@@ -20,7 +20,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:'Noto Sans TC',-apple-system,'PingFang TC',sans-serif;
-  background:#f0f4ff;color:var(--g800);font-size:14px;line-height:1.6;
+  background:#f0f4ff;color:var(--g800);font-size:16px;line-height:1.7;
+  zoom:1.3;
 }
 
 /* ── HERO ── */
@@ -997,6 +998,17 @@ body{
     <div style="font-size:11px;color:var(--g400);margin-top:10px">＊ 時段倍數（×1.25 / ×1.5）僅影響獎金金額，不影響政府給付或居服員薪資，故每週毛利與時段無關。</div>
   </div>
 
+  <!-- AA收入說明 -->
+  <div class="highlight blue" style="margin-bottom:16px">
+    <div class="hi-icon">💡</div>
+    <div class="hi-text">
+      <strong>AA碼收入性質說明：</strong>AA05 / AA06 每次服務政府給付 <strong>$200／次（天）</strong>，屬於<strong>每週持續性收入</strong>，而非一次性收入。
+      例如每週服務3天且符合AA05申報 → 每週 $200×3＝<strong>$600 的持續AA收入</strong>。
+      個管員獲得的AA獎金（$200一次性）在第一週AA收入時即全數抵回，之後每週均為純增益。
+      因此含AA申報的案件，財務上比不含AA的案件<strong>更為有利</strong>。
+    </div>
+  </div>
+
   <!-- 獎金回收期試算 -->
   <div class="card">
     <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:6px">⏱️ 獎金回收期試算（虧損修復週數）</div>
@@ -1004,14 +1016,16 @@ body{
       獎金為<strong>一次性支出</strong>，支付後每週毛利持續累積，直到累積毛利覆蓋獎金即為「回本」。
     </div>
     <div style="font-size:12px;color:var(--g600);margin-bottom:16px">
-      公式：<strong>回收週數 = 獎金總額 ÷ 每週毛利</strong>
+      公式：<strong>回收週數 = 獎金總額 ÷ 每週總收入（毛利＋AA週收入）</strong>
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead>
           <tr style="background:var(--g800);color:#fff">
             <th style="padding:9px 12px;text-align:left">情境</th>
-            <th style="padding:9px 12px;text-align:right">每週毛利</th>
+            <th style="padding:9px 12px;text-align:right">每週毛利<br><small style="opacity:.7;font-weight:400">（服務）</small></th>
+            <th style="padding:9px 12px;text-align:right">AA每週收入<br><small style="opacity:.7;font-weight:400">（政府給付）</small></th>
+            <th style="padding:9px 12px;text-align:right">每週總收入</th>
             <th style="padding:9px 12px;text-align:right">個管獎金<br><small style="opacity:.7;font-weight:400">（一次性）</small></th>
             <th style="padding:9px 12px;text-align:right">居督獎金<br><small style="opacity:.7;font-weight:400">（一次性）</small></th>
             <th style="padding:9px 12px;text-align:right">獎金合計</th>
@@ -1023,6 +1037,8 @@ body{
           <tr>
             <td style="padding:9px 12px;font-weight:700">S 級 ×1.0（無居督）</td>
             <td style="padding:9px 12px;text-align:right;color:var(--green)">$180</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700">$180</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$150</td>
             <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
             <td style="padding:9px 12px;text-align:right">$150</td>
@@ -1032,6 +1048,8 @@ body{
           <tr style="background:var(--g50)">
             <td style="padding:9px 12px;font-weight:700">A 級 ×1.0（無居督）</td>
             <td style="padding:9px 12px;text-align:right;color:var(--green)">$360</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700">$360</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$300</td>
             <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
             <td style="padding:9px 12px;text-align:right">$300</td>
@@ -1041,6 +1059,8 @@ body{
           <tr>
             <td style="padding:9px 12px;font-weight:700">B 級 ×1.0（無居督）</td>
             <td style="padding:9px 12px;text-align:right;color:var(--green)">$600</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700">$600</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$500</td>
             <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
             <td style="padding:9px 12px;text-align:right">$500</td>
@@ -1050,6 +1070,8 @@ body{
           <tr style="background:var(--g50)">
             <td style="padding:9px 12px;font-weight:700">C 級 ×1.5 ＋ 居督挪移</td>
             <td style="padding:9px 12px;text-align:right;color:var(--green)">$840</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700">$840</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$1,050</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$1,050</td>
             <td style="padding:9px 12px;text-align:right">$2,100</td>
@@ -1057,24 +1079,37 @@ body{
             <td style="padding:9px 12px;text-align:right;font-size:11px;color:var(--g500)">長期第4週</td>
           </tr>
           <tr style="background:#fef9c3">
-            <td style="padding:9px 12px;font-weight:800;color:var(--yellow)">⚠️ S ×1.5 ＋AA雙＋居督挪移<br><small style="font-weight:400">（最高獎金占比情境）</small></td>
+            <td style="padding:9px 12px;font-weight:800;color:var(--yellow)">⚠️ S ×1.5 ＋ 居督挪移（無AA）<br><small style="font-weight:400;color:var(--g600)">（真實最差情境：毛利最低＋最高獎金比例）</small></td>
             <td style="padding:9px 12px;text-align:right;color:var(--green)">$180</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:700">$180</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--red)">$225</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--red)">$225</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--red)">$450</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--yellow)">2.5 週</td>
+            <td style="padding:9px 12px;text-align:right;font-size:11px;color:var(--g500)">長期第4週</td>
+          </tr>
+          <tr style="background:#ecfdf5">
+            <td style="padding:9px 12px;font-weight:800;color:var(--green)">✅ S ×1.5 ＋AA雙（3天/週）＋ 居督挪移<br><small style="font-weight:400;color:var(--g600)">（AA每週持續收入正確計算）</small></td>
+            <td style="padding:9px 12px;text-align:right;color:var(--green)">$180</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--green);font-weight:700">$1,200<br><small style="font-weight:400">$400×3天</small></td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$1,380</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$625</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">$625</td>
             <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--red)">$1,250</td>
-            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--red)">6.9 週</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">0.9 週</td>
             <td style="padding:9px 12px;text-align:right;font-size:11px;color:var(--g500)">長期第4週</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:var(--g400);margin-top:10px">＊ AA加碼（+$200/+$400）為公司額外收入，可加速回收；此處保守計算未納入。回收週數計算自獎金支付當週起算。</div>
+    <div style="font-size:11px;color:var(--g400);margin-top:10px">＊ AA每週收入 = AA05/AA06 政府給付 $200/次 × 每週服務天數，與一次性獎金分開計算。S級以1.5h/週、3天×0.5h為例；實際以申報天數為準。回收週數 = 獎金合計 ÷ 每週總收入。</div>
   </div>
 
   <!-- 長期案累積損益示意 -->
   <div class="card">
-    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:12px">📈 長期案累積損益示意（以 S 級 ×1.5 AA雙 居督挪移 最差情境為例）</div>
-    <div style="font-size:12px;color:var(--g600);margin-bottom:14px">獎金於第4週支付，AA 為一次性收入，每週毛利持續累積</div>
+    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:12px">📈 長期案累積損益示意（以 S 級 ×1.5 ＋居督挪移 無AA — 真實最差情境）</div>
+    <div style="font-size:12px;color:var(--g600);margin-bottom:14px">獎金於第4週支付，每週毛利 $180 持續累積；此情境無AA收入</div>
     <div style="display:flex;flex-direction:column;gap:6px">
       <!-- 週次條 -->
       <div style="display:grid;grid-template-columns:60px repeat(10,1fr);gap:4px;font-size:11px;font-weight:700;color:var(--g500);text-align:center">
@@ -1097,11 +1132,11 @@ body{
       </div>
       <!-- 獎金支出 -->
       <div style="display:grid;grid-template-columns:60px repeat(10,1fr);gap:4px;font-size:11px;text-align:center">
-        <div style="font-weight:700;color:var(--g600);display:flex;align-items:center;font-size:10px">獎金＋AA</div>
+        <div style="font-weight:700;color:var(--g600);display:flex;align-items:center;font-size:10px">獎金支出</div>
         <div style="background:var(--g50);border-radius:4px;padding:4px;color:var(--g400)">—</div>
         <div style="background:var(--g50);border-radius:4px;padding:4px;color:var(--g400)">—</div>
         <div style="background:var(--g50);border-radius:4px;padding:4px;color:var(--g400)">—</div>
-        <div style="background:#fee2e2;border-radius:4px;padding:4px;color:var(--red);font-weight:700">−$1,250<br>+$400</div>
+        <div style="background:#fee2e2;border-radius:4px;padding:4px;color:var(--red);font-weight:700">−$450</div>
         <div style="background:var(--g50);border-radius:4px;padding:4px;color:var(--g400)">—</div>
         <div style="background:var(--g50);border-radius:4px;padding:4px;color:var(--g400)">—</div>
         <div style="background:var(--g50);border-radius:4px;padding:4px;color:var(--g400)">—</div>
@@ -1115,21 +1150,21 @@ body{
         <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$180</div>
         <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$360</div>
         <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$540</div>
-        <div style="background:#fee2e2;border-radius:4px;padding:4px;color:var(--red);font-weight:800">−$130<br><small>虧損期</small></div>
-        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$50</div>
-        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$230</div>
-        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$410</div>
-        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$590</div>
-        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$770</div>
-        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$950</div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:800">+$270<br><small>仍為正</small></div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$450</div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$630</div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$810</div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$990</div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$1,170</div>
+        <div style="background:var(--green-light);border-radius:4px;padding:4px;color:var(--green);font-weight:700">+$1,350</div>
       </div>
     </div>
-    <div class="highlight yellow" style="margin-top:16px">
-      <div class="hi-icon">📌</div>
+    <div class="highlight green" style="margin-top:16px">
+      <div class="hi-icon">✅</div>
       <div class="hi-text" style="font-size:12px">
-        <strong>最差情境下：</strong>僅在第4週支付獎金當週出現 −$130 短暫虧損，第5週（約1週後）即回正。<br>
-        此後每週持續累積 $180 毛利，<strong>長期執行越久，對公司越有利</strong>。<br>
-        絕大多數情境（無居督、或較高時數）在第4週支付獎金後累積損益仍為正值，不存在虧損期。
+        <strong>真實最差情境下：</strong>第4週支付獎金 $450 時，前3週已累積毛利 $540，加上第4週 $180，當週累積仍為 <strong>+$270，無虧損期</strong>。<br>
+        這是因為長期案發放時機（第4週）讓毛利已自然緩衝了獎金支出。<br>
+        <strong>含AA申報的情境更佳</strong>：AA政府收入每週持續累積，第一週即超過AA獎金一次性支出，全程不存在虧損。
       </div>
     </div>
   </div>
@@ -1137,29 +1172,38 @@ body{
   <!-- 整體結論 -->
   <div class="card" style="background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff">
     <div style="font-size:16px;font-weight:900;margin-bottom:16px">📌 整體評估：損失是否在可承擔範圍？</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
       <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:16px">
-        <div style="font-size:13px;font-weight:800;margin-bottom:8px">✅ 正常情境</div>
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px">✅ 一般情境（無居督）</div>
         <div style="font-size:12px;opacity:.9;line-height:1.8">
-          • 獎金回收期僅 <strong>不到1週</strong><br>
-          • 長期第4週支付時，前3週累積毛利已足以覆蓋<br>
-          • 案件持續執行，每週持續有 $120/h 毛利<br>
+          • 回收期 <strong>不到1週</strong><br>
+          • 長期案第4週支付，前3週毛利已足夠覆蓋<br>
+          • 全程無虧損期<br>
           • <strong>完全在可承擔範圍內</strong>
         </div>
       </div>
       <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:16px">
-        <div style="font-size:13px;font-weight:800;margin-bottom:8px">⚠️ 最差情境</div>
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px">⚠️ 最差情境（無AA）</div>
         <div style="font-size:12px;opacity:.9;line-height:1.8">
-          • S級＋×1.5＋AA雙＋居督挪移<br>
-          • 第4週支付獎金後短暫虧損 <strong>$130</strong><br>
-          • 虧損持續時間：<strong>不超過1週</strong><br>
-          • 第5週即回正，此後持續獲利
+          • S級 ×1.5 ＋ 居督挪移，<strong>無AA申報</strong><br>
+          • 回收期 <strong>2.5 週</strong><br>
+          • 第4週付獎金後累積仍為 <strong>+$270，無虧損</strong><br>
+          • 此後每週持續獲利 $180
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:16px;border:1px solid rgba(255,255,255,.3)">
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px">🌟 AA申報情境</div>
+        <div style="font-size:12px;opacity:.9;line-height:1.8">
+          • AA每週政府收入遠超一次性AA獎金<br>
+          • 例：3天/週→每週 $1,200 AA收入<br>
+          • 回收期 <strong>不到1週</strong>，財務表現最佳<br>
+          • AA申報案件對公司最有利
         </div>
       </div>
     </div>
     <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:16px;font-size:13px;line-height:2">
       <strong>⚠️ 說明限制：</strong>以上損益僅計入「居服員薪資」與「媒合獎金」兩項主要成本，未含管理費、行政人力、交通補貼等間接成本，實際損益請依完整成本結構另行評估。<br>
-      <strong>結論：</strong>在主要成本範圍內，此制度的財務壓力極低——最壞情況僅有不到1週的短暫虧損 $130，回收後即持續獲利，屬完全可承擔的短期成本。
+      <strong>結論：</strong>在主要成本範圍內，此制度<strong>任何情境下均無虧損期</strong>——即使最差情境（S級＋居督挪移，無AA），第4週支付獎金當週累積損益仍為正值。含AA申報的案件因每週持續AA收入，財務表現更優。屬完全可承擔的結構。
     </div>
   </div>
 </div>
