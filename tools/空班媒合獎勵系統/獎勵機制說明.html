@@ -955,178 +955,163 @@ body{
 <div class="section" style="padding-top:0">
   <div class="section-tag">11 / 財務分析</div>
   <div class="section-title">這套制度對公司的實質損益</div>
-  <div class="section-sub">以每月單筆媒合為單位，計算公司實際獲益與獎金支出，評估是否在可承擔範圍內。</div>
+  <div class="section-sub">以「空班填補」的增量效益為基礎，正確評估獎金支出是否合理。</div>
 
-  <!-- 前提：空班不媒合的損失 -->
-  <div class="card">
-    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:12px">🔴 前提：空班不填補的代價</div>
-    <div class="highlight red">
-      <div class="hi-icon">💸</div>
+  <!-- 關鍵前提：居服員薪資是沉沒成本 -->
+  <div class="card" style="border-left:4px solid var(--primary)">
+    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:12px">🔑 分析前提：居服員薪資是「沉沒成本」</div>
+    <div class="highlight blue">
+      <div class="hi-icon">💡</div>
       <div class="hi-text">
-        空班時段的居服員已固定排班，<strong>薪資仍照付</strong>（230元/h）；但沒有個案服務，政府給付為零、AA加碼也無法申報。
-        每1小時空班 = 公司直接損失 <strong>230元人力成本</strong>，機會損失再加 <strong>120元毛利</strong>，合計 <strong>350元/h</strong>。
+        空班時段的居服員<strong>已固定排班，薪資照付（$230/h）</strong>，不論空班有沒有被填補。<br>
+        因此，評估媒合是否划算時，<strong>居服員薪資不應列為「因媒合而新增」的成本</strong>——那是管理決策前就已存在的固定支出。<br>
+        正確的問題是：<strong>「填補空班能帶來多少新收入？這筆收入夠付獎金嗎？」</strong>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
       <div style="text-align:center;background:var(--red-light);border-radius:10px;padding:16px">
-        <div style="font-size:11px;color:var(--red);font-weight:700">空班不媒合（每小時）</div>
-        <div style="font-size:28px;font-weight:900;color:var(--red)">−$230</div>
-        <div style="font-size:11px;color:var(--g500)">薪資仍支出</div>
-      </div>
-      <div style="text-align:center;background:var(--yellow-light);border-radius:10px;padding:16px">
-        <div style="font-size:11px;color:var(--yellow);font-weight:700">機會損失（每小時）</div>
-        <div style="font-size:28px;font-weight:900;color:var(--yellow)">−$120</div>
-        <div style="font-size:11px;color:var(--g500)">本可獲得的毛利</div>
+        <div style="font-size:11px;color:var(--red);font-weight:700">空班不填補（每月每小時）</div>
+        <div style="font-size:24px;font-weight:900;color:var(--red)">−$230</div>
+        <div style="font-size:11px;color:var(--g500)">薪資白付，0 收入</div>
       </div>
       <div style="text-align:center;background:var(--green-light);border-radius:10px;padding:16px">
-        <div style="font-size:11px;color:var(--green);font-weight:700">媒合後淨回收（每小時）</div>
-        <div style="font-size:28px;font-weight:900;color:var(--green)">+$120</div>
-        <div style="font-size:11px;color:var(--g500)">毛利回收（含AA另計）</div>
+        <div style="font-size:11px;color:var(--green);font-weight:700">填補後新增收入（每小時）</div>
+        <div style="font-size:24px;font-weight:900;color:var(--green)">+$350</div>
+        <div style="font-size:11px;color:var(--g500)">政府給付（薪資仍照付）</div>
+      </div>
+      <div style="text-align:center;background:var(--primary-light);border-radius:10px;padding:16px">
+        <div style="font-size:11px;color:var(--primary);font-weight:700">每小時改善幅度</div>
+        <div style="font-size:24px;font-weight:900;color:var(--primary)">+$580</div>
+        <div style="font-size:11px;color:var(--g500)">由虧轉盈的每小時效益</div>
       </div>
     </div>
+    <div style="font-size:11px;color:var(--g500);margin-top:10px">＊ $580 = 從「付薪無收」（−$230）轉為「付薪有收」（+$350），差距即 $580/h。這才是填補空班的真實商業價值。</div>
   </div>
 
-  <!-- 損益試算：各情境 -->
+  <!-- 正確損益試算 -->
   <div class="card">
-    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:16px">📊 各情境月損益試算（長期案 × 4週）</div>
+    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:6px">📊 正確損益試算：各情境月淨新增收益（長期案 × 4週）</div>
+    <div style="font-size:12px;color:var(--g500);margin-bottom:16px">計算基準：新增收益 = 政府給付 $350/h（居服員薪資為沉沒成本，不計）− 獎金支出</div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead>
           <tr style="background:var(--g800);color:#fff">
             <th style="padding:9px 12px;text-align:left">情境</th>
-            <th style="padding:9px 12px;text-align:right">每週時數</th>
+            <th style="padding:9px 12px;text-align:right">週時數</th>
             <th style="padding:9px 12px;text-align:right">時段倍數</th>
-            <th style="padding:9px 12px;text-align:right">月毛利回收</th>
+            <th style="padding:9px 12px;text-align:right">月新增收入<br><small style="opacity:.7;font-weight:400">$350×h×4週</small></th>
             <th style="padding:9px 12px;text-align:right">AA收入</th>
             <th style="padding:9px 12px;text-align:right">個管獎金</th>
             <th style="padding:9px 12px;text-align:right">居督獎金</th>
-            <th style="padding:9px 12px;text-align:right;background:#1e3a8a">公司月淨益</th>
-            <th style="padding:9px 12px;text-align:right">獎金/毛利比</th>
+            <th style="padding:9px 12px;text-align:right;background:#065f46">月淨新增益</th>
+            <th style="padding:9px 12px;text-align:right">獎金/收入比</th>
           </tr>
         </thead>
         <tbody>
-          <!-- 最典型 -->
           <tr>
-            <td style="padding:9px 12px;font-weight:700">典型 A</td>
-            <td style="padding:9px 12px;text-align:right">3h</td>
+            <td style="padding:9px 12px;font-weight:700">S 級（無居督）</td>
+            <td style="padding:9px 12px;text-align:right">1.5h</td>
             <td style="padding:9px 12px;text-align:right">×1.0</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$1,440</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$2,100</td>
             <td style="padding:9px 12px;text-align:right">$0</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--red)">−$300</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--g500)">無</td>
-            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$1,140</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--g500)">20.8%</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--red)">−$150</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$1,950</td>
+            <td style="padding:9px 12px;text-align:right">7.1%</td>
           </tr>
           <tr style="background:var(--g50)">
-            <td style="padding:9px 12px;font-weight:700">典型 B ＋ AA05</td>
+            <td style="padding:9px 12px;font-weight:700">A 級（無居督）</td>
+            <td style="padding:9px 12px;text-align:right">3h</td>
+            <td style="padding:9px 12px;text-align:right">×1.0</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$4,200</td>
+            <td style="padding:9px 12px;text-align:right">$0</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--red)">−$300</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$3,900</td>
+            <td style="padding:9px 12px;text-align:right">7.1%</td>
+          </tr>
+          <tr>
+            <td style="padding:9px 12px;font-weight:700">B 級 ＋ AA05</td>
             <td style="padding:9px 12px;text-align:right">5h</td>
             <td style="padding:9px 12px;text-align:right">×1.0</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$2,400</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$7,000</td>
             <td style="padding:9px 12px;text-align:right;color:var(--yellow)">+$200</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">−$700</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--g500)">無</td>
-            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$1,900</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--g500)">27.0%</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--g400)">—</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$6,500</td>
+            <td style="padding:9px 12px;text-align:right">9.7%</td>
           </tr>
-          <!-- 高倍數有居督 -->
-          <tr>
+          <tr style="background:var(--g50)">
             <td style="padding:9px 12px;font-weight:700">C ＋ ×1.5 ＋ 居督挪移</td>
             <td style="padding:9px 12px;text-align:right">7h</td>
             <td style="padding:9px 12px;text-align:right">×1.5</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$3,360</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$9,800</td>
             <td style="padding:9px 12px;text-align:right">$0</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">−$1,050</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">−$1,050</td>
-            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$1,260</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--g500)">62.5%</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$7,700</td>
+            <td style="padding:9px 12px;text-align:right">21.4%</td>
           </tr>
-          <!-- 最差情境 -->
           <tr style="background:#fef2f2">
-            <td style="padding:9px 12px;font-weight:800;color:var(--red)">⚠️ 最高成本情境<br><small style="font-weight:400">C ＋ ×1.5 ＋ AA雙＋居督挪移</small></td>
-            <td style="padding:9px 12px;text-align:right">7h</td>
-            <td style="padding:9px 12px;text-align:right">×1.5</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$3,360</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--yellow)">+$400</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--red)">−$1,450</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--red)">−$1,450</td>
-            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$860</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--red);font-weight:700">77.2%</td>
-          </tr>
-          <!-- S級最差 -->
-          <tr style="background:#fef9c3">
-            <td style="padding:9px 12px;font-weight:700">⚠️ S ＋ ×1.5 ＋ AA雙＋居督挪移</td>
+            <td style="padding:9px 12px;font-weight:800">⚠️ 最高獎金情境<br><small style="font-weight:400">S ＋ ×1.5 ＋ AA雙 ＋ 居督挪移</small></td>
             <td style="padding:9px 12px;text-align:right">1.5h</td>
             <td style="padding:9px 12px;text-align:right">×1.5</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$720</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--primary)">$3,150</td>
             <td style="padding:9px 12px;text-align:right;color:var(--yellow)">+$400</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">−$625</td>
             <td style="padding:9px 12px;text-align:right;color:var(--red)">−$625</td>
-            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--yellow)">−$130</td>
-            <td style="padding:9px 12px;text-align:right;color:var(--red);font-weight:800">❌ 虧損</td>
+            <td style="padding:9px 12px;text-align:right;font-weight:800;color:var(--green)">$2,300</td>
+            <td style="padding:9px 12px;text-align:right;color:var(--green);font-weight:700">✅ 35.7%</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:var(--g400);margin-top:10px">＊ AA收入以每月一次計算；居督獎金僅列「有實際挪移協調」的情況（象徵性獎金金額極小，不列）。個管員與居督獎金各自獨立計算。</div>
+    <div style="font-size:11px;color:var(--g400);margin-top:10px">＊ 月新增收入 = $350/h × 週時數 × 4週（不扣居服員薪資，因為薪資是沉沒成本）。AA 以每月一次計算。</div>
   </div>
 
-  <!-- 唯一虧損情境分析 -->
+  <!-- 定價依據重新說明 -->
   <div class="card" style="border-left:4px solid var(--yellow)">
-    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:12px">🔍 唯一可能虧損情境分析</div>
-    <div class="grid-2">
-      <div>
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--red)">S 級 × 居督挪移同時發生</div>
-        <div style="font-size:12px;color:var(--g600);line-height:2">
-          <div>每週時數：未滿 2h（例 1.5h）</div>
-          <div>月毛利回收：1.5h × $120 × 4 = <strong>$720</strong></div>
-          <div>個管獎金（最高）：$150 × 1.5 + $400 = <strong>$625</strong></div>
-          <div>居督獎金（挪移）：$150 × 1.5 + $400 = <strong>$625</strong></div>
-          <div>公司月淨益：$720 + $400（AA）− $625 − $625 = <strong style="color:var(--red)">−$130</strong></div>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--green)">建議管理對策</div>
-        <div class="highlight green" style="margin-bottom:8px">
-          <div class="hi-icon">✅</div>
-          <div class="hi-text" style="font-size:12px">S 級案件（未滿2h）幾乎不太可能需要居督「實際挪移協調」——時數極短，挪移協調的動機低。<strong>實務上此情境發生機率極低。</strong></div>
-        </div>
-        <div class="highlight yellow">
-          <div class="hi-icon">💡</div>
-          <div class="hi-text" style="font-size:12px">若要完全規避虧損，可在制度上增加一條：<strong>S 級案件（未滿2h）不適用居督挪移同額獎金</strong>，僅適用象徵性獎金（$15 × 倍數）。這樣 S 級最差情境淨益仍為正值。</div>
-        </div>
+    <div style="font-size:14px;font-weight:800;color:var(--g900);margin-bottom:12px">📐 回頭看：基準獎金 S/A/B/C 的意義再確認</div>
+    <div class="highlight yellow">
+      <div class="hi-icon">⚠️</div>
+      <div class="hi-text" style="font-size:12px">
+        Section 3 中說明基準獎金「約占毛利 20%」，使用的是 <strong>$350−$230=$120/h 毛利</strong>。<br>
+        這個計算方式在「新增服務」的情境下是正確的（例：開發全新個案）。<br>
+        但在<strong>空班填補</strong>的情境中，因薪資已是沉沒成本，實際分析應用 $350/h 作為新增收入基礎。<br>
+        兩種算法都顯示：<strong>獎金制度對公司財務完全安全，無虧損可能。</strong>
       </div>
     </div>
   </div>
 
   <!-- 整體結論 -->
-  <div class="card" style="background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#fff">
+  <div class="card" style="background:linear-gradient(135deg,#065f46,#059669);color:#fff">
     <div style="font-size:16px;font-weight:900;margin-bottom:16px">📌 整體評估：損失是否在可承擔範圍？</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-      <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:16px">
-        <div style="font-size:13px;font-weight:800;margin-bottom:8px;opacity:.9">✅ 正常情境（佔絕大多數）</div>
-        <div style="font-size:12px;opacity:.8;line-height:1.8">
-          • 每月公司淨益 <strong>$860 ~ $1,900</strong><br>
-          • 獎金占毛利 20.8 ~ 27%（有AA時略升）<br>
-          • 即使有居督協助，多數仍有數百元至千元以上淨益<br>
-          • <strong>這些收入原本是零</strong>——空班不媒合就是全部損失
+      <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:16px">
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px">✅ 所有情境均為正值</div>
+        <div style="font-size:12px;opacity:.9;line-height:1.8">
+          • 即使是最高獎金情境（S＋×1.5＋AA雙＋居督）<br>
+          &nbsp;&nbsp;月淨新增益仍有 <strong>$2,300</strong>，獎金只佔 35.7%<br>
+          • 正常情境獎金佔新增收入不到 10%<br>
+          • <strong>沒有任何情境會造成虧損</strong>
         </div>
       </div>
-      <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:16px">
-        <div style="font-size:13px;font-weight:800;margin-bottom:8px;opacity:.9">⚠️ 邊緣情境（需注意）</div>
-        <div style="font-size:12px;opacity:.8;line-height:1.8">
-          • S級 × 居督挪移 × 雙AA ≈ 月虧 $130<br>
-          • 此情境現實中幾乎不會發生<br>
-          • <strong>建議制度補充：</strong>S級不適用居督挪移同額獎金<br>
-          • 加此限制後，所有情境均為正值
+      <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:16px">
+        <div style="font-size:13px;font-weight:800;margin-bottom:8px">💡 空班的真實成本</div>
+        <div style="font-size:12px;opacity:.9;line-height:1.8">
+          • 空班 <strong>1小時</strong> = 白付薪資 $230<br>
+          • 空班 <strong>5h/週 × 4週</strong> = 每月白付 $4,600<br>
+          • 填補後淨新增益 ≈ $6,500<br>
+          • 不媒合才是真正的損失來源
         </div>
       </div>
     </div>
     <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:16px;font-size:13px;line-height:2">
-      <strong>結論：</strong>這套制度的設計在財務上是<strong>安全且合理的</strong>。<br>
-      ① 所有媒合均來自原本為零收益的空班，獎金是從新增毛利中支出，不影響既有收入。<br>
-      ② 正常情境下公司保留 ~80% 新增毛利，獎金支出約 20%，屬合理激勵比例。<br>
-      ③ 唯一潛在虧損情境（S級＋雙重獎金）實務發生率極低，且可透過制度補充規則完全消除。<br>
-      ④ <strong>建議在制度說明中加入一條：S級（未滿2h）居督協助僅適用象徵性獎金</strong>，以確保所有情境均不虧損。
+      <strong>結論：</strong>這套獎勵制度的財務風險極低，完全在可承擔範圍內。<br>
+      ① 空班填補後，所有新增收入都高於獎金支出，公司永遠淨正益。<br>
+      ② 對公司而言，真正的損失來自「空班沒有被填補」，而非「獎金太高」。<br>
+      ③ 獎金制度是將原本持續虧損的空班時數，轉化為公司正收益的工具。<br>
+      ④ 建議定期檢視空班填補率，而非糾結於獎金金額是否過高。
     </div>
   </div>
 </div>
