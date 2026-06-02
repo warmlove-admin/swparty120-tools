@@ -187,6 +187,7 @@ tr:hover td{background:var(--g50)}
     <div class="nav-tab active" onclick="showPage('dashboard')">儀表板</div>
     <div class="nav-tab" onclick="showPage('vacant')">空班管理</div>
     <div class="nav-tab" onclick="showPage('matches')">媒合記錄</div>
+    <div class="nav-tab" onclick="showPage('settlement')">月結算</div>
     <div class="nav-tab" onclick="showPage('performance')">個人績效</div>
     <div class="nav-tab" onclick="showPage('team')">團隊效益</div>
     <div class="nav-tab" onclick="showPage('settings')">⚙ 設定</div>
@@ -280,6 +281,35 @@ tr:hover td{background:var(--g50)}
     </div>
   </div>
 
+  <!-- ▌SETTLEMENT ▌-->
+  <div id="page-settlement" class="page">
+    <div class="section-hd">
+      <div class="section-title">月結算</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="form-select" style="width:160px" id="settle-month-sel" onchange="renderSettlement()"></select>
+        <button class="btn btn-primary" onclick="doMonthSettle()">✅ 結算本月符合案件</button>
+      </div>
+    </div>
+    <div class="alert alert-info" style="margin-bottom:16px">
+      ⚠️ 結算前請<strong>手動確認</strong>各案件實際是否仍在執行（短期案需確認已完成；長期案需滿4週）。結算後會記錄於歷史清單。
+    </div>
+    <!-- 待結算 -->
+    <div class="card">
+      <div class="card-title" id="settle-pending-title">🕐 本月可結算（尚未結算）</div>
+      <div id="settle-pending-list"></div>
+    </div>
+    <!-- 本月已結算 -->
+    <div class="card">
+      <div class="card-title">✅ 本月已結算記錄</div>
+      <div id="settle-done-list"></div>
+    </div>
+    <!-- 月績效摘要 -->
+    <div class="card">
+      <div class="card-title">📊 月達成績效（已結算）</div>
+      <div id="settle-perf-summary"></div>
+    </div>
+  </div>
+
   <!-- ▌PERFORMANCE ▌-->
   <div id="page-performance" class="page">
     <div class="section-hd">
@@ -319,6 +349,13 @@ tr:hover td{background:var(--g50)}
         </div>
         <div id="worker-list"></div>
       </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        🏷️ 服務代碼管理（BA碼）
+        <button class="btn btn-primary btn-sm" onclick="openModal('m-scode')">新增代碼</button>
+      </div>
+      <div id="scode-list"></div>
     </div>
     <div class="card">
       <div class="card-title">📖 獎勵規則說明</div>
@@ -443,8 +480,8 @@ tr:hover td{background:var(--g50)}
       <div class="form-group">
         <label class="form-label">案件類型</label>
         <div style="display:flex;gap:20px;margin-top:6px">
-          <label class="check-label"><input type="radio" name="mt-type" value="long" checked onchange="matchPreview()"> 長期（≥4週，發放100%）</label>
-          <label class="check-label"><input type="radio" name="mt-type" value="short" onchange="matchPreview()"> 短期（2–4週，發放30%）</label>
+          <label class="check-label"><input type="radio" name="mt-type" value="long" checked onchange="renderServiceItemsUI();matchPreview()"> 長期（≥4週，發放100%）</label>
+          <label class="check-label"><input type="radio" name="mt-type" value="short" onchange="renderServiceItemsUI();matchPreview()"> 短期（2–4週，發放30%）</label>
         </div>
       </div>
       <hr class="divider">
@@ -454,6 +491,18 @@ tr:hover td{background:var(--g50)}
           <label class="check-label"><input type="checkbox" id="mt-aa05" onchange="matchPreview()"> <strong>AA05</strong> 申報 +200元</label>
           <label class="check-label"><input type="checkbox" id="mt-aa06" onchange="matchPreview()"> <strong>AA06</strong> 申報 +200元</label>
         </div>
+      </div>
+      <hr class="divider">
+      <hr class="divider">
+      <div class="form-group" id="mt-estimated-weeks-grp" style="display:none">
+        <label class="form-label">預估執行週數（短期案）</label>
+        <input type="number" class="form-input" id="mt-estimated-weeks" min="2" max="20" placeholder="例：3（週）" oninput="matchPreview()">
+        <div style="font-size:11px;color:var(--g500);margin-top:4px">短期案月績效 = 每週收入 × 此週數</div>
+      </div>
+      <hr class="divider">
+      <div class="form-group">
+        <label class="form-label">服務項目（每天實際服務內容，用於計算月績效）</label>
+        <div id="mt-service-items-wrap" style="margin-top:8px"></div>
       </div>
       <hr class="divider">
       <div class="form-group"><label class="form-label">居督協助（選填）</label><select class="form-select" id="mt-sup" onchange="onSupChange()"></select></div>
@@ -486,6 +535,33 @@ tr:hover td{background:var(--g50)}
   </div>
 </div>
 
+<!-- Add Service Code -->
+<div class="modal-bg" id="m-scode">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title">新增服務代碼</div><button class="modal-x" onclick="closeModal('m-scode')">×</button></div>
+    <div class="modal-bd">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">代碼</label><input class="form-input" id="sc-code" placeholder="例：BA20"></div>
+        <div class="form-group"><label class="form-label">名稱</label><input class="form-input" id="sc-name" placeholder="例：身體照顧"></div>
+      </div>
+      <div class="form-group"><label class="form-label">單價（元／次）</label><input type="number" class="form-input" id="sc-rate" min="0" placeholder="例：190"></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('m-scode')">取消</button><button class="btn btn-primary" onclick="addServiceCode()">新增</button></div>
+  </div>
+</div>
+
+<!-- Settlement Confirm -->
+<div class="modal-bg" id="m-settle">
+  <div class="modal modal-lg">
+    <div class="modal-hd"><div class="modal-title">確認結算</div><button class="modal-x" onclick="closeModal('m-settle')">×</button></div>
+    <div class="modal-bd" id="m-settle-body"></div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('m-settle')">取消</button>
+      <button class="btn btn-primary" onclick="confirmSettle()">✅ 確認結算</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bonus Detail -->
 <div class="modal-bg" id="m-detail">
   <div class="modal">
@@ -514,15 +590,362 @@ const TIERS = [
   {id:'C',min:6,max:Infinity,base:700,sym:70},
 ];
 const DAYS = {0:'日',1:'一',2:'二',3:'三',4:'四',5:'五',6:'六'};
-const PAGE_ORDER = ['dashboard','vacant','matches','performance','team','settings'];
+const PAGE_ORDER = ['dashboard','vacant','matches','settlement','performance','team','settings'];
 
 // ══════════════════════════════════════════════
 // DB
 // ══════════════════════════════════════════════
-let db = {staff:[],careWorkers:[],vacantSlots:[],matches:[]};
+let db = {
+  staff:[],
+  careWorkers:[],
+  vacantSlots:[],
+  matches:[],
+  serviceCodes:[
+    {id:'sc01',code:'BA01',name:'沐浴（全身）',unitRate:200},
+    {id:'sc02',code:'BA02',name:'沐浴（局部）',unitRate:150},
+    {id:'sc03',code:'BA05',name:'協助移位',unitRate:130},
+    {id:'sc04',code:'BA13',name:'協助如廁',unitRate:100},
+    {id:'sc05',code:'BA20',name:'身體照顧',unitRate:190},
+    {id:'sc06',code:'BA21',name:'陪同就醫',unitRate:160},
+    {id:'sc07',code:'BA30',name:'家事服務',unitRate:120},
+    {id:'sc08',code:'BA40',name:'餐食準備',unitRate:110}
+  ],
+  settlements:[]
+};
 
 function loadDB(){
-  try{ const s=localStorage.getItem('vms-db'); if(s) db=JSON.parse(s); }catch(e){}
+  try{
+    const s=localStorage.getItem('vms-db');
+    if(s){
+      const loaded=JSON.parse(s);
+      db=loaded;
+      // 補齊新欄位（升級相容）
+      if(!db.serviceCodes||!db.serviceCodes.length) db.serviceCodes=[
+        {id:'sc01',code:'BA01',name:'沐浴（全身）',unitRate:200},
+        {id:'sc02',code:'BA02',name:'沐浴（局部）',unitRate:150},
+        {id:'sc03',code:'BA05',name:'協助移位',unitRate:130},
+        {id:'sc04',code:'BA13',name:'協助如廁',unitRate:100},
+        {id:'sc05',code:'BA20',name:'身體照顧',unitRate:190},
+        {id:'sc06',code:'BA21',name:'陪同就醫',unitRate:160},
+        {id:'sc07',code:'BA30',name:'家事服務',unitRate:120},
+        {id:'sc08',code:'BA40',name:'餐食準備',unitRate:110}
+      ];
+      if(!db.settlements) db.settlements=[];
+    }
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════
+// 服務項目計算
+// ══════════════════════════════════════════════
+function calcWeeklyIncome(serviceItems){
+  // serviceItems: [{day, code, qty}]
+  if(!serviceItems||!serviceItems.length) return 0;
+  return serviceItems.reduce((sum,item)=>{
+    const sc=db.serviceCodes.find(s=>s.code===item.code);
+    return sum+(sc?sc.unitRate*item.qty:0);
+  },0);
+}
+
+function calcMonthlyPerf(match){
+  const wIncome=calcWeeklyIncome(match.serviceItems||[]);
+  if(!wIncome) return 0;
+  if(match.caseType==='long') return wIncome*4;
+  return wIncome*(match.estimatedWeeks||2);
+}
+
+// ══════════════════════════════════════════════
+// 服務代碼 CRUD
+// ══════════════════════════════════════════════
+function addServiceCode(){
+  const code=document.getElementById('sc-code').value.trim().toUpperCase();
+  const name=document.getElementById('sc-name').value.trim();
+  const rate=parseFloat(document.getElementById('sc-rate').value);
+  if(!code||!name||isNaN(rate)){ alert('請填寫完整資訊'); return; }
+  db.serviceCodes.push({id:uid(),code,name,unitRate:rate});
+  saveDB(); closeModal('m-scode');
+  document.getElementById('sc-code').value='';
+  document.getElementById('sc-name').value='';
+  document.getElementById('sc-rate').value='';
+  renderSettings();
+}
+function delServiceCode(id){
+  if(!confirm('確定刪除此代碼？')) return;
+  db.serviceCodes=db.serviceCodes.filter(s=>s.id!==id);
+  saveDB(); renderSettings();
+}
+function renderServiceCodeList(){
+  const el=document.getElementById('scode-list');
+  if(!el) return;
+  el.innerHTML=db.serviceCodes.length===0
+    ?'<div class="empty-state" style="padding:16px"><div class="empty-text">尚無代碼</div></div>'
+    :`<table><thead><tr><th>代碼</th><th>名稱</th><th>單價（元/次）</th><th></th></tr></thead><tbody>
+    ${db.serviceCodes.map(s=>`<tr>
+      <td><span class="badge b-blue">${s.code}</span></td>
+      <td>${s.name}</td>
+      <td>$${s.unitRate}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="delServiceCode('${s.id}')">刪除</button></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════════
+// 媒合 modal 服務項目 UI
+// ══════════════════════════════════════════════
+function renderServiceItemsUI(){
+  const actualDays=[...document.querySelectorAll('#mt-actual-days .day-chip.on')].map(c=>+c.dataset.day);
+  const caseType=document.querySelector('input[name="mt-type"]:checked')?.value||'long';
+  document.getElementById('mt-estimated-weeks-grp').style.display=caseType==='short'?'block':'none';
+  const wrap=document.getElementById('mt-service-items-wrap');
+  const dayNames={0:'日',1:'一',2:'二',3:'三',4:'四',5:'五',6:'六'};
+  if(!actualDays.length){ wrap.innerHTML='<div style="font-size:12px;color:var(--g400)">請先選擇實際媒合星期</div>'; return; }
+  const codeOpts=db.serviceCodes.map(s=>`<option value="${s.code}">${s.code} ${s.name} ($${s.unitRate})</option>`).join('');
+  wrap.innerHTML=actualDays.slice().sort().map(d=>`
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--g700);margin-bottom:6px">週${dayNames[d]}</div>
+      <div id="si-day-${d}" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="addServiceItem(${d})">＋ 加項目</button>
+    </div>`).join('');
+  // 預設每天加一行
+  actualDays.forEach(d=>addServiceItem(d));
+}
+function addServiceItem(day){
+  const container=document.getElementById(`si-day-${day}`);
+  if(!container) return;
+  const codeOpts=db.serviceCodes.map(s=>`<option value="${s.code}">${s.code} ${s.name} ($${s.unitRate})</option>`).join('');
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  row.innerHTML=`<select class="form-select" style="flex:2" onchange="matchPreview()">${codeOpts}</select>
+    <span style="font-size:12px;white-space:nowrap">× 數量</span>
+    <input type="number" class="form-input" style="width:64px" value="1" min="1" oninput="matchPreview()">
+    <button type="button" class="btn btn-secondary btn-sm btn-icon" onclick="this.parentElement.remove();matchPreview()">×</button>`;
+  container.appendChild(row);
+  matchPreview();
+}
+function getServiceItemsFromForm(){
+  const actualDays=[...document.querySelectorAll('#mt-actual-days .day-chip.on')].map(c=>+c.dataset.day);
+  const items=[];
+  actualDays.forEach(d=>{
+    const container=document.getElementById(`si-day-${d}`);
+    if(!container) return;
+    container.querySelectorAll('div').forEach(row=>{
+      const sel=row.querySelector('select');
+      const qty=row.querySelector('input[type=number]');
+      if(sel&&qty) items.push({day:d,code:sel.value,qty:parseInt(qty.value)||1});
+    });
+  });
+  return items;
+}
+
+// ══════════════════════════════════════════════
+// 月結算
+// ══════════════════════════════════════════════
+let pendingSettleItems=[];
+
+function initSettleMonthSel(){
+  const sel=document.getElementById('settle-month-sel');
+  if(!sel) return;
+  const now=new Date();
+  const opts=[];
+  for(let i=0;i<6;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const lbl=`${d.getFullYear()}年${d.getMonth()+1}月`;
+    opts.push(`<option value="${val}" ${i===0?'selected':''}>${lbl}</option>`);
+  }
+  sel.innerHTML=opts.join('');
+}
+
+function getQualifiedMatches(targetMonth){
+  // 可結算：尚未結算 + 達門檻（長期≥4週，短期已完成）
+  return db.matches.filter(m=>{
+    const weeks=m.executionWeeks||0;
+    const threshold=m.caseType==='long'?4:2;
+    if(weeks<threshold) return false;
+    // 已結算過的排除
+    const settled=db.settlements.some(s=>s.matchId===m.id&&s.targetMonth===targetMonth);
+    return !settled;
+  });
+}
+
+function renderSettlement(){
+  const targetMonth=document.getElementById('settle-month-sel')?.value;
+  if(!targetMonth) return;
+
+  // 待結算
+  const qualList=getQualifiedMatches(targetMonth);
+  const pendEl=document.getElementById('settle-pending-list');
+  document.getElementById('settle-pending-title').textContent=`🕐 可結算（尚未結算）— 共 ${qualList.length} 筆`;
+  if(!qualList.length){
+    pendEl.innerHTML='<div class="empty-state" style="padding:20px"><div class="empty-text">本月無可結算案件</div><div class="empty-sub">需達門檻：長期案≥4週，短期案≥2週</div></div>';
+  } else {
+    pendEl.innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>居服員</th><th>個案</th><th>個管員</th><th>案件</th><th>執行週</th><th>個管獎金</th><th>每週收入</th><th>月績效估算</th><th></th></tr></thead>
+      <tbody>${qualList.map(m=>{
+        const sl=db.vacantSlots.find(s=>s.id===m.vacantSlotId);
+        const w=sl?db.careWorkers.find(x=>x.id===sl.careWorkerId):null;
+        const mg=db.staff.find(s=>s.id===m.managerId);
+        const c=calcBonuses(m);
+        const wIncome=calcWeeklyIncome(m.serviceItems||[]);
+        const mPerf=calcMonthlyPerf(m);
+        return `<tr>
+          <td><strong>${w?.name||'?'}</strong></td>
+          <td>${m.caseName||'—'}</td>
+          <td>${mg?.name||'?'}</td>
+          <td>${m.caseType==='long'?'<span class="badge b-blue">長期</span>':'<span class="badge b-gray">短期</span>'} ${m.executionWeeks||0}週</td>
+          <td>${m.executionWeeks||0}週</td>
+          <td class="text-blue"><strong>${c&&!c.ineligible?'$'+c.mgr.toLocaleString():'—'}</strong></td>
+          <td class="text-green">${wIncome?'$'+wIncome.toLocaleString():'未設定'}</td>
+          <td class="text-green"><strong>${mPerf?'$'+mPerf.toLocaleString():'未設定'}</strong></td>
+          <td><button class="btn btn-primary btn-sm" onclick="openSettleConfirm('${m.id}','${targetMonth}')">結算</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  }
+
+  // 已結算
+  const doneList=db.settlements.filter(s=>s.targetMonth===targetMonth);
+  const doneEl=document.getElementById('settle-done-list');
+  if(!doneList.length){
+    doneEl.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-text">本月尚無結算記錄</div></div>';
+  } else {
+    let totMgr=0,totPerf=0;
+    doneList.forEach(s=>{totMgr+=s.mgrAmount||0;totPerf+=s.monthlyPerf||0;});
+    doneEl.innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>居服員</th><th>個案</th><th>個管員</th><th>結算日</th><th>個管獎金</th><th>月績效</th><th>備注</th><th></th></tr></thead>
+      <tbody>${doneList.map(s=>{
+        const m=db.matches.find(x=>x.id===s.matchId);
+        const sl=m?db.vacantSlots.find(x=>x.id===m.vacantSlotId):null;
+        const w=sl?db.careWorkers.find(x=>x.id===sl.careWorkerId):null;
+        const mg=m?db.staff.find(x=>x.id===m.managerId):null;
+        return `<tr>
+          <td>${w?.name||'?'}</td>
+          <td>${m?.caseName||'—'}</td>
+          <td>${mg?.name||'?'}</td>
+          <td>${s.date}</td>
+          <td class="text-blue">$${(s.mgrAmount||0).toLocaleString()}</td>
+          <td class="text-green">$${(s.monthlyPerf||0).toLocaleString()}</td>
+          <td style="font-size:12px;color:var(--g500)">${s.note||'—'}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="cancelSettle('${s.id}')">撤銷</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr style="background:var(--g50)">
+        <td colspan="4" style="font-weight:800">本月合計</td>
+        <td class="text-blue"><strong>$${totMgr.toLocaleString()}</strong></td>
+        <td class="text-green"><strong>$${totPerf.toLocaleString()}</strong></td>
+        <td colspan="2"></td>
+      </tr></tfoot>
+    </table></div>`;
+  }
+
+  // 月達成績效摘要
+  renderSettlePerfSummary(targetMonth);
+}
+
+function renderSettlePerfSummary(targetMonth){
+  const doneList=db.settlements.filter(s=>s.targetMonth===targetMonth);
+  const el=document.getElementById('settle-perf-summary');
+  if(!doneList.length){ el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-text">本月尚無結算資料</div></div>'; return; }
+  // 按個管員彙總
+  const mgrMap={};
+  doneList.forEach(s=>{
+    const m=db.matches.find(x=>x.id===s.matchId);
+    if(!m) return;
+    const mg=db.staff.find(x=>x.id===m.managerId);
+    const key=mg?.id||'?';
+    if(!mgrMap[key]) mgrMap[key]={name:mg?.name||'?',cnt:0,bonus:0,perf:0};
+    mgrMap[key].cnt++;
+    mgrMap[key].bonus+=s.mgrAmount||0;
+    mgrMap[key].perf+=s.monthlyPerf||0;
+  });
+  const rows=Object.values(mgrMap).sort((a,b)=>b.perf-a.perf);
+  el.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>個管員</th><th>結算筆數</th><th>獎金合計</th><th>月達成績效</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.cnt} 筆</td>
+      <td class="text-blue">$${r.bonus.toLocaleString()}</td>
+      <td class="text-green" style="font-size:16px;font-weight:800">$${r.perf.toLocaleString()}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function openSettleConfirm(matchId, targetMonth){
+  const m=db.matches.find(x=>x.id===matchId);
+  if(!m) return;
+  const sl=db.vacantSlots.find(s=>s.id===m.vacantSlotId);
+  const w=sl?db.careWorkers.find(x=>x.id===sl.careWorkerId):null;
+  const mg=db.staff.find(s=>s.id===m.managerId);
+  const c=calcBonuses(m);
+  const wIncome=calcWeeklyIncome(m.serviceItems||[]);
+  const mPerf=calcMonthlyPerf(m);
+  document.getElementById('m-settle-body').innerHTML=`
+    <div class="alert alert-warn">請確認此案件<strong>實際上仍在執行</strong>，結算後將記錄於本月清單。</div>
+    <div class="calc-box">
+      <div class="calc-row"><span>居服員</span><span>${w?.name||'?'}</span></div>
+      <div class="calc-row"><span>個案</span><span>${m.caseName||'—'}</span></div>
+      <div class="calc-row"><span>個管員</span><span>${mg?.name||'?'}</span></div>
+      <div class="calc-row"><span>案件類型</span><span>${m.caseType==='long'?'長期':'短期'} · ${m.executionWeeks||0}週</span></div>
+      <div class="calc-row"><span>個管獎金</span><span class="text-blue"><strong>${c&&!c.ineligible?'$'+c.mgr.toLocaleString():'—'}</strong></span></div>
+      <div class="calc-row"><span>每週服務收入</span><span class="text-green">${wIncome?'$'+wIncome.toLocaleString():'（未設定服務項目）'}</span></div>
+      <div class="calc-row calc-total"><span>月達成績效</span><span class="text-green">${mPerf?'$'+mPerf.toLocaleString():'（未設定）'}</span></div>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">備注（選填）</label>
+      <input class="form-input" id="settle-note" placeholder="例：已確認執行、個案本人確認">
+    </div>
+    <input type="hidden" id="settle-match-id" value="${matchId}">
+    <input type="hidden" id="settle-target-month" value="${targetMonth}">`;
+  openModal('m-settle');
+}
+
+function confirmSettle(){
+  const matchId=document.getElementById('settle-match-id').value;
+  const targetMonth=document.getElementById('settle-target-month').value;
+  const note=document.getElementById('settle-note').value.trim();
+  const m=db.matches.find(x=>x.id===matchId);
+  if(!m) return;
+  const c=calcBonuses(m);
+  const mPerf=calcMonthlyPerf(m);
+  db.settlements.push({
+    id:uid(),
+    matchId,
+    targetMonth,
+    date:new Date().toISOString().split('T')[0],
+    mgrAmount:c&&!c.ineligible?c.mgr:0,
+    supAmount:c&&c.sup?c.sup:0,
+    monthlyPerf:mPerf,
+    note
+  });
+  saveDB();
+  closeModal('m-settle');
+  renderSettlement();
+}
+
+function cancelSettle(id){
+  if(!confirm('確定撤銷此結算記錄？')) return;
+  db.settlements=db.settlements.filter(s=>s.id!==id);
+  saveDB(); renderSettlement();
+}
+
+function doMonthSettle(){
+  const targetMonth=document.getElementById('settle-month-sel')?.value;
+  const qualList=getQualifiedMatches(targetMonth);
+  if(!qualList.length){ alert('本月無可結算案件'); return; }
+  if(!confirm(`本月共有 ${qualList.length} 筆可結算案件，請確認全部實際仍在執行後點確認。\n\n建議逐筆點「結算」按鈕確認更安全。`)) return;
+  qualList.forEach(m=>{
+    const c=calcBonuses(m);
+    const mPerf=calcMonthlyPerf(m);
+    db.settlements.push({
+      id:uid(),matchId:m.id,targetMonth,
+      date:new Date().toISOString().split('T')[0],
+      mgrAmount:c&&!c.ineligible?c.mgr:0,
+      supAmount:c&&c.sup?c.sup:0,
+      monthlyPerf:mPerf,
+      note:'批次月結'
+    });
+  });
+  saveDB(); renderSettlement();
+  alert(`✅ 已結算 ${qualList.length} 筆`);
 }
 function saveDB(){ localStorage.setItem('vms-db',JSON.stringify(db)); }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -564,10 +987,14 @@ function getTier(hrs){
 }
 
 function getPeriodRatio(weeks, caseType){
+  if(caseType==='long'){
+    if(weeks<4) return 0;   // 長期案需滿4週
+    return 1.0;
+  }
+  // 短期案
   if(weeks<2) return 0;
-  if(caseType==='long') return 1.0;
-  if(weeks>=5) return 1.0;   // short converted
-  return 0.3;                // short 2-4 weeks
+  if(weeks>=5) return 1.0;  // 短期轉長期
+  return 0.3;
 }
 
 function calcBonuses(match){
@@ -629,7 +1056,7 @@ function showPage(p){
     t.classList.toggle('active', PAGE_ORDER[i]===p);
   });
   document.getElementById('page-'+p).classList.add('active');
-  const renders={dashboard:renderDash,vacant:renderVacant,matches:renderMatches,performance:()=>renderPerf(),team:renderTeam,settings:renderSettings};
+  const renders={dashboard:renderDash,vacant:renderVacant,matches:renderMatches,settlement:()=>{initSettleMonthSel();renderSettlement();},performance:()=>renderPerf(),team:renderTeam,settings:renderSettings};
   renders[p]?.();
 }
 
@@ -813,6 +1240,9 @@ function initMatchModal(preSlotId){
   document.querySelector('input[name="mt-type"][value="long"]').checked=true;
   document.querySelector('input[name="mt-suprole"][value="shift"]').checked=true;
   document.getElementById('mt-sup-role-grp').style.display='none';
+  document.getElementById('mt-estimated-weeks-grp').style.display='none';
+  document.getElementById('mt-estimated-weeks').value='';
+  document.getElementById('mt-service-items-wrap').innerHTML='';
   document.getElementById('mt-preview').innerHTML='';
   initActualDays();
 }
@@ -829,10 +1259,12 @@ function initActualDays(){
   container.innerHTML=slot.daysOfWeek.slice().sort().map(d=>
     `<div class="day-chip on" data-day="${d}" onclick="toggleActualDay(this)">${dayNames[d]}</div>`
   ).join('');
+  renderServiceItemsUI();
   matchPreview();
 }
 function toggleActualDay(el){
   el.classList.toggle('on');
+  renderServiceItemsUI();
   matchPreview();
 }
 function onSlotChange(){
@@ -909,6 +1341,19 @@ function matchPreview(){
     const suppAmt=Math.round(tier.base*mult*bonusMult*0.7);
     html+=`<div class="calc-row" style="color:var(--yellow);font-size:11px;margin-top:6px"><span>⚡ 超5週補發差額（個管）</span><span>+$ ${suppAmt.toLocaleString()}</span></div>`;
   }
+  // 服務項目每週收入預估
+  const siItems=getServiceItemsFromForm();
+  const wIncome=calcWeeklyIncome(siItems);
+  const estWeeks=parseInt(document.getElementById('mt-estimated-weeks')?.value)||0;
+  const mPerf=caseType==='long'?wIncome*4:(estWeeks>=2?wIncome*estWeeks:0);
+  if(wIncome>0){
+    html+=`<div class="calc-box green-box" style="margin-top:10px">
+      <div class="calc-box-title">📊 月達成績效估算</div>
+      <div class="calc-row"><span>每週服務收入</span><span class="text-green"><strong>$ ${wIncome.toLocaleString()}</strong></span></div>
+      <div class="calc-row"><span>計算基礎</span><span>${caseType==='long'?'× 4週（長期）':(estWeeks>=2?`× ${estWeeks}週（短期預估）`:'請填寫預估週數')}</span></div>
+      <div class="calc-row calc-total green-total"><span>月績效估算</span><span>$ ${mPerf.toLocaleString()}</span></div>
+    </div>`;
+  }
   html+=`</div>`;
   document.getElementById('mt-preview').innerHTML=html;
 }
@@ -925,12 +1370,14 @@ function addMatch(){
   const actualDays=[...document.querySelectorAll('#mt-actual-days .day-chip.on')].map(c=>+c.dataset.day);
   const actualStartTime=document.getElementById('mt-actual-start').value||'';
   const actualEndTime=document.getElementById('mt-actual-end').value||'';
+  const serviceItems=getServiceItemsFromForm();
+  const estimatedWeeks=parseInt(document.getElementById('mt-estimated-weeks').value)||0;
   if(!slotId){ alert('請選擇空班時段'); return; }
   if(!mgrId){ alert('請選擇個管員'); return; }
   if(!caseName){ alert('請填寫個案姓名'); return; }
   if(!actualDays.length){ alert('請選擇實際媒合星期'); return; }
   if(!startDate){ alert('請填寫開始日期'); return; }
-  db.matches.push({id:uid(),vacantSlotId:slotId,managerId:mgrId,supervisorId:supId||null,supervisorRole:supId?supRole:null,aa05,aa06,caseType,startDate,caseName,actualDays,actualStartTime,actualEndTime,executionWeeks:0,supplementPaid:false,createdAt:new Date().toISOString()});
+  db.matches.push({id:uid(),vacantSlotId:slotId,managerId:mgrId,supervisorId:supId||null,supervisorRole:supId?supRole:null,aa05,aa06,caseType,startDate,caseName,actualDays,actualStartTime,actualEndTime,executionWeeks:0,supplementPaid:false,serviceItems,estimatedWeeks,createdAt:new Date().toISOString()});
   const slot=db.vacantSlots.find(s=>s.id===slotId);
   if(slot) slot.status='matched';
   saveDB(); closeModal('m-match'); renderMatches();
@@ -954,10 +1401,14 @@ function weeksPreview(){
   const calc=calcBonuses(m);
   if(!calc||calc.ineligible){ document.getElementById('wk-preview').innerHTML=''; return; }
   let msg='', cls='alert-info';
-  if(weeks<2){ msg='⏳ 執行未滿 2 週，尚未達發放條件（獎金 $0）'; cls='alert-warn'; }
-  else if(m.caseType==='short'&&weeks<5){ msg=`✅ 短期案 ${weeks} 週，發放30%（第2週後）個管獎金：<strong>$ ${calc.mgr.toLocaleString()}</strong>`; }
-  else if(m.caseType==='long'){ msg=`✅ 長期案，發放100%　個管獎金：<strong>$ ${calc.mgr.toLocaleString()}</strong>`; }
-  else { msg=`✅ 短期轉長期（≥5週），發放100%　個管獎金：<strong>$ ${calc.mgr.toLocaleString()}</strong>`; cls='alert-success'; }
+  if(m.caseType==='long'){
+    if(weeks<4){ msg=`⏳ 長期案執行 ${weeks} 週，需滿 4 週才發放，還差 ${4-weeks} 週（獎金 $0）`; cls='alert-warn'; }
+    else { msg=`✅ 長期案滿 ${weeks} 週，發放100%　個管獎金：<strong>$ ${calc.mgr.toLocaleString()}</strong>`; cls='alert-success'; }
+  } else {
+    if(weeks<2){ msg=`⏳ 短期案執行 ${weeks} 週，需滿 2 週才發放，還差 ${2-weeks} 週（獎金 $0）`; cls='alert-warn'; }
+    else if(weeks<5){ msg=`✅ 短期案 ${weeks} 週，發放30%　個管獎金：<strong>$ ${calc.mgr.toLocaleString()}</strong>`; }
+    else { msg=`✅ 短期轉長期（${weeks}週），發放100%　個管獎金：<strong>$ ${calc.mgr.toLocaleString()}</strong>`; cls='alert-success'; }
+  }
   let html=`<div class="alert ${cls}" style="margin-top:10px">${msg}</div>`;
   if(calc.needsSupp) html+=`<div class="alert alert-warn">⚡ 補發差額（個管）：<strong>+$ ${calc.suppAmt.toLocaleString()}</strong>　請勾選「已發放」後儲存</div>`;
   document.getElementById('wk-preview').innerHTML=html;
@@ -1045,7 +1496,7 @@ function renderDash(){
 
   // ── KPI 計算 ──
   const total=db.matches.length;
-  const active=db.matches.filter(m=>(m.executionWeeks||0)>=2).length;
+  const active=db.matches.filter(m=>(m.executionWeeks||0)>=(m.caseType==='long'?4:2)).length;
   const vacantCount=db.vacantSlots.filter(s=>s.status!=='matched').length;
   const suppCount=db.matches.filter(m=>{ const c=calcBonuses(m); return c&&c.needsSupp; }).length;
   let totMgr=0,totSup=0;
@@ -1153,7 +1604,7 @@ function renderDash(){
     }).join('');
 
   // ── 執行中（未達標）──
-  const pending=db.matches.filter(m=>(m.executionWeeks||0)<2);
+  const pending=db.matches.filter(m=>{const w=m.executionWeeks||0;return m.caseType==='long'?w<4:w<2;});
   document.getElementById('pending-count').textContent=pending.length;
   document.getElementById('dash-pending').innerHTML=pending.length===0
     ?'<div class="empty-state" style="padding:20px"><div class="empty-text" style="font-size:13px">✅ 無等待中的記錄</div></div>'
@@ -1162,11 +1613,14 @@ function renderDash(){
       const w=sl?db.careWorkers.find(x=>x.id===sl.careWorkerId):null;
       const mg=db.staff.find(s=>s.id===m.managerId);
       const weeks=m.executionWeeks||0;
-      const remain=2-weeks;
+      const threshold=m.caseType==='long'?4:2;
+      const remain=threshold-weeks;
+      const typeTag=m.caseType==='long'?'長期':'短期';
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--g100)">
         <div>
           <strong style="font-size:13px">${w?.name||'?'}</strong>
           <span style="color:var(--g500);font-size:12px"> ／ ${mg?.name||'?'}</span>
+          <span style="font-size:10px;color:var(--g400);margin-left:4px">（${typeTag}案）</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--g400)">再${remain}週達標</span>
@@ -1188,7 +1642,8 @@ function renderDash(){
         const c=calcBonuses(m);
         const bonus=c&&!c.ineligible?`$${c.mgr.toLocaleString()}`:'—';
         const weeks=m.executionWeeks||0;
-        const st=weeks<2
+        const qualThreshold=m.caseType==='long'?4:2;
+        const st=weeks<qualThreshold
           ?`<span class="badge b-yellow">第${weeks}週</span>`
           :c?.needsSupp
             ?'<span class="badge b-purple">需補發</span>'
@@ -1250,7 +1705,8 @@ function renderMatches(){
     const supBonus=c&&c.sup>0?`$ ${c.sup.toLocaleString()}`:'—';
     const suLabel=su?`${su.name}<br><small style="color:var(--g400)">${m.supervisorRole==='shift'?'挪移':'確認'}</small>`:'—';
     let st='';
-    if(weeks<2) st='<span class="badge b-yellow">執行中</span>';
+    const qThreshold=m.caseType==='long'?4:2;
+    if(weeks<qThreshold) st='<span class="badge b-yellow">執行中</span>';
     else if(c?.needsSupp) st='<span class="badge b-purple">需補發</span>';
     else st='<span class="badge b-green">發放中</span>';
     const actualDays=(m.actualDays&&m.actualDays.length)?m.actualDays.slice().sort().map(d=>'週'+DAYS[d]).join('、'):(sl?sl.daysOfWeek.slice().sort().map(d=>'週'+DAYS[d]).join('、'):'?');
@@ -1300,7 +1756,7 @@ function renderPerf(){
     const c=calcBonuses(m);
     const bonus=isMgr?(c?.mgr||0):(c?.sup||0);
     const weeks=m.executionWeeks||0;
-    const isActive=weeks>=2;
+    const isActive=weeks>=(m.caseType==='long'?4:2);
     if(isActive) paid+=bonus; else pending+=bonus;
     if(c?.needsSupp) suppPend+=(isMgr?c.suppAmt:c.supSupp);
     const st=isActive?c?.needsSupp?'<span class="badge b-purple">需補發</span>':'<span class="badge b-green">發放中</span>':'<span class="badge b-yellow">待達標</span>';
@@ -1413,6 +1869,7 @@ function renderSettings(){
       <td><button class="btn btn-danger btn-sm" onclick="delStaff('${s.id}')">刪除</button></td>
     </tr>`).join('')}</tbody></table>`;
 
+  renderServiceCodeList();
   document.getElementById('worker-list').innerHTML=db.careWorkers.length===0
     ?'<div class="empty-state" style="padding:20px"><div class="empty-text">尚無居服員</div></div>'
     :`<table><thead><tr><th>姓名</th><th></th></tr></thead><tbody>
