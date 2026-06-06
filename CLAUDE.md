@@ -10,7 +10,7 @@ Obsidian vault 路徑：`C:\Users\USER\iCloudDrive\iCloud~md~obsidian\swparty120
 - **接續工作**：對 Claude 說「**開工**」→ 讀工作筆記、報告 git 狀態、建議下一步
 
 ## 工作桌 + 三個家
-- ☁️ iCloud 工作桌：`C:\Users\USER\iCloudDrive\Claude Code\swparty120-tools\`（自動跨電腦同步）
+- ☁️ Google Drive 工作桌：`G:\我的雲端硬碟\swparty120-tools\`（自動跨電腦同步）
 - 🐙 GitHub repo：`warmlove-admin/swparty120-tools`（公開，網頁的家）
 - 📘 Obsidian 駕駛艙：`swparty120-tools/工作筆記.md`（想法的家）
 
