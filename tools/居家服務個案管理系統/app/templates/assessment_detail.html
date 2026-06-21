@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ assessment.assessment_type.value }} - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>{{ case.name }} - {{ assessment.assessment_type.value }}（{{ assessment.assessment_date }}）</h2>
+  <p>狀態：<strong>{{ assessment.status.value }}</strong></p>
+
+  <div class="card">
+    <div class="section-title">總分</div>
+    <div class="form-grid">
+      <div><label>ADL總分</label>{{ assessment.adl_total_score }} / 100</div>
+      <div><label>IADL總分（已換算百分制）</label>{{ assessment.iadl_total_score }} / 100</div>
+      <div><label>本季平均每週外出次數</label>{{ assessment.outing_frequency if assessment.outing_frequency is not none else "-" }}</div>
+    </div>
+    <div style="margin-top:1rem;">
+      <span class="status-badge status-paused">
+        依賴等級：{{ assessment.items|selectattr("item_code", "equalto", "dependency_level")|map(attribute="text_value")|first }}
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">各面向細項</div>
+    <table>
+      <thead><tr><th>面向</th><th>項目</th><th>結果</th><th>備註</th></tr></thead>
+      <tbody>
+        {% for item in assessment.items %}
+        <tr>
+          <td>{{ item.domain }}</td>
+          <td>{{ item.item_code }}</td>
+          <td>{{ item.score_value if item.score_value is not none else item.text_value }}</td>
+          <td>{{ item.note or "-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a href="/cases/{{ case.id }}" class="btn btn-secondary">返回個案</a>
+{% endblock %}

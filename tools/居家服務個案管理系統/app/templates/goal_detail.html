@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ goal.domain }} - {{ case.name }}{% endblock %}
+{% block content %}
+  <div style="display:flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin:0;">{{ case.name }} - 照顧目標</h2>
+    {% if user.role.value in ["居督", "主管"] %}
+    <a href="/cases/{{ case.id }}/goals/{{ goal.id }}/edit" class="btn btn-secondary">編輯</a>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="form-grid">
+      <div><label>所屬面向</label>{{ goal.domain }}</div>
+      <div><label>狀態</label>{{ goal.status.value }}</div>
+      <div><label>設定日期</label>{{ goal.set_date }}</div>
+    </div>
+    <div style="margin-top:0.8rem;"><label>目標描述</label>{{ goal.description }}</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div class="section-title" style="margin:0;">照顧計畫（具體服務安排）</div>
+      {% if user.role.value in ["居督", "主管"] %}
+      <a href="/cases/{{ case.id }}/care_plans/new?goal_id={{ goal.id }}" class="btn">+ 新增照顧計畫</a>
+      {% endif %}
+    </div>
+    {% if goal.care_plans %}
+    <table>
+      <thead><tr><th>服務代碼項目</th><th>總分鐘數</th><th>指派居服員</th><th>同時關聯其他目標</th><th></th></tr></thead>
+      <tbody>
+        {% for cp in goal.care_plans %}
+        <tr>
+          <td>{% for item in cp.coded_services %}{{ item.code }} {{ item.name }} x{{ item.quantity }}<br>{% endfor %}</td>
+          <td>{{ cp.coded_services|sum(attribute="total_minutes") }} 分</td>
+          <td>{{ cp.assigned_caregiver.display_name if cp.assigned_caregiver else "-" }}</td>
+          <td>
+            {% set others = cp.goals|rejectattr("id", "equalto", goal.id)|list %}
+            {% if others %}{{ others|map(attribute="domain")|join("、") }}{% else %}-{% endif %}
+          </td>
+          <td>
+            {% if user.role.value in ["居督", "主管"] %}
+            <a href="/cases/{{ case.id }}/care_plans/{{ cp.id }}/edit" class="btn btn-secondary">編輯</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">尚未建立照顧計畫</p>
+    {% endif %}
+
+    {% if user.role.value in ["居督", "主管"] and linkable_plans %}
+    <form method="post" action="/cases/{{ case.id }}/goals/{{ goal.id }}/link_care_plan" style="margin-top:1rem; border-top:1px solid #eee; padding-top:1rem;">
+      <label>連結個案既有的照顧計畫到此目標（避免重複新增同一服務）</label>
+      <select name="care_plan_id" required>
+        <option value="">請選擇既有照顧計畫</option>
+        {% for cp in linkable_plans %}
+        <option value="{{ cp.id }}">{{ cp.service_item }}（{{ cp.quantity_frequency or "-" }}）</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn" style="margin-top:0.5rem;">連結</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <a href="/cases/{{ case.id }}" class="btn btn-secondary">返回個案</a>
+{% endblock %}

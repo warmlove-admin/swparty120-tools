@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ case.name }} - 個案詳細{% endblock %}
+{% block content %}
+  <div style="display:flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin:0;">{{ case.name }}（{{ case.org_case_no }}）</h2>
+    <div>
+      {% if case.status.value == "服務中" %}<span class="status-badge status-active">服務中</span>
+      {% elif case.status.value == "暫停中" %}<span class="status-badge status-paused">暫停中</span>
+      {% else %}<span class="status-badge status-closed">已結案</span>{% endif %}
+
+      {% if user.role.value in ["居督", "主管"] %}
+        {% if case.status.value == "服務中" %}
+          <a href="/cases/{{ case.id }}/pause" class="btn btn-secondary" style="margin-left:0.5rem;">暫停服務</a>
+          <a href="/cases/{{ case.id }}/close" class="btn btn-secondary" style="margin-left:0.5rem;">結案</a>
+        {% elif case.status.value == "暫停中" %}
+          <form method="post" action="/cases/{{ case.id }}/resume" style="display:inline;">
+            <button type="submit" class="btn" style="margin-left:0.5rem;">恢復服務</button>
+          </form>
+          <a href="/cases/{{ case.id }}/close" class="btn btn-secondary" style="margin-left:0.5rem;">結案</a>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% if case.status.value == "暫停中" %}
+  <div class="card" style="background:#fdebd0;">
+    <strong>暫停中</strong>　暫停日期：{{ case.pause_date }}　原因：{{ case.pause_reason_type.value if case.pause_reason_type else "-" }}
+    {% if case.pause_reason_note %}<br>補充說明：{{ case.pause_reason_note }}{% endif %}
+  </div>
+  {% elif case.status.value == "已結案" %}
+  <div class="card" style="background:#ecf0f1;">
+    <strong>已結案</strong>　結案日期：{{ case.close_date }}　原因：{{ case.close_reason_type.value if case.close_reason_type else "-" }}
+    {% if case.close_reason_note %}<br>補充說明：{{ case.close_reason_note }}{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div class="section-title" style="margin:0;">基本資料</div>
+      {% if user.role.value in ["居督", "主管"] %}
+      <a href="/cases/{{ case.id }}/edit" class="btn btn-secondary">編輯</a>
+      {% endif %}
+    </div>
+    <div class="form-grid">
+      <div><label>身分證字號</label>{{ case.id_number }}</div>
+      <div><label>生日</label>{{ case.birth_date or "-" }}</div>
+      <div><label>性別</label>{{ case.gender or "-" }}</div>
+      <div><label>電話</label>{{ case.phone or "-" }}</div>
+      <div><label>CMS等級</label>{{ case.cms_level or "-" }}</div>
+      <div><label>居住狀況</label>{{ case.living_status or "-" }}</div>
+      <div><label>主責居督</label>{{ case.primary_supervisor.display_name if case.primary_supervisor else "-" }}</div>
+      <div><label>機構開案日期</label>{{ case.open_date or "-" }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div class="section-title" style="margin:0;">評估紀錄</div>
+      {% if user.role.value in ["居督", "主管"] and case.status.value != "已結案" and not case.assessments %}
+      <a href="/cases/{{ case.id }}/assessments/new" class="btn">+ 新增開案評估</a>
+      {% endif %}
+    </div>
+    {% if case.assessments %}
+    <table>
+      <thead><tr><th>類型</th><th>評估日期</th><th>ADL</th><th>IADL</th><th>狀態</th></tr></thead>
+      <tbody>
+        {% for a in case.assessments|sort(attribute="assessment_date", reverse=True) %}
+        <tr onclick="location.href='/cases/{{ case.id }}/assessments/{{ a.id }}'" style="cursor:pointer;">
+          <td>{{ a.assessment_type.value }}</td>
+          <td>{{ a.assessment_date }}</td>
+          <td>{{ a.adl_total_score }}</td>
+          <td>{{ a.iadl_total_score }}</td>
+          <td>{{ a.status.value }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">尚未建立評估紀錄</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div class="section-title" style="margin:0;">照顧目標</div>
+      {% if user.role.value in ["居督", "主管"] and case.status.value != "已結案" %}
+      <a href="/cases/{{ case.id }}/goals/new" class="btn">+ 新增照顧目標</a>
+      {% endif %}
+    </div>
+    {% if case.goals %}
+    <table>
+      <thead><tr><th>面向</th><th>目標描述</th><th>狀態</th><th>設定日期</th></tr></thead>
+      <tbody>
+        {% for g in case.goals|sort(attribute="set_date", reverse=True) %}
+        <tr onclick="location.href='/cases/{{ case.id }}/goals/{{ g.id }}'" style="cursor:pointer;">
+          <td>{{ g.domain }}</td>
+          <td>{{ g.description }}</td>
+          <td>{{ g.status.value }}</td>
+          <td>{{ g.set_date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">尚未建立照顧目標</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div class="section-title" style="margin:0;">照顧計畫（全部服務安排總覽）</div>
+      {% if user.role.value in ["居督", "主管"] and case.goals %}
+      <a href="/cases/{{ case.id }}/care_plans/new" class="btn">+ 新增照顧計畫</a>
+      {% endif %}
+    </div>
+    {% if case.care_plans %}
+    <table>
+      <thead><tr><th>服務代碼項目</th><th>總分鐘數</th><th>指派居服員</th><th>關聯目標</th><th>補充說明</th><th></th></tr></thead>
+      <tbody>
+        {% for cp in case.care_plans %}
+        <tr>
+          <td>{% for item in cp.coded_services %}{{ item.code }} {{ item.name }} x{{ item.quantity }}<br>{% endfor %}</td>
+          <td>{{ cp.coded_services|sum(attribute="total_minutes") }} 分</td>
+          <td>{{ cp.assigned_caregiver.display_name if cp.assigned_caregiver else "-" }}</td>
+          <td>{{ cp.goals|map(attribute="domain")|join("、") or "-" }}</td>
+          <td>{{ cp.note or "-" }}</td>
+          <td>
+            {% if user.role.value in ["居督", "主管"] %}
+            <a href="/cases/{{ case.id }}/care_plans/{{ cp.id }}/edit" class="btn btn-secondary">編輯</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">尚未建立照顧計畫</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="section-title">聯絡人／照顧者</div>
+    {% if case.contacts %}
+    <table>
+      <thead><tr><th>角色</th><th>姓名</th><th>關係</th><th>電話</th></tr></thead>
+      <tbody>
+        {% for c in case.contacts %}
+        <tr><td>{{ c.contact_role.value }}</td><td>{{ c.name }}</td><td>{{ c.relation or "-" }}</td><td>{{ c.phone or "-" }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">尚未建立聯絡人</p>
+    {% endif %}
+  </div>
+
+  {% if case.status.value != "已結案" %}
+  <div class="card">
+    <div class="section-title">緊急聯絡人</div>
+    {% if case.emergency_contacts %}
+    <table>
+      <thead><tr><th>姓名</th><th>關係</th><th>電話</th></tr></thead>
+      <tbody>
+        {% for ec in case.emergency_contacts %}
+        <tr><td>{{ ec.name }}</td><td>{{ ec.relation or "-" }}</td><td>{{ ec.phone or "-" }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;">尚未建立緊急聯絡人</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <a href="/cases" class="btn btn-secondary">返回列表</a>
+{% endblock %}

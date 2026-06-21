@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}暫停服務 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>暫停服務：{{ case.name }}</h2>
+  <form method="post" action="/cases/{{ case.id }}/pause">
+    <div class="card">
+      <div class="form-grid">
+        <div><label>暫停日期 *</label><input type="date" name="pause_date" required></div>
+        <div><label>暫停原因 *</label>
+          <select name="pause_reason_type" required>
+            <option value="">請選擇</option>
+            {% for r in pause_reasons %}
+            <option value="{{ r.name }}">{{ r.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="full"><label>補充說明</label><textarea name="pause_reason_note" rows="3"></textarea></div>
+      </div>
+    </div>
+    <button type="submit" class="btn">確認暫停</button>
+    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>
+{% endblock %}

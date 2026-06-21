@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}新增照顧目標 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>新增照顧目標：{{ case.name }}</h2>
+  <form method="post" action="/cases/{{ case.id }}/goals">
+    <div class="card">
+      <div class="form-grid">
+        <div>
+          <label>所屬面向 *</label>
+          <select name="domain" id="domain-select" required onchange="filterTemplates()">
+            <option value="">請選擇</option>
+            {% for d in domains %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label>設定日期 *</label><input type="date" name="set_date" required></div>
+      </div>
+
+      <div style="margin-top:1rem;">
+        <label>從目標庫帶入模板（選用）</label>
+        <select id="template-select" onchange="applyTemplate()">
+          <option value="">不使用模板，直接手動輸入</option>
+          {% for t in goal_templates %}
+          <option value="{{ t.id }}" data-domain="{{ t.domain }}" data-desc="{{ t.goal_description }}" style="display:none;">
+            {{ t.template_name }}
+          </option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="template_id" id="template_id">
+      </div>
+
+      <div class="full" style="margin-top:1rem;">
+        <label>目標描述 *</label>
+        <textarea name="description" id="description" rows="3" required></textarea>
+      </div>
+    </div>
+    <button type="submit" class="btn">建立目標</button>
+    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>
+
+  <script>
+    function filterTemplates() {
+      const domain = document.getElementById('domain-select').value;
+      const options = document.getElementById('template-select').options;
+      for (const opt of options) {
+        if (!opt.dataset.domain) continue;
+        opt.style.display = (opt.dataset.domain === domain) ? '' : 'none';
+      }
+      document.getElementById('template-select').value = '';
+      document.getElementById('template_id').value = '';
+    }
+    function applyTemplate() {
+      const select = document.getElementById('template-select');
+      const opt = select.options[select.selectedIndex];
+      document.getElementById('template_id').value = select.value;
+      if (opt.dataset.desc) {
+        document.getElementById('description').value = opt.dataset.desc;
+      }
+    }
+  </script>
+{% endblock %}

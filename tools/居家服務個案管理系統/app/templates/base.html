@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}居家服務個案管理系統{% endblock %}</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f6f8; margin: 0; color: #2d3436; }
+    header { background: #2c7a7b; color: white; padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    header a { color: white; text-decoration: none; }
+    header nav a { margin-right: 1rem; }
+    main { padding: 1.5rem; max-width: 1000px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    th, td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eee; text-align: left; font-size: 0.9rem; }
+    th { background: #edf2f2; }
+    tr:hover { background: #f9fafa; }
+    .btn { display: inline-block; padding: 0.5rem 1rem; background: #2c7a7b; color: white; border-radius: 4px; text-decoration: none; font-size: 0.9rem; border: none; cursor: pointer; }
+    .btn-secondary { background: #95a5a6; }
+    .card { background: white; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 1rem; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .form-grid .full { grid-column: span 2; }
+    label { display: block; margin-bottom: 0.3rem; font-size: 0.85rem; color: #555; }
+    input, select, textarea { width: 100%; padding: 0.45rem; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+    .status-badge { padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; }
+    .status-active { background: #d4efdf; color: #1e8449; }
+    .status-paused { background: #fdebd0; color: #b9770e; }
+    .status-closed { background: #ecf0f1; color: #7f8c8d; }
+    .section-title { font-weight: bold; margin: 1.2rem 0 0.5rem; color: #2c7a7b; }
+    .error { color: #c0392b; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><a href="/"><strong>居家服務個案管理系統</strong></a></div>
+    <nav>
+      <a href="/cases">個案列表</a>
+      {% if user %}
+        <span style="margin-right:1rem;">{{ user.display_name }}（{{ user.role.value }}）</span>
+        <a href="/logout">登出</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

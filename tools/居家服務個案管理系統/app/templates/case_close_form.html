@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}結案 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>結案：{{ case.name }}</h2>
+  <form method="post" action="/cases/{{ case.id }}/close">
+    <div class="card">
+      <div class="form-grid">
+        <div><label>結案日期 *</label><input type="date" name="close_date" required></div>
+        <div><label>結案原因 *</label>
+          <select name="close_reason_type" required>
+            <option value="">請選擇</option>
+            {% for r in close_reasons %}
+            <option value="{{ r.name }}">{{ r.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="full"><label>補充說明</label><textarea name="close_reason_note" rows="3"></textarea></div>
+      </div>
+    </div>
+    <p style="color:#c0392b; font-size:0.9rem;">結案後個案狀態無法復原，若要重新提供服務須建立新個案。</p>
+    <button type="submit" class="btn">確認結案</button>
+    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>
+{% endblock %}

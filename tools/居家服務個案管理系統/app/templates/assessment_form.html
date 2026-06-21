@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}開案評估 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>開案評估：{{ case.name }}</h2>
+  <form method="post" action="/cases/{{ case.id }}/assessments">
+    <div class="card">
+      <div class="section-title">基本資訊</div>
+      <div class="form-grid">
+        <div><label>評估日期 *</label><input type="date" name="assessment_date" required></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.1 身體功能面 - ADL（巴氏量表 Barthel Index）</div>
+      {% for code, label, options in adl_items %}
+      <div style="margin-bottom:1rem;">
+        <label><strong>{{ label }}</strong></label>
+        <select name="score_{{ code }}" required>
+          <option value="">請選擇</option>
+          {% for score, desc in options %}
+          <option value="{{ score }}">{{ score }}分：{{ desc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.1 身體功能面 - IADL（Lawton IADL量表）</div>
+      {% for code, label, options in iadl_items %}
+      <div style="margin-bottom:1rem;">
+        <label><strong>{{ label }}</strong></label>
+        <select name="score_{{ code }}" required>
+          <option value="">請選擇</option>
+          {% for score, desc in options %}
+          <option value="{{ score }}">{{ score }}分：{{ desc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+      <div class="form-grid" style="margin-top:1rem;">
+        <div><label>本季平均每週外出次數（開案時為基準次數）</label><input type="number" step="0.1" min="0" name="outing_frequency"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.2 認知與心理面</div>
+      <div class="form-grid">
+        {% for code, label, options in cognitive_items %}
+        <div>
+          <label>{{ label }}</label>
+          <select name="select_{{ code }}">
+            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.3 家庭與照顧者面</div>
+      <p style="font-size:0.85rem; color:#555;">照顧負荷感受依下列客觀項目勾選結果自動換算等級，不直接由居督主觀判斷。</p>
+      <div class="form-grid">
+        {% for code, label in family_burden_checklist %}
+        <div>
+          <label>{{ label }}</label>
+          <select name="burden_{{ code }}">
+            <option value="0">否</option>
+            <option value="1">是</option>
+          </select>
+        </div>
+        {% endfor %}
+        <div>
+          <label>主要照顧者主觀感受照顧壓力分數（0最輕～5最重）</label>
+          <select name="burden_subjective_score">
+            {% for i in range(6) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:1rem;">
+        {% for code, label, options in family_other_items %}
+        <div>
+          <label>{{ label }}</label>
+          <select name="select_{{ code }}">
+            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.4 居家環境面</div>
+      <p style="font-size:0.85rem; color:#555;">風險等級依下列檢核項目勾選結果自動換算，個案不需要的項目請選「不適用」，不會列入風險計算。</p>
+      {% for code, label in env_risk_checklist %}
+      <div style="margin-bottom:0.8rem;">
+        <label>{{ label }}</label>
+        <select name="envrisk_{{ code }}">
+          {% for o in env_risk_options %}<option>{{ o }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+      <div class="form-grid">
+        {% for code, label, options in env_other_items %}
+        <div>
+          <label>{{ label }}</label>
+          <select name="select_{{ code }}">
+            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.5 福利資源與服務滿意度</div>
+      <div class="form-grid">
+        {% for code, label, options in econ_items %}
+        <div>
+          <label>{{ label }}{% if code == "ECON_satisfaction" %}（選填，開案時尚無服務經驗可留空）{% endif %}</label>
+          <select name="select_{{ code }}">
+            <option value="">請選擇{% if code == "ECON_satisfaction" %}（可留空）{% endif %}</option>
+            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3.6 文化與語言面</div>
+      <div class="form-grid">
+        {% for code, label, options in culture_items %}
+        <div>
+          <label>{{ label }}</label>
+          <select name="select_{{ code }}">
+            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        {% endfor %}
+        <div class="full"><label>文化或飲食習俗注意事項</label><textarea name="note_CUL_note" rows="2"></textarea></div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn">送出評估（草稿）</button>
+    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>
+{% endblock %}

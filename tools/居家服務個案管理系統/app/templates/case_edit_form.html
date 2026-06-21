@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}編輯個案 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>編輯個案：{{ case.name }}</h2>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <form method="post" action="/cases/{{ case.id }}/edit">
+    <div class="card">
+      <div class="section-title">機構自訂欄位</div>
+      <div class="form-grid">
+        <div><label>機構自訂案號 *</label><input name="org_case_no" value="{{ case.org_case_no }}" required></div>
+        <div><label>主責居督</label>
+          <select name="primary_supervisor_id">
+            <option value="">請選擇</option>
+            {% for u in supervisors %}
+            <option value="{{ u.id }}" {% if case.primary_supervisor_id == u.id %}selected{% endif %}>{{ u.display_name }}（{{ u.role.value }}）</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label>機構開案日期</label><input type="date" name="open_date" value="{{ case.open_date or '' }}"></div>
+        <div><label>LINE群組ID</label><input name="line_group_id" value="{{ case.line_group_id or '' }}"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">個案基本資料</div>
+      <div class="form-grid">
+        <div><label>個案姓名 *</label><input name="name" value="{{ case.name }}" required></div>
+        <div><label>身分證字號 *</label><input name="id_number" value="{{ case.id_number }}" required></div>
+        <div><label>生日</label><input type="date" name="birth_date" value="{{ case.birth_date or '' }}"></div>
+        <div><label>性別</label>
+          <select name="gender">
+            <option value="">請選擇</option>
+            <option {% if case.gender == '男' %}selected{% endif %}>男</option>
+            <option {% if case.gender == '女' %}selected{% endif %}>女</option>
+          </select>
+        </div>
+        <div><label>電話</label><input name="phone" value="{{ case.phone or '' }}"></div>
+        <div><label>長照福利身份</label><input name="ltc_welfare_status" value="{{ case.ltc_welfare_status or '' }}"></div>
+        <div><label>身障類別／等級</label><input name="disability_category" value="{{ case.disability_category or '' }}"></div>
+        <div><label>CMS等級</label><input name="cms_level" value="{{ case.cms_level or '' }}"></div>
+        <div><label>居住狀況</label><input name="living_status" value="{{ case.living_status or '' }}"></div>
+        <div><label>A5居住地（行政區）</label><input name="residence_district" value="{{ case.residence_district or '' }}"></div>
+        <div class="full"><label>戶籍地址</label><input name="household_address" value="{{ case.household_address or '' }}"></div>
+        <div class="full"><label>居住（通訊）地址</label><input name="residence_address" value="{{ case.residence_address or '' }}"></div>
+        <div><label>A單位名稱</label><input name="a_unit_name" value="{{ case.a_unit_name or '' }}"></div>
+        <div><label>個管員姓名</label><input name="case_manager_name" value="{{ case.case_manager_name or '' }}"></div>
+        <div><label>個管員聯絡方式</label><input name="case_manager_contact" value="{{ case.case_manager_contact or '' }}"></div>
+        <div><label>上次CMS評估日期</label><input type="date" name="last_cms_assessment_date" value="{{ case.last_cms_assessment_date or '' }}"></div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn">儲存變更</button>
+    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}編輯照顧目標 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>編輯照顧目標：{{ case.name }}</h2>
+  <form method="post" action="/cases/{{ case.id }}/goals/{{ goal.id }}/edit">
+    <div class="card">
+      <div class="form-grid">
+        <div>
+          <label>所屬面向 *</label>
+          <select name="domain" required>
+            {% for d in domains %}
+            <option value="{{ d }}" {% if d == goal.domain %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label>設定日期 *</label><input type="date" name="set_date" value="{{ goal.set_date }}" required></div>
+        <div>
+          <label>目標狀態 *</label>
+          <select name="status" required>
+            {% for s in statuses %}
+            <option value="{{ s.name }}" {% if s == goal.status %}selected{% endif %}>{{ s.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="full" style="margin-top:1rem;">
+        <label>目標描述 *</label>
+        <textarea name="description" rows="3" required>{{ goal.description }}</textarea>
+      </div>
+    </div>
+    <button type="submit" class="btn">儲存變更</button>
+    <a href="/cases/{{ case.id }}/goals/{{ goal.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>
+{% endblock %}
