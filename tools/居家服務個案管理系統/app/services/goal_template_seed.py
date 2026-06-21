@@ -10,6 +10,7 @@ GOAL_TEMPLATE_SEED = [
     ("身體功能面", "改善如廁／排泄控制", "改善如廁能力或大小便控制狀況"),
     ("身體功能面", "維持IADL自理能力", "維持購物／備餐／家務等工具性日常活動參與度"),
     ("身體功能面", "提升服藥遵從度", "提升個案自行或在協助下正確服藥之遵從度"),
+    ("身體功能面", "協助基本清潔", "協助基本清潔，提升身體舒適度"),
     ("認知與心理面", "穩定情緒狀態", "穩定情緒狀態，減少焦慮／憂鬱徵兆出現頻率"),
     ("認知與心理面", "降低異常行為發生", "降低遊走／抗拒照護等異常行為發生頻率"),
     ("認知與心理面", "維持認知功能", "透過日常互動維持認知功能、延緩退化"),
@@ -33,14 +34,21 @@ GOAL_TEMPLATE_SEED = [
     ("社交、外出與人際面", "改善社交孤立", "增加社交互動機會，降低孤立感"),
     ("社交、外出與人際面", "維持人際聯繫", "協助維持與親友之聯繫互動"),
     ("社交、外出與人際面", "提升參與意願", "提升個案參與日常活動／居服互動之意願"),
+    ("社交、外出與人際面", "陪同外出就醫", "陪同外出就醫，使疾病獲得治療與改善"),
 ]
 
 
 def seed_goal_templates_if_empty(db):
+    """補齊缺少的模板（依domain+template_name判斷是否已存在），
+    而非只在表格全空時才執行，這樣未來在程式碼裡新增模板會自動生效。"""
     from app.models.goal import GoalTemplate
 
-    if db.query(GoalTemplate).first():
-        return
+    existing = {(t.domain, t.template_name) for t in db.query(GoalTemplate).all()}
+    added = False
     for domain, name, description in GOAL_TEMPLATE_SEED:
+        if (domain, name) in existing:
+            continue
         db.add(GoalTemplate(domain=domain, template_name=name, goal_description=description))
-    db.commit()
+        added = True
+    if added:
+        db.commit()
