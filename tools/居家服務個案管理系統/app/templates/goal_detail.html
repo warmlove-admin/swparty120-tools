@@ -7,6 +7,7 @@
     <a href="/cases/{{ case.id }}/goals/{{ goal.id }}/edit" class="btn btn-secondary">編輯</a>
     {% endif %}
   </div>
+  <nav class="case-detail-tabs"><a href="/cases/{{ case.id }}?tab=basic">基本資料</a><a href="/cases/{{ case.id }}?tab=assessment">評估紀錄</a><a class="active" href="/cases/{{ case.id }}?tab=care">目標與照顧計畫</a><a href="/cases/{{ case.id }}?tab=schedule">服務班表</a></nav>
   <div class="card">
     <div class="form-grid">
       <div><label>所屬面向</label>{{ goal.domain }}</div>

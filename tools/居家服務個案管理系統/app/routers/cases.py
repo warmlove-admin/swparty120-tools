@@ -33,9 +33,20 @@ def visible_cases_query(db: Session, user: User):
 
 
 @router.get("", response_class=HTMLResponse)
-def list_cases(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    cases = visible_cases_query(db, user).order_by(Case.created_at.desc()).all()
-    return templates.TemplateResponse(request, "cases_list.html", {"cases": cases, "user": user})
+def list_cases(
+    request: Request,
+    status_filter: str = "active",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    valid_filters = {"active": CaseStatus.active, "paused": CaseStatus.paused, "closed": CaseStatus.closed, "all": None}
+    if status_filter not in valid_filters:
+        status_filter = "active"
+    query = visible_cases_query(db, user)
+    if valid_filters[status_filter] is not None:
+        query = query.filter(Case.status == valid_filters[status_filter])
+    cases = query.order_by(Case.created_at.desc()).all()
+    return templates.TemplateResponse(request, "cases_list.html", {"cases": cases, "user": user, "status_filter": status_filter})
 
 
 @router.get("/new", response_class=HTMLResponse)
@@ -190,13 +201,16 @@ def create_case(
 def case_detail(
     case_id: str,
     request: Request,
+    tab: str = "basic",
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     case = visible_cases_query(db, user).filter(Case.id == case_id).first()
     if not case:
         return RedirectResponse(url="/cases", status_code=302)
-    return templates.TemplateResponse(request, "case_detail.html", {"case": case, "user": user})
+    if tab not in {"basic", "assessment", "care", "schedule"}:
+        tab = "basic"
+    return templates.TemplateResponse(request, "case_detail.html", {"case": case, "user": user, "tab": tab})
 
 
 def _get_case_or_404(db: Session, case_id: str) -> Case:

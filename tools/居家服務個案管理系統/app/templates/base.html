@@ -26,6 +26,27 @@
     .status-closed { background: #ecf0f1; color: #7f8c8d; }
     .section-title { font-weight: bold; margin: 1.2rem 0 0.5rem; color: #2c7a7b; }
     .error { color: #c0392b; margin-bottom: 1rem; }
+    .calendar-table { min-width: 900px; table-layout: fixed; }
+    .calendar-cell { height: 150px; min-width: 125px; vertical-align: top; border-right:1px solid #e1e8e8; }
+    .calendar-week td { border-top: 5px solid #d7e7e6; }
+    .calendar-week.week-0 td { background: #fbfdfd; }
+    .calendar-week.week-1 td { background: #f2f8f7; }
+    .calendar-day { display:block; color:#426b6c; margin-bottom:0.35rem; padding-bottom:0.25rem; border-bottom:1px dashed #bad0cf; }
+    .schedule-item { display: block; margin: 0.4rem 0; padding: 0.45rem; border-radius: 3px; border-left:4px solid #cc8530; background: #f8c77e; color: #52340d; text-decoration: none; font-size: 0.78rem; line-height: 1.4; }
+    .schedule-item span { font-size: 0.72rem; }
+    .view-tabs { display:flex; gap:0.5rem; margin-bottom:0.8rem; }
+    .view-tabs a { padding:0.4rem 0.75rem; border-radius:4px; background:#edf2f2; color:#2d3436; text-decoration:none; font-size:0.85rem; }
+    .view-tabs a.active { background:#2c7a7b; color:#fff; }
+    .schedule-filter { display:flex; align-items:center; gap:0.5rem; max-width:420px; }
+    .schedule-filter label { margin:0; white-space:nowrap; }
+    .case-status-tabs, .case-detail-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin:0 0 1rem; }
+    .case-status-tabs a, .case-detail-tabs a { padding:0.5rem 0.9rem; border-radius:4px; background:#edf2f2; color:#2d3436; text-decoration:none; font-size:0.9rem; }
+    .case-status-tabs a.active, .case-detail-tabs a.active { background:#2c7a7b; color:#fff; }
+    .goal-plan-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; align-items:start; }
+    .goal-plan-grid .card { margin-bottom:0; overflow-x:auto; }
+    .linked-note { color:#2c7a7b; font-size:0.78rem; }
+    .assessment-summary-card { border-left: 5px solid #2c7a7b; background: #f7fbfb; }
+    @media (max-width: 800px) { .goal-plan-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -33,6 +54,8 @@
     <div><a href="/"><strong>居家服務個案管理系統</strong></a></div>
     <nav>
       <a href="/cases">個案列表</a>
+      <a href="/schedules">服務班表</a>
+      {% if user and user.role.value == "主管" %}<a href="/users">帳號管理</a>{% endif %}
       {% if user %}
         <span style="margin-right:1rem;">{{ user.display_name }}（{{ user.role.value }}）</span>
         <a href="/logout">登出</a>

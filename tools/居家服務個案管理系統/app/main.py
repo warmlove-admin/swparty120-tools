@@ -12,6 +12,8 @@ from app.routers import cases as cases_router
 from app.routers import assessments as assessments_router
 from app.routers import goals as goals_router
 from app.routers import care_plans as care_plans_router
+from app.routers import schedules as schedules_router
+from app.routers import users as users_router
 from app.services.goal_template_seed import seed_goal_templates_if_empty
 
 app = FastAPI(title="居家服務個案管理系統")
@@ -20,6 +22,8 @@ app.include_router(cases_router.router)
 app.include_router(assessments_router.router)
 app.include_router(goals_router.router)
 app.include_router(care_plans_router.router)
+app.include_router(schedules_router.router)
+app.include_router(users_router.router)
 
 
 @app.on_event("startup")

@@ -2,6 +2,7 @@
 {% block title %}{{ assessment.assessment_type.value }} - {{ case.name }}{% endblock %}
 {% block content %}
   <h2>{{ case.name }} - {{ assessment.assessment_type.value }}（{{ assessment.assessment_date }}）</h2>
+  <nav class="case-detail-tabs"><a href="/cases/{{ case.id }}?tab=basic">基本資料</a><a class="active" href="/cases/{{ case.id }}?tab=assessment">評估紀錄</a><a href="/cases/{{ case.id }}?tab=care">目標與照顧計畫</a><a href="/cases/{{ case.id }}?tab=schedule">服務班表</a></nav>
   <p>狀態：<strong>{{ assessment.status.value }}</strong></p>
 
   <div class="card">
@@ -16,6 +17,15 @@
         依賴等級：{{ assessment.items|selectattr("item_code", "equalto", "dependency_level")|map(attribute="text_value")|first }}
       </span>
     </div>
+  </div>
+
+  <div class="card assessment-summary-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+      <div class="section-title" style="margin:0;">綜合評估摘要</div>
+      <div><button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('assessment-summary').value)">複製摘要</button>{% if user.role.value in ["居督", "主管"] %}<button type="button" id="edit-summary" class="btn btn-secondary">編輯摘要</button>{% endif %}</div>
+    </div>
+    <form method="post" action="/cases/{{ case.id }}/assessments/{{ assessment.id }}/summary"><textarea id="assessment-summary" name="summary_text" rows="9" disabled style="line-height:1.8; margin-top:1rem; resize:vertical;">{{ summary_text }}</textarea><button id="save-summary" type="submit" class="btn" style="display:none; margin-top:0.7rem;">儲存摘要</button><button id="cancel-summary" type="button" class="btn btn-secondary" style="display:none; margin:0.7rem 0 0 0.5rem;">取消</button></form>
+    <p style="margin:0.75rem 0 0; color:#777; font-size:0.82rem;">此為系統依已填寫細項自動彙整，請由居督依專業判斷覆核及補充。</p>
   </div>
 
   <div class="card">
@@ -36,4 +46,9 @@
   </div>
 
   <a href="/cases/{{ case.id }}" class="btn btn-secondary">返回個案</a>
+  <script>
+    const summary = document.getElementById('assessment-summary');
+    const edit = document.getElementById('edit-summary');
+    if (edit) { const original = summary.value; edit.onclick = () => { summary.disabled = false; summary.focus(); edit.style.display = 'none'; document.getElementById('save-summary').style.display = ''; document.getElementById('cancel-summary').style.display = ''; }; document.getElementById('cancel-summary').onclick = () => { summary.value = original; summary.disabled = true; edit.style.display = ''; document.getElementById('save-summary').style.display = 'none'; document.getElementById('cancel-summary').style.display = 'none'; }; }
+  </script>
 {% endblock %}

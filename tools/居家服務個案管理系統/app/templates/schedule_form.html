@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ "編輯" if schedule else "建立" }}服務班表 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>{{ "編輯" if schedule else "建立" }}服務班表：{{ case.name }}</h2>
+  <p style="color:#555;">服務碼別與居服員取自既有照顧計畫；服務日數須符合該碼別的每週頻率。</p>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  {% if not plans %}<div class="card"><p>尚無已指派居服員的照顧計畫，請先建立或補齊照顧計畫。</p></div>{% else %}
+  <form method="post" action="/cases/{{ case.id }}/schedules{{ '/' + schedule.id + '/edit' if schedule else '' }}">
+    <div class="card"><div class="form-grid">
+      <div class="full"><label>照顧計畫服務項目</label><select name="plan_item" required><option value="">請選擇</option>{% for plan in plans %}{% for item in plan.coded_services %}{% set value = plan.id ~ ':' ~ loop.index0 %}<option value="{{ value }}" {% if schedule and schedule.care_plan_id == plan.id and schedule.service_code == item.code %}selected{% endif %}>{{ item.code }} {{ item.name }}｜每週 {{ item.quantity }} 次｜{{ item.minutes_per_unit }} 分鐘｜{{ plan.assigned_caregiver.display_name }}</option>{% endfor %}{% endfor %}</select></div>
+      <div><label>開始時間</label><input type="time" name="start_time" required value="{{ schedule.start_time.strftime('%H:%M') if schedule else '' }}"></div>
+      <div><label>生效起日</label><input type="date" name="effective_from" required value="{{ schedule.effective_from if schedule else '' }}"></div>
+      <div><label>結束日期（選填）</label><input type="date" name="effective_until" value="{{ schedule.effective_until if schedule and schedule.effective_until else '' }}"></div>
+      <div><label>備註</label><input name="note" value="{{ schedule.note if schedule and schedule.note else '' }}"></div>
+    </div><div style="margin-top:1rem;"><label>每週服務日</label>{% for value, label in weekday_labels %}<label style="display:inline-flex; align-items:center; margin:0 1rem 0.5rem 0; font-weight:normal;"><input type="checkbox" name="weekdays" value="{{ value }}" style="width:auto; margin-right:0.35rem;" {% if schedule and value in schedule.weekdays %}checked{% endif %}>{{ label }}</label>{% endfor %}</div></div>
+    <button type="submit" class="btn">儲存班表</button><a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+  </form>{% endif %}
+{% endblock %}

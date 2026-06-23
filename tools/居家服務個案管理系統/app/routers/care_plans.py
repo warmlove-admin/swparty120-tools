@@ -54,7 +54,7 @@ def new_care_plan_form(
     goal_id: str = "",
 ):
     case = _get_case_or_404(db, case_id)
-    caregivers = db.query(User).filter(User.role == UserRole.caregiver).all()
+    caregivers = db.query(User).filter(User.role == UserRole.caregiver, User.is_active.is_(True)).all()
     return templates.TemplateResponse(
         request, "care_plan_form.html",
         {
@@ -104,7 +104,7 @@ def edit_care_plan_form(
 ):
     case = _get_case_or_404(db, case_id)
     care_plan = _get_care_plan_or_404(db, case_id, care_plan_id)
-    caregivers = db.query(User).filter(User.role == UserRole.caregiver).all()
+    caregivers = db.query(User).filter(User.role == UserRole.caregiver, User.is_active.is_(True)).all()
     return templates.TemplateResponse(
         request, "care_plan_form.html",
         {

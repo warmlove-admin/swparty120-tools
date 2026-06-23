@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}帳號管理{% endblock %}
+{% block content %}
+  <h2>帳號管理</h2>
+  <p style="color:#555;">由主管建立帳號與維護角色。停用帳號後，該使用者將無法登入，也不會出現在可指派的居服員選單。</p>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">建立帳號</div>
+    <form method="post" action="/users"><div class="form-grid">
+      <div><label>帳號</label><input name="username" required autocomplete="off" pattern="[A-Za-z0-9_.-]+" title="限英數字、底線、句點與連字號"></div>
+      <div><label>顯示姓名</label><input name="display_name" required></div>
+      <div><label>初始密碼</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div>
+      <div><label>角色</label><select name="role" required>{% for role in roles %}<option value="{{ role.value }}" {% if role.value == "居服員" %}selected{% endif %}>{{ role.value }}</option>{% endfor %}</select></div>
+    </div><button type="submit" class="btn" style="margin-top:1rem;">建立帳號</button></form>
+  </div>
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">現有帳號</div>
+    <table><thead><tr><th>帳號</th><th>顯示姓名</th><th>角色</th><th>狀態</th><th>建立時間</th><th>管理</th></tr></thead><tbody>
+      {% for account in users %}<tr>
+        <td>{{ account.username }}</td>
+        <td><form method="post" action="/users/{{ account.id }}/update" style="display:flex; gap:0.4rem;"><input name="display_name" value="{{ account.display_name }}" required style="min-width:100px;"><select name="role" style="min-width:85px;">{% for role in roles %}<option value="{{ role.value }}" {% if account.role == role %}selected{% endif %}>{{ role.value }}</option>{% endfor %}</select><button class="btn btn-secondary" type="submit">儲存</button></form></td>
+        <td>{{ account.role.value }}</td><td>{% if account.is_active %}<span class="status-badge status-active">啟用中</span>{% else %}<span class="status-badge status-closed">已停用</span>{% endif %}</td>
+        <td>{{ account.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>{% if account.id == user.id %}<span style="color:#777;">目前帳號</span>{% else %}<form method="post" action="/users/{{ account.id }}/toggle-active"><button class="btn btn-secondary" type="submit">{{ "停用" if account.is_active else "恢復" }}</button></form>{% endif %}</td>
+      </tr>{% endfor %}
+    </tbody></table>
+  </div>
+{% endblock %}

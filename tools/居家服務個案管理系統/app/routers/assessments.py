@@ -16,6 +16,7 @@ from app.services.assessment_catalog import (
     ENV_RISK_OPTIONS, ENV_OTHER_ITEMS, ECON_ITEMS, CULTURE_ITEMS,
     family_burden_level, env_risk_level, dependency_level,
 )
+from app.services.assessment_summary import build_assessment_summary
 
 router = APIRouter(prefix="/cases/{case_id}/assessments")
 templates = Jinja2Templates(directory="app/templates")
@@ -42,10 +43,15 @@ def _get_case_or_404(db: Session, case_id: str) -> Case:
 def new_assessment_form(
     case_id: str,
     request: Request,
+    assessment_type: str = "intake",
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
 ):
     case = _get_case_or_404(db, case_id)
+    try:
+        selected_type = AssessmentType(assessment_type)
+    except ValueError:
+        selected_type = AssessmentType.intake
     return templates.TemplateResponse(
         request,
         "assessment_form.html",
@@ -62,6 +68,7 @@ def new_assessment_form(
             "env_other_items": ENV_OTHER_ITEMS,
             "econ_items": ECON_ITEMS,
             "culture_items": CULTURE_ITEMS,
+            "assessment_type": selected_type,
         },
     )
 
@@ -79,9 +86,13 @@ async def create_assessment(
     assessment_date = form.get("assessment_date")
     outing_frequency = form.get("outing_frequency")
 
+    try:
+        assessment_type = AssessmentType(form.get("assessment_type") or AssessmentType.intake.value)
+    except ValueError:
+        assessment_type = AssessmentType.intake
     assessment = Assessment(
         case_id=case.id,
-        assessment_type=AssessmentType.intake,
+        assessment_type=assessment_type,
         assessment_date=date.fromisoformat(assessment_date),
         assessor_id=user.id,
         outing_frequency=float(outing_frequency) if outing_frequency else None,
@@ -220,4 +231,31 @@ def assessment_detail(
     assessment = db.query(Assessment).filter(Assessment.id == assessment_id, Assessment.case_id == case_id).first()
     if not assessment:
         raise HTTPException(404, "評估紀錄不存在")
-    return templates.TemplateResponse(request, "assessment_detail.html", {"case": case, "assessment": assessment, "user": user})
+    override = next((item.note for item in assessment.items if item.item_code == "summary_override" and item.note), None)
+    return templates.TemplateResponse(
+        request,
+        "assessment_detail.html",
+        {"case": case, "assessment": assessment, "user": user, "summary_text": override or build_assessment_summary(assessment)},
+    )
+
+
+@router.post("/{assessment_id}/summary")
+async def save_summary(
+    case_id: str,
+    assessment_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+):
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id, Assessment.case_id == case_id).first()
+    if not assessment:
+        raise HTTPException(404, "評估紀錄不存在")
+    form = await request.form()
+    summary_text = (form.get("summary_text") or "").strip()
+    existing = next((item for item in assessment.items if item.item_code == "summary_override"), None)
+    if existing:
+        existing.note = summary_text or None
+    elif summary_text:
+        db.add(AssessmentItem(assessment_id=assessment.id, domain="綜合評估摘要", item_code="summary_override", note=summary_text))
+    db.commit()
+    return RedirectResponse(url=f"/cases/{case_id}/assessments/{assessment_id}", status_code=302)

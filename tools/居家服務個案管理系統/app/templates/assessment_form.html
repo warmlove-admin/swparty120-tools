@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}開案評估 - {{ case.name }}{% endblock %}
+{% block title %}{{ assessment_type.value }} - {{ case.name }}{% endblock %}
 {% block content %}
-  <h2>開案評估：{{ case.name }}</h2>
+  <h2>{{ assessment_type.value }}：{{ case.name }}</h2>
   <form method="post" action="/cases/{{ case.id }}/assessments">
+    <input type="hidden" name="assessment_type" value="{{ assessment_type.value }}">
     <div class="card">
       <div class="section-title">基本資訊</div>
       <div class="form-grid">
