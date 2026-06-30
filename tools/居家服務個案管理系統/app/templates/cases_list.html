@@ -2,32 +2,81 @@
 {% block title %}個案列表{% endblock %}
 {% block content %}
   <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <h2 style="margin:0;">個案列表</h2>
+    <h2 style="margin:0;">個案列表（{{ cases|length }}）</h2>
     {% if user.role.value in ["居督", "主管"] %}
       <a href="/cases/new" class="btn">+ 新增開案</a>
     {% endif %}
   </div>
   <div class="case-status-tabs">
-    <a class="{{ 'active' if status_filter == 'active' else '' }}" href="/cases?status_filter=active">服務中</a>
-    <a class="{{ 'active' if status_filter == 'paused' else '' }}" href="/cases?status_filter=paused">暫停中</a>
-    <a class="{{ 'active' if status_filter == 'closed' else '' }}" href="/cases?status_filter=closed">已結案</a>
-    <a class="{{ 'active' if status_filter == 'all' else '' }}" href="/cases?status_filter=all">全部</a>
+    <a class="{{ 'active' if status_filter == 'active' else '' }}" href="/cases?status_filter=active{{ status_query_suffix }}">服務中</a>
+    <a class="{{ 'active' if status_filter == 'paused' else '' }}" href="/cases?status_filter=paused{{ status_query_suffix }}">暫停中</a>
+    <a class="{{ 'active' if status_filter == 'closed' else '' }}" href="/cases?status_filter=closed{{ status_query_suffix }}">已結案</a>
+    <a class="{{ 'active' if status_filter == 'all' else '' }}" href="/cases?status_filter=all{{ status_query_suffix }}">全部</a>
   </div>
+
+  <form method="get" action="/cases" class="schedule-filter" style="margin-bottom:1rem;">
+    <input type="hidden" name="status_filter" value="{{ status_filter }}">
+    <div>
+      <label>搜尋個案</label>
+      <input type="search" name="q" value="{{ q }}" placeholder="姓名、案號、身分證或電話" onchange="this.form.submit()">
+    </div>
+    <div>
+      <label>主責居督</label>
+      <select name="supervisor_id" onchange="this.form.submit()">
+        <option value="">全部</option>
+        {% for supervisor in supervisors %}
+          <option value="{{ supervisor.id }}" {% if supervisor.id == supervisor_id %}selected{% endif %}>{{ supervisor.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>居服員</label>
+      <select name="caregiver_id" onchange="this.form.submit()">
+        <option value="">全部</option>
+        {% for caregiver in caregivers %}
+          <option value="{{ caregiver.id }}" {% if caregiver.id == caregiver_id %}selected{% endif %}>{{ caregiver.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+
+  {% if returned_assessments %}
+  <div class="card returned-review-alert">
+    <div class="section-title" style="margin-top:0;">退回待修正</div>
+    <table>
+      <thead><tr><th>個案</th><th>評估</th><th>退回原因</th><th></th></tr></thead>
+      <tbody>
+        {% for item in returned_assessments %}
+        <tr>
+          <td>{{ item.assessment.case.name }}</td>
+          <td>{{ item.assessment.assessment_type.value }}｜{{ item.assessment.assessment_date }}</td>
+          <td>{{ item.return_log.change_note or "-" }}</td>
+          <td><a class="btn btn-secondary" href="/cases/{{ item.assessment.case_id }}/assessments/{{ item.assessment.id }}/review-preview">查看與修正</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 
   <table>
     <thead>
       <tr>
-        <th>機構案號</th>
+        <th class="narrow-col">序號</th>
+        <th class="case-no-col">案號</th>
         <th>姓名</th>
         <th>CMS等級</th>
-        <th>狀態</th>
+        <th class="status-col">狀態</th>
+        <th>評估提醒</th>
         <th>主責居督</th>
+        <th>近半年居服員</th>
       </tr>
     </thead>
     <tbody>
       {% for case in cases %}
       <tr onclick="location.href='/cases/{{ case.id }}'" style="cursor:pointer;">
-        <td>{{ case.org_case_no }}</td>
+        <td>{{ loop.index }}</td>
+        <td>{{ display_org_case_no(case) }}</td>
         <td>{{ case.name }}</td>
         <td>{{ case.cms_level or "-" }}</td>
         <td>
@@ -35,10 +84,22 @@
           {% elif case.status.value == "暫停中" %}<span class="status-badge status-paused">暫停中</span>
           {% else %}<span class="status-badge status-closed">已結案</span>{% endif %}
         </td>
+        {% set due = assessment_due_by_case[case.id] %}
+        <td>
+          {% if due.status == "overdue" %}<span class="status-badge status-returned">{{ due.label }}</span>
+          {% elif due.status == "soon" %}<span class="status-badge status-paused">{{ due.label }}</span>
+          {% elif due.status == "ok" %}<span class="status-badge status-active">{{ due.label }}</span>
+          {% else %}<span class="status-badge status-closed">{{ due.label }}</span>{% endif %}
+          {% if due.next_3m %}<br><small>3個月：{{ due.next_3m }}｜6個月：{{ due.next_6m }}</small>{% endif %}
+        </td>
         <td>{{ case.primary_supervisor.display_name if case.primary_supervisor else "-" }}</td>
+        <td>
+          {% set caregiver_names = recent_caregivers_by_case[case.id] %}
+          {{ caregiver_names|join("、") if caregiver_names else "-" }}
+        </td>
       </tr>
       {% else %}
-      <tr><td colspan="5" style="text-align:center; color:#999;">此狀態目前沒有個案資料</td></tr>
+      <tr><td colspan="8" style="text-align:center; color:#999;">此狀態目前沒有個案資料</td></tr>
       {% endfor %}
     </tbody>
   </table>

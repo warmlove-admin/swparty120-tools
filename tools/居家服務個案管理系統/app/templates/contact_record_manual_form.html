@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}新增電訪紀錄 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>{{ case.name }} - 新增電訪紀錄</h2>
+  <div class="card">
+    <form method="post" action="/cases/{{ case.id }}/contact-records">
+      <div class="form-grid">
+        <div><label>日期</label><input type="date" name="contact_date" value="{{ today }}" required></div>
+        <div>
+          <label>對象類型</label>
+          <select id="contact-type-select" name="contact_type" required>
+            {% for option in contact_type_options %}
+            <option value="{{ option.value }}">{{ option.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>內容類型</label>
+          <select id="phone-call-type-select" name="phone_call_type" required></select>
+        </div>
+        <div id="family-relation-field">
+          <label>家屬關係</label>
+          <select id="family-relation-select" name="family_relation">
+            <option value="">請選擇</option>
+            {% for relation in family_relation_options %}
+            <option value="{{ relation }}">{{ relation }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="other-contact-field"><label>其他對象</label><input id="other-contact-input" name="other_contact_detail"></div>
+        <div class="full">
+          <label>電訪紀錄內容</label>
+          <textarea name="summary" rows="10" required style="line-height:1.8;" placeholder="例如：過程：...&#10;處理結果：..."></textarea>
+        </div>
+      </div>
+      <button class="btn" type="submit" style="margin-top:0.8rem;">建立草稿</button>
+      <a href="/cases/{{ case.id }}?tab=contact" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+    </form>
+  </div>
+  <script>
+    (() => {
+      const optionsByTarget = {
+        {% for target, options in phone_call_type_options.items() %}
+        "{{ target }}": [{% for option in options %}{ value: "{{ option.value }}", label: "{{ option.value.split('：', 1)[-1] }}" }{% if not loop.last %},{% endif %}{% endfor %}]{% if not loop.last %},{% endif %}
+        {% endfor %}
+      };
+      const targetSelect = document.getElementById('contact-type-select');
+      const typeSelect = document.getElementById('phone-call-type-select');
+      const familyField = document.getElementById('family-relation-field');
+      const familySelect = document.getElementById('family-relation-select');
+      const otherField = document.getElementById('other-contact-field');
+      const otherInput = document.getElementById('other-contact-input');
+      const refreshTypes = () => {
+        const options = optionsByTarget[targetSelect.value] || [];
+        typeSelect.innerHTML = '';
+        options.forEach(option => {
+          const node = document.createElement('option');
+          node.value = option.value;
+          node.textContent = option.label;
+          typeSelect.appendChild(node);
+        });
+      };
+      const refreshTargetFields = () => {
+        const target = targetSelect.value;
+        const isFamily = target === '家屬';
+        const isOther = target === '其他';
+        familyField.style.display = isFamily ? '' : 'none';
+        otherField.style.display = isOther ? '' : 'none';
+        familySelect.required = isFamily;
+        otherInput.required = isOther;
+      };
+      targetSelect.addEventListener('change', () => {
+        refreshTypes();
+        refreshTargetFields();
+      });
+      refreshTypes();
+      refreshTargetFields();
+    })();
+  </script>
+{% endblock %}

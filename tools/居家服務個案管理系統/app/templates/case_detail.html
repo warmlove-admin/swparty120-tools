@@ -10,28 +10,241 @@
   </div>
   {% if case.status.value == "暫停中" %}<div class="card" style="background:#fdebd0;"><strong>暫停中</strong>　暫停日期：{{ case.pause_date }}　原因：{{ case.pause_reason_type.value if case.pause_reason_type else "-" }}{% if case.pause_reason_note %}<br>補充說明：{{ case.pause_reason_note }}{% endif %}</div>{% elif case.status.value == "已結案" %}<div class="card" style="background:#ecf0f1;"><strong>已結案</strong>　結案日期：{{ case.close_date }}　原因：{{ case.close_reason_type.value if case.close_reason_type else "-" }}{% if case.close_reason_note %}<br>補充說明：{{ case.close_reason_note }}{% endif %}</div>{% endif %}
 
-  <nav class="case-detail-tabs"><a data-case-tab="basic" href="?tab=basic">基本資料</a><a data-case-tab="assessment" href="?tab=assessment">評估紀錄</a><a data-case-tab="care" href="?tab=care">目標與照顧計畫</a><a data-case-tab="schedule" href="?tab=schedule">服務班表</a></nav>
+  <nav class="case-detail-tabs"><a data-case-tab="basic" href="?tab=basic">基本資料</a><a data-case-tab="assessment" href="?tab=assessment">評估紀錄</a><a data-case-tab="care" href="?tab=care">目標與照顧計畫</a><a data-case-tab="contact" href="?tab=contact">電訪紀錄</a><a data-case-tab="schedule" href="?tab=schedule">服務班表</a></nav>
 
   <section class="case-tab-panel" data-panel="basic">
+  {% if user.role.value in ["居督", "主管"] %}
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">個案狀態異動</div>
+    <form method="post" action="/cases/{{ case.id }}/status">
+      <div class="form-grid">
+        <div>
+          <label>調整狀態</label>
+          <select name="status">
+            {% for status in case_statuses %}
+            <option value="{{ status.name }}" {% if case.status == status %}selected{% endif %}>{{ status.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label>生效日期</label><input type="date" name="effective_date" value="{{ case.resume_date if case.status.value == '服務中' and case.resume_date else (case.pause_date if case.status.value == '暫停中' and case.pause_date else (case.close_date if case.status.value == '已結案' and case.close_date else '')) }}"></div>
+        <div>
+          <label>暫停原因</label>
+          <select name="pause_reason_type">
+            {% for reason in pause_reasons %}
+            <option value="{{ reason.name }}" {% if case.pause_reason_type == reason %}selected{% endif %}>{{ reason.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>結案原因</label>
+          <select name="close_reason_type">
+            {% for reason in close_reasons %}
+            <option value="{{ reason.name }}" {% if case.close_reason_type == reason %}selected{% endif %}>{{ reason.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label>暫停補充說明</label><input name="pause_reason_note" value="{{ case.pause_reason_note or '' }}"></div>
+        <div><label>結案補充說明</label><input name="close_reason_note" value="{{ case.close_reason_note or '' }}"></div>
+      </div>
+      <button class="btn" type="submit" style="margin-top:0.8rem;">儲存狀態異動</button>
+    </form>
+  </div>
+  {% endif %}
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">評估到期提醒</div>
+    {% if assessment_due.status == "overdue" %}<span class="status-badge status-returned">{{ assessment_due.label }}</span>
+    {% elif assessment_due.status == "soon" %}<span class="status-badge status-paused">{{ assessment_due.label }}</span>
+    {% elif assessment_due.status == "ok" %}<span class="status-badge status-active">{{ assessment_due.label }}</span>
+    {% else %}<span class="status-badge status-closed">{{ assessment_due.label }}</span>{% endif %}
+    <div class="form-grid" style="margin-top:0.8rem;">
+      <div><label>最近一次評估</label>{% if assessment_due.latest_assessment %}{{ assessment_due.latest_assessment.assessment_date }}｜{{ assessment_due.latest_assessment.assessment_type.value }}{% else %}-{% endif %}</div>
+      <div><label>評估基準日</label>{{ assessment_due.baseline_date or "-" }}</div>
+      <div><label>3個月複評到期日</label>{{ assessment_due.next_3m or "-" }}</div>
+      <div><label>6個月追蹤到期日</label>{{ assessment_due.next_6m or "-" }}</div>
+    </div>
+  </div>
   <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">基本資料</div>{% if user.role.value in ["居督", "主管"] %}<a href="/cases/{{ case.id }}/edit" class="btn btn-secondary">編輯</a>{% endif %}</div><div class="form-grid"><div><label>身分證字號</label>{{ case.id_number }}</div><div><label>生日</label>{{ case.birth_date or "-" }}</div><div><label>性別</label>{{ case.gender or "-" }}</div><div><label>電話</label>{{ case.phone or "-" }}</div><div><label>CMS等級</label>{{ case.cms_level or "-" }}</div><div><label>居住狀況</label>{{ case.living_status or "-" }}</div><div><label>主責居督</label>{{ case.primary_supervisor.display_name if case.primary_supervisor else "-" }}</div><div><label>機構開案日期</label>{{ case.open_date or "-" }}</div></div></div>
   <div class="card"><div class="section-title">聯絡人／照顧者</div>{% if case.contacts %}<table><thead><tr><th>角色</th><th>姓名</th><th>關係</th><th>電話</th></tr></thead><tbody>{% for contact in case.contacts %}<tr><td>{{ contact.contact_role.value }}</td><td>{{ contact.name }}</td><td>{{ contact.relation or "-" }}</td><td>{{ contact.phone or "-" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立聯絡人</p>{% endif %}</div>
   {% if case.status.value != "已結案" %}<div class="card"><div class="section-title">緊急聯絡人</div>{% if case.emergency_contacts %}<table><thead><tr><th>姓名</th><th>關係</th><th>電話</th></tr></thead><tbody>{% for contact in case.emergency_contacts %}<tr><td>{{ contact.name }}</td><td>{{ contact.relation or "-" }}</td><td>{{ contact.phone or "-" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立緊急聯絡人</p>{% endif %}</div>{% endif %}
   </section>
 
   <section class="case-tab-panel" data-panel="assessment">
-  <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">評估紀錄</div>{% if user.role.value in ["居督", "主管"] and case.status.value != "已結案" %}{% if case.assessments %}<a href="/cases/{{ case.id }}/assessments/new?assessment_type=定期評估" class="btn">+ 新增定期評估</a>{% else %}<a href="/cases/{{ case.id }}/assessments/new?assessment_type=開案評估" class="btn">+ 新增開案評估</a>{% endif %}{% endif %}</div>{% if case.assessments %}<table><thead><tr><th>類型</th><th>評估日期</th><th>ADL</th><th>IADL</th><th>狀態</th></tr></thead><tbody>{% for assessment in case.assessments|sort(attribute="assessment_date", reverse=True) %}<tr onclick="location.href='/cases/{{ case.id }}/assessments/{{ assessment.id }}'" style="cursor:pointer;"><td>{{ assessment.assessment_type.value }}</td><td>{{ assessment.assessment_date }}</td><td>{{ assessment.adl_total_score }}</td><td>{{ assessment.iadl_total_score }}</td><td>{{ assessment.status.value }}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立評估紀錄</p>{% endif %}</div>
+  {% if assessment_trends|length >= 2 %}<div class="card"><div class="section-title" style="margin-top:0;">評估趨勢圖</div><div class="trend-legend"><span class="adl">● ADL 日常生活功能</span><span class="iadl">● IADL 工具性日常生活功能</span></div><div id="assessment-trend-chart" class="assessment-trend-chart"></div><div class="form-grid" style="margin-top:0.7rem;">{% for point in assessment_trends|reverse %}<div class="trend-summary"><strong>{{ point.assessment.assessment_date }}｜{{ point.assessment.assessment_type.value }}</strong><br>ADL：{{ point.assessment.adl_total_score if point.assessment.adl_total_score is not none else '-' }}{% if point.adl_change is not none %}（{{ '+' if point.adl_change >= 0 else '' }}{{ point.adl_change }}）{% endif %}　IADL：{{ point.assessment.iadl_total_score if point.assessment.iadl_total_score is not none else '-' }}{% if point.iadl_change is not none %}（{{ '+' if point.iadl_change >= 0 else '' }}{{ point.iadl_change }}）{% endif %}<br><a href="/cases/{{ case.id }}/assessments/{{ point.assessment.id }}">查看本次評估</a></div>{% endfor %}</div><p style="margin:0.75rem 0 0; font-size:0.82rem; color:#777;">分數 0–100；括號為相較前一次評估的變化。請結合個案實際狀況判讀。</p></div>
+  <script>
+    (() => {
+      const points = [{% for point in assessment_trends %}{ date: "{{ point.assessment.assessment_date }}", adl: {{ point.assessment.adl_total_score if point.assessment.adl_total_score is not none else 'null' }}, iadl: {{ point.assessment.iadl_total_score if point.assessment.iadl_total_score is not none else 'null' }} }{% if not loop.last %},{% endif %}{% endfor %}];
+      const host = document.getElementById('assessment-trend-chart'); if (!host) return;
+      const width = Math.max(500, points.length * 150), height = 200, left = 46, right = 18, top = 14, bottom = 38;
+      const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${width} ${height}`); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'ADL與IADL評估趨勢圖');
+      const x = i => left + i * ((width - left - right) / Math.max(points.length - 1, 1)); const y = value => top + (100 - value) * ((height - top - bottom) / 100);
+      [0, 25, 50, 75, 100].forEach(value => { const line = document.createElementNS(ns, 'line'); line.setAttribute('x1', left); line.setAttribute('x2', width-right); line.setAttribute('y1', y(value)); line.setAttribute('y2', y(value)); line.setAttribute('class', 'trend-grid'); svg.append(line); const label = document.createElementNS(ns, 'text'); label.setAttribute('x', left-9); label.setAttribute('y', y(value)+4); label.setAttribute('text-anchor', 'end'); label.setAttribute('class', 'trend-axis'); label.textContent = value; svg.append(label); });
+      [['adl','#2c7a7b'], ['iadl','#7c4d99']].forEach(([key, color]) => { const valid = points.map((point, index) => ({value:point[key], index})).filter(point => point.value !== null); if (!valid.length) return; const polyline = document.createElementNS(ns, 'polyline'); polyline.setAttribute('points', valid.map(point => `${x(point.index)},${y(point.value)}`).join(' ')); polyline.setAttribute('fill', 'none'); polyline.setAttribute('stroke', color); polyline.setAttribute('stroke-width', '4'); polyline.setAttribute('stroke-linecap', 'round'); polyline.setAttribute('stroke-linejoin', 'round'); svg.append(polyline); valid.forEach(point => { const dot = document.createElementNS(ns, 'circle'); dot.setAttribute('cx', x(point.index)); dot.setAttribute('cy', y(point.value)); dot.setAttribute('r', '5'); dot.setAttribute('fill', color); svg.append(dot); const value = document.createElementNS(ns, 'text'); value.setAttribute('x', x(point.index)); value.setAttribute('y', y(point.value)-10); value.setAttribute('text-anchor', 'middle'); value.setAttribute('fill', color); value.setAttribute('class', 'trend-value'); value.textContent = point.value; svg.append(value); }); });
+      points.forEach((point, index) => { const label = document.createElementNS(ns, 'text'); label.setAttribute('x', x(index)); label.setAttribute('y', height-16); label.setAttribute('text-anchor', index === 0 ? 'start' : (index === points.length - 1 ? 'end' : 'middle')); label.setAttribute('class', 'trend-axis'); label.textContent = point.date; svg.append(label); }); host.append(svg);
+    })();
+  </script>
+  <div class="context-trend-card"><div class="section-title" style="margin-top:0;">生活與照顧風險趨勢</div><table><thead><tr><th>評估日期</th><th>每週外出</th><th>照顧負荷</th><th>居家環境風險</th></tr></thead><tbody>{% for point in assessment_trends|reverse %}<tr><td><a href="/cases/{{ case.id }}/assessments/{{ point.assessment.id }}">{{ point.assessment.assessment_date }}</a></td><td>{{ point.assessment.outing_frequency if point.assessment.outing_frequency is not none else '-' }}{% if point.assessment.outing_frequency is not none %} 次{% endif %}{% if point.outing_change is not none %}<small class="trend-delta">（{{ '+' if point.outing_change >= 0 else '' }}{{ point.outing_change }}）</small>{% endif %}</td><td>{{ point.burden_level or '-' }}{% if point.burden_note %}<br><small>{{ point.burden_note }}</small>{% endif %}</td><td>{{ point.env_risk_level or '-' }}{% if point.env_risk_note %}<br><small>{{ point.env_risk_note }}</small>{% endif %}</td></tr>{% endfor %}</tbody></table><p style="margin:0.75rem 0 0; font-size:0.82rem; color:#777;">外出次數括號為相較前一次評估的變化；照顧負荷與環境風險由各次檢核結果自動換算。</p></div>
+  {% endif %}
+  <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">評估紀錄</div>{% if user.role.value in ["居督", "主管"] and case.status.value != "已結案" %}{% if case.assessments %}<a href="/cases/{{ case.id }}/assessments/new?assessment_type=定期評估" class="btn">+ 新增定期評估</a>{% else %}<a href="/cases/{{ case.id }}/assessments/new?assessment_type=開案評估" class="btn">+ 新增開案評估</a>{% endif %}{% endif %}</div>{% if case.assessments %}<table><thead><tr><th>類型</th><th>評估日期</th><th>ADL</th><th>IADL</th><th>狀態</th></tr></thead><tbody>{% for assessment in case.assessments|sort(attribute="assessment_date", reverse=True) %}<tr onclick="location.href='/cases/{{ case.id }}/assessments/{{ assessment.id }}'" style="cursor:pointer;"><td>{{ assessment.assessment_type.value }}</td><td>{{ assessment.assessment_date }}</td><td>{{ assessment.adl_total_score }}</td><td>{{ assessment.iadl_total_score }}</td><td>{% if assessment.id in return_logs %}<span class="status-badge status-returned">退回待修正</span><br><small>{{ return_logs[assessment.id].change_note or "請依退回意見修正" }}</small>{% else %}{{ assessment.status.value }}{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立評估紀錄</p>{% endif %}</div>
   </section>
 
   <section class="case-tab-panel" data-panel="care">
-  <div class="goal-plan-grid">
-    <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">照顧目標</div>{% if user.role.value in ["居督", "主管"] and case.status.value != "已結案" %}<a href="/cases/{{ case.id }}/goals/new" class="btn">+ 新增目標</a>{% endif %}</div>{% if case.goals %}<table><thead><tr><th>面向／目標</th><th>狀態</th></tr></thead><tbody>{% for goal in case.goals|sort(attribute="set_date", reverse=True) %}<tr onclick="location.href='/cases/{{ case.id }}/goals/{{ goal.id }}'" style="cursor:pointer;"><td><strong>{{ goal.domain }}</strong><br>{{ goal.description }}{% if goal.care_plans %}<br><small class="linked-note">對應服務：{% for plan in goal.care_plans %}{% for item in plan.coded_services %}{{ item.code }}{% if not loop.last %}、{% endif %}{% endfor %}{% if not loop.last %}；{% endif %}{% endfor %}</small>{% endif %}</td><td>{{ goal.status.value }}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立照顧目標</p>{% endif %}</div>
-    <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">照顧計畫</div>{% if user.role.value in ["居督", "主管"] and case.goals %}<a href="/cases/{{ case.id }}/care_plans/new" class="btn">+ 新增計畫</a>{% endif %}</div>{% if case.care_plans %}<table><thead><tr><th>服務項目</th><th>居服員</th><th>對應目標</th><th></th></tr></thead><tbody>{% for plan in case.care_plans %}<tr><td>{% for item in plan.coded_services %}{{ item.code }} {{ item.name }} ×{{ item.quantity }}<br>{% endfor %}<small>{{ plan.note or "" }}</small></td><td>{{ plan.assigned_caregiver.display_name if plan.assigned_caregiver else "-" }}</td><td>{{ plan.goals|map(attribute="domain")|join("、") or "-" }}</td><td>{% if user.role.value in ["居督", "主管"] %}<a href="/cases/{{ case.id }}/care_plans/{{ plan.id }}/edit" class="btn btn-secondary">編輯</a>{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立照顧計畫</p>{% endif %}</div>
-  </div>
+    {% for group in care_groups %}
+    <div class="care-period">
+      <div class="care-period-header">
+        <div class="care-period-label">評估依據：{{ group.label }}</div>
+        {% if user.role.value in ["居督", "主管", "主任"] and case.status.value != "已結案" %}
+        <div class="care-period-actions">
+          {% if group.assessment %}<a href="/cases/{{ case.id }}/assessments/{{ group.assessment.id }}/review-preview" class="btn {% if group.assessment.id in return_logs %}btn-returned{% else %}btn-secondary{% endif %} btn-compact">{% if group.assessment.id in return_logs %}退回待修正{% else %}簽核：{{ group.assessment.status.value }}{% endif %}</a>{% endif %}
+          {% if user.role.value in ["居督", "主管"] and group.assessment %}<a href="/cases/{{ case.id }}/goals/new?assessment_id={{ group.assessment.id }}" class="btn btn-secondary btn-compact">補登目標</a>{% endif %}
+          {% if user.role.value in ["居督", "主管"] and group.can_create_plan %}<a href="/cases/{{ case.id }}/care_plans/new{% if group.assessment %}?assessment_id={{ group.assessment.id }}{% endif %}" class="btn btn-secondary btn-compact">+ 新增計畫</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if group.goal_plan_pairs %}
+      {% for pair in group.goal_plan_pairs %}
+      <div class="goal-plan-pair">
+        <div class="card">
+          <div class="compact-card-heading">
+            <div class="section-title">照顧目標</div>
+            {% if pair.goal %}
+            <div class="compact-card-actions">
+              <a href="/cases/{{ case.id }}/goals/{{ pair.goal.id }}" class="btn btn-secondary btn-compact">查看</a>
+              {% if user.role.value in ["居督", "主管"] %}
+              <a href="/cases/{{ case.id }}/goals/{{ pair.goal.id }}/edit" class="btn btn-secondary btn-compact">編輯</a>
+              {% if pair.goal.id not in protected_goal_ids %}<form method="post" action="/cases/{{ case.id }}/goals/{{ pair.goal.id }}/delete" onsubmit="return confirm('確定刪除此目標？它會從照顧計畫解除關聯，且歷次目標檢討紀錄也會一併刪除。');"><button type="submit" class="btn btn-secondary btn-compact">刪除</button></form>{% endif %}
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% if pair.goal %}
+          <strong>{{ pair.goal.domain }}</strong>{% if pair.goal.id in group.continued_goal_ids %}<span class="linked-note">（{{ group.continued_goal_labels[pair.goal.id] }}）</span>{% endif %}<br>
+          {{ pair.goal.description }}<br><small>狀態：{{ pair.goal.status.value }}</small>
+          {% else %}
+          <p style="color:#999; margin:0;">尚未連結照顧目標</p>
+          {% endif %}
+        </div>
+        <div class="card">
+          <div class="compact-card-heading">
+            <div class="section-title">對應照顧計畫</div>
+          </div>
+          {% for plan in pair.plans %}
+          <div class="plan-block">
+            {% for item in plan.coded_services %}<strong>{{ item.code }}</strong> {{ item.name }} ×{{ item.quantity }}<br>{% endfor %}
+            {% if plan.goals|selectattr('id', 'in', group.continued_goal_ids)|list %}<span class="linked-note">延續前次照顧計畫</span><br>{% endif %}
+            <small>居服員：{{ plan.assigned_caregiver.display_name if plan.assigned_caregiver else "未指派" }}　｜　對應目標：{{ plan.goals|map(attribute="domain")|join("、") or "-" }}</small>
+            {% if user.role.value in ["居督", "主管"] %}
+            <div class="compact-card-actions" style="justify-content:flex-start; margin-top:0.5rem;">
+              <a href="/cases/{{ case.id }}/care_plans/{{ plan.id }}/edit" class="btn btn-secondary btn-compact">編輯</a>
+              {% if plan.id not in protected_plan_ids %}<form method="post" action="/cases/{{ case.id }}/care_plans/{{ plan.id }}/delete" onsubmit="return confirm('確定刪除這份照顧計畫？其衍生班表也會一併刪除。');"><button type="submit" class="btn btn-secondary btn-compact">刪除</button></form>{% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% else %}<p style="color:#999;">尚未建立對應計畫</p>{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="card">此評估尚未建立目標或照顧計畫。</div>
+      {% endif %}
+    </div>
+    {% else %}<div class="card">尚未建立目標或照顧計畫。請先完成評估。</div>{% endfor %}
   </section>
 
   <section class="case-tab-panel" data-panel="schedule">
-  <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">服務班表</div><div>{% if case.service_schedules %}<a href="/schedules?view=case&case_id={{ case.id }}" class="btn btn-secondary">月曆檢視</a>{% endif %}{% if user.role.value in ["居督", "主管"] and case.status.value == "服務中" %}<a href="/cases/{{ case.id }}/schedules/new" class="btn">+ 建立週期班表</a>{% endif %}</div></div>{% if case.service_schedules %}<table><thead><tr><th>服務項目</th><th>居服員</th><th>週期／時間</th><th>生效期間</th><th>備註</th><th></th></tr></thead><tbody>{% for schedule in case.service_schedules|sort(attribute="start_time") %}<tr><td>{{ schedule.service_code }} {{ schedule.service_name }}（{{ schedule.minutes }} 分鐘）</td><td>{{ schedule.caregiver.display_name }}</td><td>{% for weekday in schedule.weekdays %}{{ ["週一", "週二", "週三", "週四", "週五", "週六", "週日"][weekday] }}{% if not loop.last %}、{% endif %}{% endfor %}<br>{{ schedule.start_time.strftime('%H:%M') }}</td><td>{{ schedule.effective_from }}{% if schedule.effective_until %} 至 {{ schedule.effective_until }}{% endif %}</td><td>{{ schedule.note or "-" }}</td><td>{% if user.role.value in ["居督", "主管"] %}<a href="/cases/{{ case.id }}/schedules/{{ schedule.id }}/edit" class="btn btn-secondary">編輯</a><form method="post" action="/cases/{{ case.id }}/schedules/{{ schedule.id }}/delete" style="display:inline;" onsubmit="return confirm('確定刪除此班表？');"><button class="btn btn-secondary" type="submit">刪除</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立服務班表。</p>{% endif %}</div>
+  {% if pending_imported_schedule_count %}
+  <div class="card returned-review-alert">
+    <strong>此個案已有照顧計畫，但仍有 {{ pending_imported_schedule_count }} 筆外部匯入班表待轉正式。</strong><br>
+    後續正式簽核流程應先完成班表轉正式或取代，避免評估計畫與實際排班脫節。
+  </div>
+  {% endif %}
+  <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">正式週期班表</div><div>{% if case.service_schedules or imported_schedule_records %}<a href="/schedules?view=case&case_id={{ case.id }}" class="btn btn-secondary">月曆檢視</a>{% endif %}{% if user.role.value in ["居督", "主管"] and case.status.value == "服務中" %}<a href="/cases/{{ case.id }}/schedules/new" class="btn">+ 建立週期班表</a>{% endif %}</div></div>{% if case.service_schedules %}<table><thead><tr><th>服務項目</th><th>居服員</th><th>週期／時間</th><th>生效期間</th><th>備註</th><th></th></tr></thead><tbody>{% for schedule in case.service_schedules|sort(attribute="start_time") %}<tr><td>{{ schedule.service_code }} {{ schedule.service_name }}（{{ schedule.minutes }} 分鐘）</td><td>{{ schedule.caregiver.display_name }}</td><td>{% for weekday in schedule.weekdays %}{{ ["週一", "週二", "週三", "週四", "週五", "週六", "週日"][weekday] }}{% if not loop.last %}、{% endif %}{% endfor %}<br>{{ schedule.start_time.strftime('%H:%M') }}</td><td>{{ schedule.effective_from }}{% if schedule.effective_until %} 至 {{ schedule.effective_until }}{% endif %}</td><td>{{ schedule.note or "-" }}</td><td>{% if user.role.value in ["居督", "主管"] %}<a href="/cases/{{ case.id }}/schedules/{{ schedule.id }}/edit" class="btn btn-secondary">編輯</a><form method="post" action="/cases/{{ case.id }}/schedules/{{ schedule.id }}/delete" style="display:inline;" onsubmit="return confirm('確定刪除此班表？');"><button class="btn btn-secondary" type="submit">刪除</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立正式週期班表。</p>{% endif %}</div>
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">外部匯入班表</div>
+    {% if imported_schedule_records %}
+    <table><thead><tr><th>日期</th><th>時間</th><th>居服員</th><th>服務代碼</th><th>狀態</th><th>來源</th></tr></thead><tbody>
+      {% for record in imported_schedule_records[:60] %}
+      <tr>
+        <td>{{ record.service_date }}</td>
+        <td>{{ record.start_time.strftime('%H:%M') }}–{{ record.end_time.strftime('%H:%M') }}</td>
+        <td>{{ record.caregiver.display_name if record.caregiver else record.caregiver_name_raw }}</td>
+        <td>{{ record.service_codes or "-" }}</td>
+        <td><span class="status-badge {{ 'status-paused' if record.formalization_status == 'pending_formalization' else 'status-closed' }}">{{ schedule_status_labels.get(record.formalization_status, "外部匯入") }}</span></td>
+        <td>{{ record.source_file or "-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody></table>
+    {% if imported_schedule_records|length > 60 %}<p style="color:#666; font-size:0.85rem;">僅顯示最近 60 筆；完整資料請用月曆檢視。</p>{% endif %}
+    {% else %}<p style="color:#999;">尚未匯入外部班表。</p>{% endif %}
+  </div>
   </section>
+
+  <section class="case-tab-panel" data-panel="contact">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="section-title" style="margin:0;">電訪紀錄與 LINE 對話分析</div>
+      <div>
+        {% if user.role.value in ["居督", "主管", "主任"] and case.status.value != "已結案" %}
+        <a href="/cases/{{ case.id }}/contact-records/new" class="btn">+ 新增電訪紀錄</a>
+        <a href="/cases/{{ case.id }}/contact-records/line-analysis/new" class="btn btn-secondary">+ 貼上 LINE 對話分析</a>
+        <form method="post" action="/cases/{{ case.id }}/contact-records/recheck-line" style="display:inline-flex; gap:0.4rem; align-items:center; margin-left:0.4rem;">
+          <input type="date" name="analysis_date" value="{{ today }}" required style="width:auto;">
+          <button class="btn btn-secondary" type="submit">補查LINE訊息</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% if request.query_params.get("line_recheck_date") %}
+    <div style="background:#f2fbf7; border-left:5px solid #2c7a7b; padding:0.7rem; margin-top:0.8rem;">
+      已補查 {{ request.query_params.get("line_recheck_date") }} LINE 訊息：
+      新建 {{ request.query_params.get("line_recheck_created") }} 筆、
+      更新 {{ request.query_params.get("line_recheck_updated") }} 筆、
+      略過 {{ request.query_params.get("line_recheck_skipped") }} 個來源。
+    </div>
+    {% endif %}
+    {% if contact_records %}
+    {% if request.query_params.get("contact_deleted") %}
+    <div style="background:#f2fbf7; border-left:5px solid #2c7a7b; padding:0.7rem; margin-top:0.8rem;">
+      已刪除 {{ request.query_params.get("contact_deleted") }} 筆電訪草稿。
+    </div>
+    {% endif %}
+    <form method="post" action="/cases/{{ case.id }}/contact-records/batch-delete" onsubmit="return confirm('確定刪除勾選的電訪草稿？只會刪除草稿，已送審或已核閱不會刪除。');">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-top:0.8rem;">
+      <label style="margin:0;"><input type="checkbox" style="width:auto;" onclick="document.querySelectorAll('[data-contact-delete-check]').forEach(item => item.checked = this.checked)"> 全選草稿</label>
+      <button class="btn btn-secondary" type="submit">刪除勾選草稿</button>
+    </div>
+    <table style="margin-top:0.8rem;"><thead><tr><th></th><th>日期</th><th>內容類型</th><th>電訪對象</th><th>摘要</th><th>狀態</th></tr></thead><tbody>
+      {% for record in contact_records %}
+      <tr>
+        <td>{% if record.status.value == "草稿" %}<input data-contact-delete-check type="checkbox" name="record_ids" value="{{ record.id }}" style="width:auto;">{% endif %}</td>
+        <td>{{ record.contact_date }}</td>
+        <td>{% if record.topic_category.value == "申訴處理" %}<span class="status-badge status-returned">{{ record.phone_call_type_label }}</span>{% else %}{{ record.phone_call_type_label }}{% endif %}</td>
+        <td>{{ record.contact_detail_label }}</td>
+        <td style="white-space:pre-line; cursor:pointer;" onclick="location.href='/contact-records/{{ record.id }}'">{{ (record.summary or "-")[:120] }}{% if record.summary and record.summary|length > 120 %}...{% endif %}</td>
+        <td>{{ record.status.value }}</td>
+      </tr>
+      {% endfor %}
+    </tbody></table>
+    </form>
+    {% else %}<p style="color:#999;">尚未建立電訪紀錄。可先貼上 LINE 對話測試分類與摘要。</p>{% endif %}
+  </div>
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">申訴處理紀錄</div>
+    {% if complaints %}
+    <table><thead><tr><th>受理日</th><th>摘要</th><th>家屬回覆確認</th><th>結案日</th></tr></thead><tbody>
+      {% for complaint in complaints %}
+      <tr>
+        <td>{{ complaint.received_date }}</td>
+        <td>{{ complaint.summary or "-" }}</td>
+        <td>{{ "已確認" if complaint.family_reply_confirmed else "未確認" }}</td>
+        <td>{{ complaint.closed_date or "未結案" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody></table>
+    {% else %}<p style="color:#999;">尚未建立申訴紀錄。LINE 對話被判定為申訴時，會先自動建立申訴草稿並進入後續追蹤流程。</p>{% endif %}
+  </div>
+  </section>
+
 
   <a href="/cases" class="btn btn-secondary">返回列表</a>
   <script>

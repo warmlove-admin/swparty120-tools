@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 venv/
 .claude/
+*.log
+tools_bin/

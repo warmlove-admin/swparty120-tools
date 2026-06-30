@@ -2,47 +2,131 @@
 {% block title %}{{ assessment.assessment_type.value }} - {{ case.name }}{% endblock %}
 {% block content %}
   <h2>{{ case.name }} - {{ assessment.assessment_type.value }}（{{ assessment.assessment_date }}）</h2>
-  <nav class="case-detail-tabs"><a href="/cases/{{ case.id }}?tab=basic">基本資料</a><a class="active" href="/cases/{{ case.id }}?tab=assessment">評估紀錄</a><a href="/cases/{{ case.id }}?tab=care">目標與照顧計畫</a><a href="/cases/{{ case.id }}?tab=schedule">服務班表</a></nav>
+  <nav class="case-detail-tabs"><a href="/cases/{{ case.id }}?tab=basic">基本資料</a><a class="active" href="/cases/{{ case.id }}?tab=assessment">評估紀錄</a><a href="/cases/{{ case.id }}?tab=care">目標與照顧計畫</a><a href="/cases/{{ case.id }}?tab=contact">電訪紀錄</a><a href="/cases/{{ case.id }}?tab=schedule">服務班表</a></nav>
   <p>狀態：<strong>{{ assessment.status.value }}</strong></p>
 
-  <div class="card">
-    <div class="section-title">總分</div>
-    <div class="form-grid">
-      <div><label>ADL總分</label>{{ assessment.adl_total_score }} / 100</div>
-      <div><label>IADL總分（已換算百分制）</label>{{ assessment.iadl_total_score }} / 100</div>
-      <div><label>本季平均每週外出次數</label>{{ assessment.outing_frequency if assessment.outing_frequency is not none else "-" }}</div>
+  {% if user.role.value in ["居督", "主管", "主任"] %}
+  <div class="card assessment-action-card">
+    <div>
+      <strong>評估後作業</strong><br>
+      <small>先完成目標檢討、目標與照顧計畫；送審與核閱請使用右側簽核作業。</small>
     </div>
-    <div style="margin-top:1rem;">
-      <span class="status-badge status-paused">
-        依賴等級：{{ assessment.items|selectattr("item_code", "equalto", "dependency_level")|map(attribute="text_value")|first }}
-      </span>
+    <div class="compact-card-actions">
+      {% if assessment.assessment_type.value == "定期評估" and user.role.value in ["居督", "主管"] %}
+      <a class="btn" href="/cases/{{ case.id }}/assessments/{{ assessment.id }}/goal-review">{{ "查看／修改檢討" if review_count else "開始目標檢討" }}</a>
+      {% endif %}
     </div>
   </div>
+  {% endif %}
 
-  <div class="card assessment-summary-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-      <div class="section-title" style="margin:0;">綜合評估摘要</div>
-      <div><button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('assessment-summary').value)">複製摘要</button>{% if user.role.value in ["居督", "主管"] %}<button type="button" id="edit-summary" class="btn btn-secondary">編輯摘要</button>{% endif %}</div>
-    </div>
-    <form method="post" action="/cases/{{ case.id }}/assessments/{{ assessment.id }}/summary"><textarea id="assessment-summary" name="summary_text" rows="9" disabled style="line-height:1.8; margin-top:1rem; resize:vertical;">{{ summary_text }}</textarea><button id="save-summary" type="submit" class="btn" style="display:none; margin-top:0.7rem;">儲存摘要</button><button id="cancel-summary" type="button" class="btn btn-secondary" style="display:none; margin:0.7rem 0 0 0.5rem;">取消</button></form>
-    <p style="margin:0.75rem 0 0; color:#777; font-size:0.82rem;">此為系統依已填寫細項自動彙整，請由居督依專業判斷覆核及補充。</p>
+  {% if user.role.value in ["居督", "主管"] %}
+  <div style="margin:-0.35rem 0 1rem;">
+    {% if assessment.status.value == "草稿" %}<a class="btn btn-secondary" href="/cases/{{ case.id }}/assessments/{{ assessment.id }}/edit">編輯評估</a>{% endif %}
+    <a class="btn btn-secondary" href="/cases/{{ case.id }}/goals/new?assessment_id={{ assessment.id }}">補登本次評估目標</a>
+    {% if can_create_care_plan %}<a class="btn btn-secondary" href="/cases/{{ case.id }}/care_plans/new?assessment_id={{ assessment.id }}">依本次評估建立／調整照顧計畫</a>{% endif %}
+    <form method="post" action="/cases/{{ case.id }}/assessments/{{ assessment.id }}/delete" style="display:inline;" onsubmit="return confirm('確定刪除此評估？若已有目標、計畫或檢討紀錄，系統會拒絕刪除以保護歷程。');"><button class="btn btn-secondary">刪除評估</button></form>
   </div>
+  {% endif %}
 
-  <div class="card">
-    <div class="section-title">各面向細項</div>
-    <table>
-      <thead><tr><th>面向</th><th>項目</th><th>結果</th><th>備註</th></tr></thead>
-      <tbody>
-        {% for item in assessment.items %}
-        <tr>
-          <td>{{ item.domain }}</td>
-          <td>{{ item.item_code }}</td>
-          <td>{{ item.score_value if item.score_value is not none else item.text_value }}</td>
-          <td>{{ item.note or "-" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="assessment-detail-layout">
+    <div>
+      {% if assessment_trends|length >= 2 %}
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">評估趨勢圖</div>
+        <div class="trend-legend"><span class="adl">● ADL 日常生活功能</span><span class="iadl">● IADL 工具性日常生活功能</span></div>
+        <div id="assessment-detail-trend-chart" class="assessment-trend-chart"></div>
+        <div class="form-grid" style="margin-top:0.7rem;">
+          {% for point in assessment_trends|reverse %}
+          <div class="trend-summary">
+            <strong>{{ point.assessment.assessment_date }}｜{{ point.assessment.assessment_type.value }}</strong><br>
+            ADL：{{ point.assessment.adl_total_score if point.assessment.adl_total_score is not none else '-' }}{% if point.adl_change is not none %}（{{ '+' if point.adl_change >= 0 else '' }}{{ point.adl_change }}）{% endif %}
+            　IADL：{{ point.assessment.iadl_total_score if point.assessment.iadl_total_score is not none else '-' }}{% if point.iadl_change is not none %}（{{ '+' if point.iadl_change >= 0 else '' }}{{ point.iadl_change }}）{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">總分</div>
+        <div class="form-grid">
+          <div><label>ADL總分</label>{{ assessment.adl_total_score }} / 100</div>
+          <div><label>IADL總分（已換算百分制）</label>{{ assessment.iadl_total_score }} / 100</div>
+          <div><label>本季平均每週外出次數</label>{{ assessment.outing_frequency if assessment.outing_frequency is not none else "-" }}</div>
+        </div>
+        <div style="margin-top:1rem;">
+          <span class="status-badge status-paused">
+            依賴等級：{{ assessment.items|selectattr("item_code", "equalto", "dependency_level")|map(attribute="text_value")|first }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card assessment-summary-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+          <div class="section-title" style="margin:0;">綜合評估摘要</div>
+          <div><button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('assessment-summary').value)">複製摘要</button>{% if user.role.value in ["居督", "主管"] %}<button type="button" id="edit-summary" class="btn btn-secondary">編輯摘要</button>{% endif %}</div>
+        </div>
+        <form method="post" action="/cases/{{ case.id }}/assessments/{{ assessment.id }}/summary"><textarea id="assessment-summary" name="summary_text" rows="9" disabled style="line-height:1.8; margin-top:1rem; resize:vertical;">{{ summary_text }}</textarea><button id="save-summary" type="submit" class="btn" style="display:none; margin-top:0.7rem;">儲存摘要</button><button id="cancel-summary" type="button" class="btn btn-secondary" style="display:none; margin:0.7rem 0 0 0.5rem;">取消</button></form>
+        <p style="margin:0.75rem 0 0; color:#777; font-size:0.82rem;">此為系統依已填寫細項自動彙整，請由居督依專業判斷覆核及補充。</p>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">各面向細項</div>
+        <table>
+          <thead><tr><th>面向</th><th>項目</th><th>結果</th><th>備註</th></tr></thead>
+          <tbody>
+            {% for item in assessment.items %}
+            <tr>
+              <td>{{ item.domain }}</td>
+              <td>{{ item.item_code }}</td>
+              <td>{{ item.score_value if item.score_value is not none else item.text_value }}</td>
+              <td>{{ item.note or "-" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">簽核作業</div>
+        <p style="color:#555; margin-top:0;">送審、核閱與退回都在預覽頁處理；此處保留目前狀態與往來意見。</p>
+        <a class="btn" href="/cases/{{ case.id }}/assessments/{{ assessment.id }}/review-preview">
+          {% if assessment.status.value == "草稿" %}開啟送審預覽{% elif assessment.status.value == "待審" %}開啟核閱預覽{% else %}查看簽核內容{% endif %}
+        </a>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">審核意見與修正歷程</div>
+        {% if active_review_rows %}
+        <div style="display:grid; gap:0.5rem; margin-bottom:0.8rem;">
+          {% for row in active_review_rows %}
+          <div class="signer-cell" style="border:1px solid #d8e5e5; padding:0.45rem; min-height:64px;">
+            {% if row.stamp %}<img class="electronic-stamp" src="{{ row.stamp.image_url }}" alt="{{ row.role }} {{ row.name }} 電子核章">{% endif %}
+            <div class="signer-text">{{ row.role }}<br>{{ row.name }}<small>{{ row.status }}｜{{ row.created_at.strftime('%Y-%m-%d %H:%M') }}</small></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if review_logs %}
+        <table>
+          <thead><tr><th>時間</th><th>人員</th><th>意見／修正說明</th></tr></thead>
+          <tbody>
+            {% for log in review_logs %}
+            <tr>
+              <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}<br><small>{{ review_note_label(log) }}</small></td>
+              <td>{{ log.changed_by_user.display_name if log.changed_by_user else '-' }}</td>
+              <td>{{ log.change_note or '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p style="color:#999;">尚無簽核或退回意見。</p>
+        {% endif %}
+      </div>
+    </aside>
   </div>
 
   <a href="/cases/{{ case.id }}" class="btn btn-secondary">返回個案</a>
@@ -50,5 +134,15 @@
     const summary = document.getElementById('assessment-summary');
     const edit = document.getElementById('edit-summary');
     if (edit) { const original = summary.value; edit.onclick = () => { summary.disabled = false; summary.focus(); edit.style.display = 'none'; document.getElementById('save-summary').style.display = ''; document.getElementById('cancel-summary').style.display = ''; }; document.getElementById('cancel-summary').onclick = () => { summary.value = original; summary.disabled = true; edit.style.display = ''; document.getElementById('save-summary').style.display = 'none'; document.getElementById('cancel-summary').style.display = 'none'; }; }
+    (() => {
+      const points = [{% for point in assessment_trends %}{ date: "{{ point.assessment.assessment_date }}", adl: {{ point.assessment.adl_total_score if point.assessment.adl_total_score is not none else 'null' }}, iadl: {{ point.assessment.iadl_total_score if point.assessment.iadl_total_score is not none else 'null' }} }{% if not loop.last %},{% endif %}{% endfor %}];
+      const host = document.getElementById('assessment-detail-trend-chart'); if (!host || points.length < 2) return;
+      const width = Math.max(540, points.length * 160), height = 210, left = 46, right = 18, top = 14, bottom = 40;
+      const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${width} ${height}`); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'ADL與IADL評估趨勢圖');
+      const x = i => left + i * ((width - left - right) / Math.max(points.length - 1, 1)); const y = value => top + (100 - value) * ((height - top - bottom) / 100);
+      [0, 25, 50, 75, 100].forEach(value => { const line = document.createElementNS(ns, 'line'); line.setAttribute('x1', left); line.setAttribute('x2', width-right); line.setAttribute('y1', y(value)); line.setAttribute('y2', y(value)); line.setAttribute('class', 'trend-grid'); svg.append(line); const label = document.createElementNS(ns, 'text'); label.setAttribute('x', left-9); label.setAttribute('y', y(value)+4); label.setAttribute('text-anchor', 'end'); label.setAttribute('class', 'trend-axis'); label.textContent = value; svg.append(label); });
+      [['adl','#2c7a7b'], ['iadl','#7c4d99']].forEach(([key, color]) => { const valid = points.map((point, index) => ({value:point[key], index})).filter(point => point.value !== null); if (!valid.length) return; const polyline = document.createElementNS(ns, 'polyline'); polyline.setAttribute('points', valid.map(point => `${x(point.index)},${y(point.value)}`).join(' ')); polyline.setAttribute('fill', 'none'); polyline.setAttribute('stroke', color); polyline.setAttribute('stroke-width', '4'); polyline.setAttribute('stroke-linecap', 'round'); polyline.setAttribute('stroke-linejoin', 'round'); svg.append(polyline); valid.forEach(point => { const dot = document.createElementNS(ns, 'circle'); dot.setAttribute('cx', x(point.index)); dot.setAttribute('cy', y(point.value)); dot.setAttribute('r', '5'); dot.setAttribute('fill', color); svg.append(dot); const value = document.createElementNS(ns, 'text'); value.setAttribute('x', x(point.index)); value.setAttribute('y', y(point.value)-10); value.setAttribute('text-anchor', 'middle'); value.setAttribute('fill', color); value.setAttribute('class', 'trend-value'); value.textContent = point.value; svg.append(value); }); });
+      points.forEach((point, index) => { const label = document.createElementNS(ns, 'text'); label.setAttribute('x', x(index)); label.setAttribute('y', height-18); label.setAttribute('text-anchor', index === 0 ? 'start' : (index === points.length - 1 ? 'end' : 'middle')); label.setAttribute('class', 'trend-axis'); label.textContent = point.date; svg.append(label); }); host.append(svg);
+    })();
   </script>
 {% endblock %}

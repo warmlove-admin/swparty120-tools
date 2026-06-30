@@ -2,11 +2,13 @@
 {% block title %}{{ "編輯" if care_plan else "新增" }}照顧計畫 - {{ case.name }}{% endblock %}
 {% block content %}
   <h2>{{ "編輯" if care_plan else "新增" }}照顧計畫：{{ case.name }}</h2>
+  {% if origin_assessment %}<p class="linked-note">此計畫將標示為回應 {{ origin_assessment.assessment_date }} 的{{ origin_assessment.assessment_type.value }}。</p>{% endif %}
   <p style="font-size:0.85rem; color:#555;">
     勾選回應目標所需的服務代碼項目並填寫數量，系統會自動依碼別單位分鐘數累計總時間。
     服務週期與時間安排請於日後「建立服務班表」功能設定，本頁僅決定要做哪些服務項目。
   </p>
   <form method="post" action="/cases/{{ case.id }}/care_plans{{ '/' + care_plan.id + '/edit' if care_plan else '' }}">
+    {% if not care_plan %}<input type="hidden" name="origin_assessment_id" value="{{ origin_assessment.id if origin_assessment else '' }}">{% endif %}
     <div class="card">
       <div class="section-title">服務代碼項目（可多選，填數量）</div>
       {% set existing = {} %}
@@ -51,9 +53,9 @@
 
       <div style="margin-top:1rem;">
         <label>關聯照顧目標（可多選，至少選一個）</label>
-        {% if case.goals %}
+        {% if selectable_goals %}
         {% set linked_ids = care_plan.goals|map(attribute="id")|list if care_plan else [] %}
-        {% for g in case.goals %}
+        {% for g in selectable_goals %}
         <label style="display:block; font-weight:normal; margin:0.3rem 0;">
           <input type="checkbox" name="goal_ids" value="{{ g.id }}" style="width:auto;"
             {% if g.id == preselect_goal_id or g.id in linked_ids %}checked{% endif %}>
@@ -61,11 +63,12 @@
         </label>
         {% endfor %}
         {% else %}
-        <p style="color:#999;">此個案尚無照顧目標，請先建立照顧目標</p>
+        <p style="color:#999;">此評估尚無可建立計畫的進行中目標，請先建立或調整照顧目標。</p>
         {% endif %}
       </div>
     </div>
-    <button type="submit" class="btn">{{ "儲存變更" if care_plan else "建立照顧計畫" }}</button>
+    {% if selectable_goals %}<button type="submit" class="btn">{{ "儲存變更" if care_plan else "建立照顧計畫" }}</button>{% endif %}
     <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
   </form>
+  {% if care_plan %}<form method="post" action="/cases/{{ case.id }}/care_plans/{{ care_plan.id }}/delete" style="margin-top:1rem;" onsubmit="return confirm('確定刪除這份照顧計畫？若已有由此計畫建立的班表，也會一併刪除。');"><button type="submit" class="btn btn-secondary">刪除照顧計畫</button></form>{% endif %}
 {% endblock %}

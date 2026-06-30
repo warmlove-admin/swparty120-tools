@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}新增申訴單{% endblock %}
+{% block content %}
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+    <h2 style="margin:0;">新增申訴單</h2>
+    <a class="btn btn-secondary" href="/complaints">返回申訴單</a>
+  </div>
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <form class="card" method="post" action="/complaints/new">
+    <div class="section-title" style="margin-top:0;">申訴表類型</div>
+    <div class="form-grid">
+      <div>
+        <label>申訴表</label>
+        <select id="report-kind" name="report_kind" required>
+          {% for option in report_kinds %}
+          <option value="{{ option.value }}" {% if selected_kind == option.value %}selected{% endif %}>{{ option.value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>申訴人類型</label>
+        <select id="reporter-type" name="reporter_type" required>
+          {% for option in reporter_types %}
+          <option value="{{ option.value }}">{{ option.value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div data-section="employee">
+        <label>送出對象</label>
+        <select name="submit_to">
+          <option value="supervisor" {% if not has_supervisor %}disabled{% endif %}>直屬主管{% if not has_supervisor %}（未設定）{% endif %}</option>
+          <option value="director" {% if not has_director %}disabled{% endif %}>主任{% if not has_director %}（未設定）{% endif %}</option>
+        </select>
+      </div>
+    </div>
+
+    <div data-section="employee">
+      <div class="section-title">員工本人申訴</div>
+      <div class="form-grid">
+        <div data-kind-section="general">
+          <label>申訴類別</label>
+          <select name="employee_category">
+            {% for option in employee_categories %}
+            <option value="{{ option.value }}">{{ option.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>申訴人</label>
+          <input value="{{ user.display_name }}（{{ user.username }}）" disabled>
+        </div>
+      </div>
+    </div>
+
+    <div data-section="recipient" style="display:none;">
+      <div class="section-title">代服務對象申訴</div>
+      <div class="form-grid">
+        <div>
+          <label>對應個案</label>
+          <input class="case-search-input" type="search" placeholder="輸入個案姓名或案號後點選" data-case-search-target="complaint-case-select">
+          <select id="complaint-case-select" name="case_id" data-case-search-select>
+            <option value="">請選擇</option>
+            {% for case in cases %}
+            <option value="{{ case.id }}" data-search="{{ case.org_case_no }} {{ case.name }} {{ case.status.value }}">{{ case.org_case_no }}｜{{ case.name }}｜{{ case.status.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div data-kind-section="general">
+          <label>申訴類別</label>
+          <select name="recipient_category">
+            {% for option in recipient_categories %}
+            <option value="{{ option.value }}">{{ option.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>申訴人姓名</label>
+          <input name="complainant_name" placeholder="個案本人或家屬姓名">
+        </div>
+        <div>
+          <label>與個案關係</label>
+          <input name="complainant_relation" placeholder="本人、女兒、案子、主要照顧者">
+        </div>
+        <div>
+          <label>聯絡電話</label>
+          <input name="complainant_phone">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">申訴內容</div>
+    <div class="form-grid">
+      <div data-kind-section="sensitive" style="display:none;">
+        <label>事件日期</label>
+        <input type="date" name="incident_date">
+      </div>
+      <div data-kind-section="sensitive" style="display:none;">
+        <label>事件地點</label>
+        <input name="incident_location">
+      </div>
+      <div data-kind-section="sensitive" style="display:none;">
+        <label>被申訴人／相對人姓名</label>
+        <input name="accused_name">
+      </div>
+      <div data-kind-section="sensitive" style="display:none;">
+        <label>被申訴人／相對人關係</label>
+        <input name="accused_relationship" placeholder="同事、主管、服務對象、家屬、其他">
+      </div>
+      <div class="full">
+        <label>申訴主旨</label>
+        <input name="subject" required>
+      </div>
+      <div class="full">
+        <label data-label-general="申訴內容" data-label-sexual-harassment="性騷擾事件經過" data-label-sexual-assault="性侵害事件經過">申訴內容</label>
+        <textarea name="content" rows="7" required></textarea>
+      </div>
+      <div class="full" data-kind-section="sensitive" style="display:none;">
+        <label>證人或相關人員</label>
+        <textarea name="witness_info" rows="3"></textarea>
+      </div>
+      <div class="full" data-kind-section="sensitive" style="display:none;">
+        <label>希望提供的協助</label>
+        <textarea name="requested_support" rows="4" placeholder="例如：協助通報、安排面談、調整服務安排、保密聯繫方式等"></textarea>
+      </div>
+      <div class="full">
+        <label>希望處理方式／補充說明</label>
+        <textarea name="expected_resolution" rows="4"></textarea>
+      </div>
+    </div>
+
+    <div style="margin-top:0.8rem; color:#688080; line-height:1.6;">
+      送出後系統會建立申訴單，並以今天起算兩個工作天作為第一次紀錄送出期限。
+    </div>
+    <button class="btn" type="submit" style="margin-top:1rem;">送出申訴單</button>
+  </form>
+
+  <script>
+    (() => {
+      const kindSelect = document.getElementById('report-kind');
+      const select = document.getElementById('reporter-type');
+      const refresh = () => {
+        const employee = select.value === '員工本人申訴';
+        const kind = kindSelect.value;
+        const sensitive = kind === '性騷擾申訴' || kind === '性侵害申訴';
+        document.querySelectorAll('[data-section="employee"]').forEach(node => node.style.display = employee ? '' : 'none');
+        document.querySelectorAll('[data-section="recipient"]').forEach(node => node.style.display = employee ? 'none' : '');
+        document.querySelectorAll('[data-kind-section="general"]').forEach(node => node.style.display = sensitive ? 'none' : '');
+        document.querySelectorAll('[data-kind-section="sensitive"]').forEach(node => node.style.display = sensitive ? '' : 'none');
+        document.querySelectorAll('[data-label-general]').forEach(node => {
+          if (kind === '性騷擾申訴') node.textContent = node.dataset.labelSexualHarassment;
+          else if (kind === '性侵害申訴') node.textContent = node.dataset.labelSexualAssault;
+          else node.textContent = node.dataset.labelGeneral;
+        });
+      };
+      kindSelect.addEventListener('change', refresh);
+      select.addEventListener('change', refresh);
+      refresh();
+    })();
+  </script>
+{% endblock %}

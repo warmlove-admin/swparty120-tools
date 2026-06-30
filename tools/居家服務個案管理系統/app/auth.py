@@ -14,6 +14,10 @@ ACCESS_TOKEN_EXPIRE_HOURS = 12
 COOKIE_NAME = "session_token"
 
 
+def must_change_password(user: User) -> bool:
+    return str(user.must_change_password).lower() in {"1", "true", "yes"}
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 

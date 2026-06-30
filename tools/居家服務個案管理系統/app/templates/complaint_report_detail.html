@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% macro signature_table(rows) %}
+  <table class="complaint-signature-table">
+    <thead>
+      <tr>
+        {% for row in rows %}
+        <th>{{ row.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        {% for row in rows %}
+        <td>
+          <strong>{{ row.name }}</strong>
+          <span class="signature-role">{{ row.role }}</span>
+        </td>
+        {% endfor %}
+      </tr>
+      <tr>
+        {% for row in rows %}
+        <td class="signature-note">{{ row.note }}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        {% for row in rows %}
+        <td>{{ row.time.strftime('%Y-%m-%d') if row.time else "-" }}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        {% for row in rows %}
+        <td class="stamp-cell">
+          {% if row.stamp %}
+          <img class="electronic-stamp" src="{{ row.stamp.image_url }}" alt="{{ row.name }}電子職章">
+          {% else %}
+          <span class="stamp-placeholder">-</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    </tbody>
+  </table>
+{% endmacro %}
+{% block title %}申訴處理{% endblock %}
+{% block content %}
+  <style>
+    .complaint-page { font-size:1.05rem; }
+    .complaint-card { padding:0.85rem 1rem; }
+    .complaint-table { table-layout:fixed; box-shadow:none; border:1px solid #dce8e8; }
+    .complaint-table th { width:8.6rem; background:#eaf1f1; white-space:nowrap; }
+    .complaint-table td { width:auto; vertical-align:top; line-height:1.45; }
+    .complaint-content { white-space:pre-line; line-height:1.75; font-size:1.04rem; }
+    .complaint-stage-meta { color:#5d7477; margin:0.55rem 0 0.75rem; font-weight:700; }
+    .complaint-actions { display:flex; flex-wrap:wrap; align-items:center; gap:0.45rem; margin-top:0.75rem; }
+    .complaint-actions form { display:flex; flex-wrap:wrap; align-items:center; gap:0.45rem; margin:0; }
+    .complaint-actions input { width:300px; max-width:100%; }
+    .complaint-signature-table { margin-top:0.55rem; table-layout:fixed; box-shadow:none; border:2px solid #9ec3c3; }
+    .complaint-signature-table th { text-align:center; font-size:1.05rem; background:#e4f0f0; color:#154f51; padding:0.28rem 0.35rem; }
+    .complaint-signature-table td { text-align:center; height:1.55rem; vertical-align:middle; padding:0.2rem 0.35rem; line-height:1.25; }
+    .complaint-signature-table .signature-role { display:inline; color:#667; font-size:0.96rem; margin-left:0.45rem; }
+    .complaint-signature-table .signature-note { height:2.7rem; white-space:pre-line; text-align:left; vertical-align:top; line-height:1.35; }
+    .complaint-signature-table .stamp-cell { height:3.35rem; }
+    .complaint-signature-table .electronic-stamp { position:static; transform:none; width:48px; height:48px; }
+    .complaint-alert { background:#fffaf2; border-left:5px solid #b9770e; padding:0.75rem 0.9rem; margin:0.75rem 0; color:#6b450d; font-weight:800; }
+    @media (max-width: 760px) {
+      .complaint-table th { width:7.2rem; white-space:normal; }
+      .complaint-actions input { width:100%; }
+    }
+  </style>
+
+  <div class="complaint-page">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem;">
+    <h2 style="margin:0;">申訴處理</h2>
+    <a class="btn btn-secondary" href="{% if can_handle %}/todos{% else %}/complaints{% endif %}">返回</a>
+  </div>
+
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">基本資料</div>
+    <table class="complaint-table">
+      <tr><th>申訴表</th><td>{{ report.report_kind.value }}</td><th>申訴人類型</th><td>{{ report.reporter_type.value }}</td></tr>
+      <tr><th>目前狀態</th><td>{{ report.status.value }}</td><th>受理日期</th><td>{{ report.received_date }}</td></tr>
+      <tr><th>首次記錄陳核期限</th><td>{{ report.initial_record_due_date }}</td><th>{% if report.report_kind.value == "性侵害申訴" %}結案期限{% else %}最終處理期限{% endif %}</th><td>{{ report.final_result_due_date }}</td></tr>
+      <tr><th>主責人員</th><td>{{ report.responsible_user.display_name if report.responsible_user else "-" }}</td><th>審核者</th><td>{{ report.assigned_reviewer.display_name if report.assigned_reviewer else "-" }}</td></tr>
+    </table>
+  </div>
+
+  {% if can_view_sensitive_content %}
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">申訴內容</div>
+    <table class="complaint-table">
+      <tr><th>送出人</th><td>{{ report.submitted_by.display_name if report.submitted_by else "-" }}</td><th>送出日期</th><td>{{ report.submitted_at.strftime('%Y-%m-%d') if report.submitted_at else "-" }}</td></tr>
+      <tr><th>主旨</th><td colspan="3">{{ report.subject }}</td></tr>
+      {% if report.case %}
+      <tr><th>個案</th><td>{{ report.case.org_case_no }}｜{{ report.case.name }}</td><th>申訴人</th><td>{{ report.complainant_name or "-" }} {{ report.complainant_relation or "" }}</td></tr>
+      {% endif %}
+      {% if report.report_kind.value == "一般申訴" %}
+      <tr><th>問題類別</th><td colspan="3">{{ report.employee_category.value if report.employee_category else report.recipient_category.value if report.recipient_category else "-" }}</td></tr>
+      <tr><th>申訴內容</th><td colspan="3" class="complaint-content">{{ report.content }}</td></tr>
+      <tr><th>期待處理方式</th><td colspan="3" class="complaint-content">{{ report.expected_resolution or "-" }}</td></tr>
+      {% else %}
+      <tr><th>事件日期</th><td>{{ report.incident_date or "-" }}</td><th>事件地點</th><td>{{ report.incident_location or "-" }}</td></tr>
+      <tr><th>相對人</th><td>{{ report.accused_name or "-" }}</td><th>相對人關係</th><td>{{ report.accused_relationship or "-" }}</td></tr>
+      <tr><th>事件經過</th><td colspan="3" class="complaint-content">{{ report.content }}</td></tr>
+      <tr><th>證人或相關人員</th><td colspan="3" class="complaint-content">{{ report.witness_info or "-" }}</td></tr>
+      <tr><th>希望提供協助</th><td colspan="3" class="complaint-content">{{ report.requested_support or "-" }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">首次處理紀錄</div>
+    {% if report.initial_record_content %}
+      <div class="complaint-content">{{ report.initial_record_content }}</div>
+      <p class="complaint-stage-meta">送出日期：{{ report.initial_record_submitted_at.strftime('%Y-%m-%d') if report.initial_record_submitted_at else "-" }}｜決行日期：{{ report.initial_record_approved_at.strftime('%Y-%m-%d') if report.initial_record_approved_at else "尚未決行" }}{% if initial_next_label %}｜目前待{{ initial_next_label }}{% endif %}</p>
+      {{ signature_table(initial_signature_rows) }}
+      {% if report.initial_record_return_note %}
+      <div class="complaint-alert">退件原因：{{ report.initial_record_return_note }}</div>
+      {% endif %}
+    {% endif %}
+    {% if can_handle and not report.initial_record_approved_at and (not report.initial_record_submitted_at or report.initial_record_returned_at) %}
+      <form method="post" action="/complaints/{{ report.id }}/initial-record">
+        <textarea name="content" rows="5" required placeholder="填寫首次處理紀錄">{{ report.initial_record_content or "" }}</textarea>
+        <button class="btn" type="submit" style="margin-top:0.8rem;">{% if report.initial_record_returned_at %}修正後重送首次處理紀錄{% else %}送出首次處理紀錄{% endif %}</button>
+      </form>
+    {% endif %}
+    <div class="complaint-actions">
+      {% if can_approve_initial %}
+      <form method="post" action="/complaints/{{ report.id }}/initial-record/approve">
+        <input name="note" placeholder="簽核意見">
+        <button class="btn" type="submit">{{ initial_next_label }}首次處理紀錄</button>
+      </form>
+      {% endif %}
+      {% if can_return_initial %}
+      <form method="post" action="/complaints/{{ report.id }}/initial-record/return">
+        <input name="note" placeholder="退件原因" required>
+        <button class="btn btn-returned" type="submit">退件</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">{% if report.report_kind.value == "性侵害申訴" %}結案紀錄陳核{% else %}最終處理結果陳核{% endif %}</div>
+    {% if not report.initial_record_approved_at %}
+      <p style="color:#999;">首次處理紀錄尚未決行，不能編輯{% if report.report_kind.value == "性侵害申訴" %}結案紀錄{% else %}最終處理結果{% endif %}。</p>
+    {% else %}
+      {% if report.final_result_return_note %}
+      <div class="complaint-alert">退件原因：{{ report.final_result_return_note }}</div>
+      {% endif %}
+      {% if report.final_result_content %}
+      <div class="complaint-content">{{ report.final_result_content }}</div>
+      <p class="complaint-stage-meta">送出日期：{{ report.final_result_submitted_at.strftime('%Y-%m-%d') if report.final_result_submitted_at else "-" }}｜決行日期：{{ report.final_result_approved_at.strftime('%Y-%m-%d') if report.final_result_approved_at else "尚未決行" }}{% if final_next_label %}｜目前待{{ final_next_label }}{% endif %}</p>
+      {{ signature_table(final_signature_rows) }}
+      {% endif %}
+      {% if can_handle and not report.final_result_approved_at and (not report.final_result_submitted_at or report.final_result_returned_at) %}
+      <form method="post" action="/complaints/{{ report.id }}/final-result">
+        <textarea name="content" rows="6" required placeholder="{% if report.report_kind.value == '性侵害申訴' %}填寫結案紀錄，包含是否報警及內部處理結果{% else %}填寫最終處理結果，送出後進行陳核{% endif %}">{{ report.final_result_content or "" }}</textarea>
+        <button class="btn" type="submit" style="margin-top:0.8rem;">{% if report.final_result_returned_at %}修正後重送{% endif %}{% if report.report_kind.value == "性侵害申訴" %}結案紀錄{% else %}最終處理結果{% endif %}陳核</button>
+      </form>
+      {% endif %}
+      <div class="complaint-actions">
+        {% if can_approve_final %}
+        <form method="post" action="/complaints/{{ report.id }}/final-result/approve">
+          <input name="note" placeholder="簽核意見">
+          <button class="btn" type="submit">{{ final_next_label }}{% if report.report_kind.value == "性侵害申訴" %}結案紀錄{% else %}處理結果{% endif %}</button>
+        </form>
+        {% endif %}
+        {% if can_return_final %}
+        <form method="post" action="/complaints/{{ report.id }}/final-result/return">
+          <input name="note" placeholder="退件原因" required>
+          <button class="btn btn-returned" type="submit">退件</button>
+        </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if report.report_kind.value != "性侵害申訴" %}
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">回覆申訴人紀錄</div>
+    {% if report.reply_return_note %}
+      <div class="complaint-alert">退件原因：{{ report.reply_return_note }}</div>
+    {% endif %}
+    {% if report.reply_content %}
+      <div class="complaint-content">{{ report.reply_content }}</div>
+      <p class="complaint-stage-meta">送出日期：{{ report.reply_submitted_at.strftime('%Y-%m-%d') if report.reply_submitted_at else "-" }}｜決行日期：{{ report.reply_approved_at.strftime('%Y-%m-%d') if report.reply_approved_at else "尚未決行" }}{% if reply_next_label %}｜目前待{{ reply_next_label }}{% endif %}</p>
+      {{ signature_table(reply_signature_rows) }}
+    {% endif %}
+    {% if can_handle and report.final_result_approved_at and not report.reply_approved_at and (not report.reply_submitted_at or report.reply_returned_at) %}
+      <form method="post" action="/complaints/{{ report.id }}/reply">
+        <textarea name="content" rows="5" required placeholder="填寫要回覆申訴人的內容，送出後需陳核">{{ report.reply_content or "" }}</textarea>
+        <button class="btn" type="submit" style="margin-top:0.8rem;">{% if report.reply_returned_at %}修正後重送{% endif %}回覆紀錄陳核</button>
+      </form>
+    {% endif %}
+    <div class="complaint-actions">
+      {% if can_approve_reply %}
+      <form method="post" action="/complaints/{{ report.id }}/reply/approve">
+        <input name="note" placeholder="簽核意見">
+        <button class="btn" type="submit">{{ reply_next_label }}回覆紀錄</button>
+      </form>
+      {% endif %}
+      {% if can_return_reply %}
+      <form method="post" action="/complaints/{{ report.id }}/reply/return">
+        <input name="note" placeholder="退件原因" required>
+        <button class="btn btn-returned" type="submit">退件</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">回覆內容</div>
+    {% if report.reply_approved_at %}
+      <div class="complaint-content">{{ report.reply_content }}</div>
+      <p class="complaint-stage-meta">回覆日期：{{ report.reply_approved_at.strftime('%Y-%m-%d') }}</p>
+    {% else %}
+      <p style="color:#999;">申訴已送出，處理完成並核准回覆後會在這裡通知。</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if can_handle and logs %}
+  <div class="card complaint-card">
+    <div class="section-title" style="margin-top:0;">簽核／退件紀錄</div>
+    <table class="complaint-table">
+      <thead><tr><th>日期</th><th>人員</th><th>狀態</th><th>意見</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr><td>{{ log.created_at.strftime('%Y-%m-%d') if log.created_at else "-" }}</td><td>{{ log.changed_by_user.display_name if log.changed_by_user else "-" }}</td><td>{{ log.to_status }}</td><td>{{ log.change_note or "-" }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  </div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}LINE 每日分析{% endblock %}
+{% block content %}
+  <h2>LINE 每日分析</h2>
+  <div class="card" style="background:#f7fbfb; border-left:5px solid #2c7a7b;">
+    <strong>這裡是批次分析紀錄，不是編輯工作頁。</strong><br>
+    要刪除無用訊息請到 <a href="/line/messages">LINE 原始訊息</a>；要修改或刪除草稿請進個案的電訪紀錄頁。
+  </div>
+  {% if request.query_params.get("created") is not none %}
+  <div class="card" style="background:#f2fbf7; border-left:5px solid #2c7a7b;">
+    <strong>{{ request.query_params.get("analysis_date") }} 分析完成</strong><br>
+    可分析來源：{{ request.query_params.get("message_groups") }}，
+    新增電訪紀錄：{{ request.query_params.get("created") }}，
+    略過既有分析：{{ request.query_params.get("skipped") }}。
+  </div>
+  {% endif %}
+  {% if user.role.value in ["主管", "主任"] %}
+  <div id="line-daily-analysis" class="card">
+    <div class="section-title" style="margin-top:0;">手動執行每日彙整</div>
+    <form method="post" action="/line/daily-analysis/run" class="schedule-filter">
+      <label>分析日期</label>
+      <input type="date" name="analysis_date" value="{{ today }}" required>
+      <button class="btn" type="submit">執行分析</button>
+    </form>
+  </div>
+  {% endif %}
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">最近批次紀錄</div>
+    {% if analyses %}
+    <table><thead><tr><th>日期</th><th>來源ID</th><th>訊息數</th><th>狀態</th><th>電訪紀錄</th></tr></thead><tbody>
+      {% for item in analyses %}
+      <tr>
+        <td>{{ item.analysis_date }}</td>
+        <td>{{ item.line_platform_group_id or "一對一／未記錄" }}</td>
+        <td>{{ item.message_count }}</td>
+        <td>{{ item.status }}</td>
+        <td>{% if item.contact_record_id %}<a href="/contact-records/{{ item.contact_record_id }}">查看</a>{% else %}-{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody></table>
+    {% else %}<p style="color:#999;">尚未執行每日分析。</p>{% endif %}
+  </div>
+{% endblock %}

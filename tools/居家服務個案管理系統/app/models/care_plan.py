@@ -36,6 +36,10 @@ class CarePlan(Base):
 
     id = Column(String, primary_key=True, default=gen_uuid)
     case_id = Column(String, ForeignKey("cases.id"), nullable=False)
+    # 本次計畫調整所回應的評估；舊資料可保留空值。
+    origin_assessment_id = Column(String, ForeignKey("assessments.id"), nullable=True)
+    # 由前一期計畫自動承接時保留前身，讓兩期服務安排可追溯。
+    predecessor_care_plan_id = Column(String, ForeignKey("care_plans.id"), nullable=True)
 
     coded_services = Column(JSON, nullable=False)  # 碼別清單，見上方說明
     assigned_caregiver_id = Column(String, ForeignKey("users.id"))
@@ -47,3 +51,18 @@ class CarePlan(Base):
     case = relationship("Case", backref="care_plans")
     goals = relationship("Goal", secondary=care_plan_goals, backref="care_plans")
     assigned_caregiver = relationship("User", foreign_keys=[assigned_caregiver_id])
+    origin_assessment = relationship("Assessment", foreign_keys=[origin_assessment_id])
+    predecessor_care_plan = relationship("CarePlan", remote_side=[id], foreign_keys=[predecessor_care_plan_id])
+
+
+class CarePlanAssessmentLink(Base):
+    """照顧計畫在後續定期評估中被延用的歷程關聯。"""
+    __tablename__ = "care_plan_assessment_links"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    care_plan_id = Column(String, ForeignKey("care_plans.id"), nullable=False)
+    assessment_id = Column(String, ForeignKey("assessments.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    care_plan = relationship("CarePlan", backref="assessment_links")
+    assessment = relationship("Assessment", foreign_keys=[assessment_id])

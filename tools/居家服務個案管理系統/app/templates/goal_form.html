@@ -1,8 +1,10 @@
 {% extends "base.html" %}
-{% block title %}新增照顧目標 - {{ case.name }}{% endblock %}
+{% block title %}補登本次評估目標 - {{ case.name }}{% endblock %}
 {% block content %}
-  <h2>新增照顧目標：{{ case.name }}</h2>
+  <h2>補登本次評估目標：{{ case.name }}</h2>
+  {% if origin_assessment %}<p class="linked-note">此目標將標示為回應 {{ origin_assessment.assessment_date }} 的{{ origin_assessment.assessment_type.value }}。</p>{% endif %}
   <form method="post" action="/cases/{{ case.id }}/goals">
+    <input type="hidden" name="origin_assessment_id" value="{{ origin_assessment.id if origin_assessment else '' }}">
     <div class="card">
       <div class="form-grid">
         <div>
@@ -12,7 +14,7 @@
             {% for d in domains %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
           </select>
         </div>
-        <div><label>設定日期 *</label><input type="date" name="set_date" required></div>
+        <div><label>目標日期</label><div style="padding:0.45rem; background:#f4f6f8; border-radius:4px;">{{ origin_assessment.assessment_date if origin_assessment else "需先建立評估" }}</div></div>
       </div>
 
       <div style="margin-top:1rem;">
@@ -33,8 +35,8 @@
         <textarea name="description" id="description" rows="3" required></textarea>
       </div>
     </div>
-    <button type="submit" class="btn">建立目標</button>
-    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+    <button type="submit" class="btn">補登目標</button>
+    <a href="{% if origin_assessment %}/cases/{{ case.id }}/assessments/{{ origin_assessment.id }}{% else %}/cases/{{ case.id }}?tab=care{% endif %}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
   </form>
 
   <script>

@@ -1,0 +1,91 @@
+{% set recent_list = recent_messages.get(source.source_id) or [] %}
+<form id="source-{{ source.id }}" method="post" action="/line/sources/{{ source.id }}/update" style="margin:1rem 0; padding:1rem; border:1px solid #dce8e8; border-radius:6px; {% if saved_source_id == source.id or manual_source_id == source.id %}border-left:5px solid #2c7a7b;{% endif %}">
+  <div style="display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:0.8rem;">
+    <div>
+      <div class="section-title" style="margin:0 0 0.25rem;">{{ source_card_title(source) }}</div>
+      <div style="font-size:0.82rem; color:#688080;">{{ source.category.value }} ｜ {{ source.source_kind.value }} ｜ {{ source.source_id }}</div>
+      {% if recent_list %}
+      <div style="margin-top:0.35rem; color:#344447; line-height:1.5;">
+        最近：{{ message_display_text(recent_list[0]) }}
+      </div>
+      {% endif %}
+    </div>
+    <button class="btn" type="submit">儲存對應</button>
+  </div>
+
+  <div class="form-grid">
+    <div>
+      <label>LINE 顯示名稱</label>
+      <input name="display_name" value="{{ source.display_name or '' }}" placeholder="@個案姓名／!居服員姓名／*A單位">
+    </div>
+    <div>
+      <label>來源身分</label>
+      <select name="category" data-line-category-select="{{ source.id }}">
+        {% for category in categories %}
+          <option value="{{ category.value }}" {% if source.category == category %}selected{% endif %}>{{ category.value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div data-line-field="{{ source.id }}" data-line-field-type="case">
+      <label>對應個案（個案／家屬才需要）</label>
+      <input class="case-search-input" type="search" placeholder="輸入個案姓名或案號後點選" data-case-search-target="case-select-{{ source.id }}">
+      <select id="case-select-{{ source.id }}" name="case_id" data-case-search-select>
+        <option value="">尚未對應</option>
+        {% for case in cases %}
+          <option value="{{ case.id }}" data-search="{{ case.org_case_no }} {{ case.name }} {{ case.status.value }}" {% if source.case_id == case.id %}selected{% endif %}>{{ case.org_case_no }}｜{{ case.name }}｜{{ case.status.value }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div data-line-field="{{ source.id }}" data-line-field-type="caregiver">
+      <label>對應居服員（居服員來源使用）</label>
+      <select name="caregiver_user_id">
+        <option value="">不指定</option>
+        {% for caregiver in caregivers %}
+          <option value="{{ caregiver.id }}" {% if source.caregiver_user_id == caregiver.id %}selected{% endif %}>{{ caregiver.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div data-line-field="{{ source.id }}" data-line-field-type="organization" style="display:none;">
+      <label>A 單位</label>
+      <input value="先以 LINE 顯示名稱與備註記憶" disabled>
+    </div>
+    <div class="full">
+      <label>關係／備註</label>
+      <input name="relation_label" value="{{ source.relation_label or '' }}" placeholder="例如：本人、女兒、居服員、A單位個管">
+    </div>
+  </div>
+  <div style="margin-top:0.6rem; color:#688080; font-size:0.88rem; line-height:1.6;">
+    個案／家屬才需要對應個案；居服員請選對應居服員；A 單位先以 LINE 顯示名稱與備註記憶，目前不建立電訪草稿。
+  </div>
+
+  {% if source_candidates.get(source.id) or caregiver_candidates.get(source.id) %}
+    <div style="margin-top:0.9rem; padding:0.75rem; background:#f7fbfb; border-left:4px solid #c7dfdf;">
+      {% if source_candidates.get(source.id) %}
+        <div style="font-weight:bold; color:#2c7a7b; margin-bottom:0.35rem;">可能個案</div>
+        {% for candidate in source_candidates.get(source.id) %}
+          <div style="font-size:0.88rem; margin:0.2rem 0;">{{ candidate.case.name }}（{{ candidate.case.org_case_no }}）：{{ candidate.reason }}</div>
+        {% endfor %}
+      {% endif %}
+      {% if caregiver_candidates.get(source.id) %}
+        <div style="font-weight:bold; color:#2c7a7b; margin:0.6rem 0 0.35rem;">可能居服員</div>
+        {% for caregiver in caregiver_candidates.get(source.id) %}
+          <div style="font-size:0.88rem; margin:0.2rem 0;">{{ caregiver.display_name }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div style="margin-top:0.9rem; color:#555; line-height:1.6;">
+    <strong>最近訊息：</strong>
+    <span style="color:#688080;">共 {{ source_message_counts.get(source.source_id, 0) }} 則，顯示最近 {{ recent_list|length }} 則</span>
+    {% if recent_list %}
+      <ul style="margin:0.4rem 0 0; padding-left:1.2rem;">
+        {% for message in recent_list %}
+        <li>{{ message.event_timestamp.strftime('%m/%d %H:%M') }} ｜ {{ message_display_text(message) }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      尚無訊息
+    {% endif %}
+  </div>
+</form>

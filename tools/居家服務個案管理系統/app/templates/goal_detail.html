@@ -7,20 +7,28 @@
     <a href="/cases/{{ case.id }}/goals/{{ goal.id }}/edit" class="btn btn-secondary">編輯</a>
     {% endif %}
   </div>
-  <nav class="case-detail-tabs"><a href="/cases/{{ case.id }}?tab=basic">基本資料</a><a href="/cases/{{ case.id }}?tab=assessment">評估紀錄</a><a class="active" href="/cases/{{ case.id }}?tab=care">目標與照顧計畫</a><a href="/cases/{{ case.id }}?tab=schedule">服務班表</a></nav>
+  {% if user.role.value in ["居督", "主管"] and can_delete_goal %}<form method="post" action="/cases/{{ case.id }}/goals/{{ goal.id }}/delete" style="margin:0 0 1rem;" onsubmit="return confirm('確定刪除此目標？它會從照顧計畫解除關聯，且歷次目標檢討紀錄也會一併刪除。');"><button type="submit" class="btn btn-secondary">刪除目標</button></form>{% endif %}
+  <nav class="case-detail-tabs"><a href="/cases/{{ case.id }}?tab=basic">基本資料</a><a href="/cases/{{ case.id }}?tab=assessment">評估紀錄</a><a class="active" href="/cases/{{ case.id }}?tab=care">目標與照顧計畫</a><a href="/cases/{{ case.id }}?tab=contact">電訪紀錄</a><a href="/cases/{{ case.id }}?tab=schedule">服務班表</a></nav>
   <div class="card">
     <div class="form-grid">
       <div><label>所屬面向</label>{{ goal.domain }}</div>
       <div><label>狀態</label>{{ goal.status.value }}</div>
       <div><label>設定日期</label>{{ goal.set_date }}</div>
+      <div><label>建立依據</label>{% if goal.origin_assessment %}<a href="/cases/{{ case.id }}/assessments/{{ goal.origin_assessment.id }}">{{ goal.origin_assessment.assessment_date }} {{ goal.origin_assessment.assessment_type.value }}</a>{% else %}未標示（既有資料）{% endif %}</div>
+      <div><label>承接來源</label>{% if goal.predecessor_goal %}<a href="/cases/{{ case.id }}/goals/{{ goal.predecessor_goal.id }}">{{ goal.predecessor_goal.set_date }} 的目標</a>{% else %}-{% endif %}</div>
     </div>
     <div style="margin-top:0.8rem;"><label>目標描述</label>{{ goal.description }}</div>
   </div>
 
   <div class="card">
+    <div class="section-title">歷次目標檢討</div>
+    {% if progress_logs %}<table><thead><tr><th>評估日期</th><th>達成情形</th><th>後續決定</th><th>原因／評估說明</th></tr></thead><tbody>{% for log in progress_logs %}<tr><td>{% if log.assessment %}<a href="/cases/{{ case.id }}/assessments/{{ log.assessment.id }}">{{ log.assessment.assessment_date }}</a>{% else %}-{% endif %}</td><td>{{ log.achievement_level.value }}</td><td>{{ log.decision.value }}</td><td>{{ log.change_reason or "-" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚無定期評估後的目標檢討紀錄。</p>{% endif %}
+  </div>
+
+  <div class="card">
     <div style="display:flex; justify-content: space-between; align-items: center;">
       <div class="section-title" style="margin:0;">照顧計畫（具體服務安排）</div>
-      {% if user.role.value in ["居督", "主管"] %}
+      {% if user.role.value in ["居督", "主管"] and goal.status.value == "進行中" %}
       <a href="/cases/{{ case.id }}/care_plans/new?goal_id={{ goal.id }}" class="btn">+ 新增照顧計畫</a>
       {% endif %}
     </div>
@@ -40,6 +48,7 @@
           <td>
             {% if user.role.value in ["居督", "主管"] %}
             <a href="/cases/{{ case.id }}/care_plans/{{ cp.id }}/edit" class="btn btn-secondary">編輯</a>
+            {% if cp.id not in protected_plan_ids %}<form method="post" action="/cases/{{ case.id }}/care_plans/{{ cp.id }}/delete" style="display:inline;" onsubmit="return confirm('確定刪除這份照顧計畫？其衍生班表也會一併刪除。');"><button type="submit" class="btn btn-secondary">刪除</button></form>{% endif %}
             {% endif %}
           </td>
         </tr>
@@ -50,13 +59,13 @@
     <p style="color:#999;">尚未建立照顧計畫</p>
     {% endif %}
 
-    {% if user.role.value in ["居督", "主管"] and linkable_plans %}
+    {% if user.role.value in ["居督", "主管"] and goal.status.value == "進行中" and linkable_plans %}
     <form method="post" action="/cases/{{ case.id }}/goals/{{ goal.id }}/link_care_plan" style="margin-top:1rem; border-top:1px solid #eee; padding-top:1rem;">
       <label>連結個案既有的照顧計畫到此目標（避免重複新增同一服務）</label>
       <select name="care_plan_id" required>
         <option value="">請選擇既有照顧計畫</option>
         {% for cp in linkable_plans %}
-        <option value="{{ cp.id }}">{{ cp.service_item }}（{{ cp.quantity_frequency or "-" }}）</option>
+        <option value="{{ cp.id }}">{% for item in cp.coded_services %}{{ item.code }} {{ item.name }} ×{{ item.quantity }}{% if not loop.last %}；{% endif %}{% endfor %}</option>
         {% endfor %}
       </select>
       <button type="submit" class="btn" style="margin-top:0.5rem;">連結</button>

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% macro signature_table(rows) %}
+  <table class="print-signature-table">
+    <thead><tr>{% for row in rows %}<th>{{ row.label }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      <tr>{% for row in rows %}<td><strong>{{ row.name }}</strong><span>{{ row.role }}</span></td>{% endfor %}</tr>
+      <tr>{% for row in rows %}<td class="note-cell">{{ row.note }}</td>{% endfor %}</tr>
+      <tr>{% for row in rows %}<td>{{ row.time.strftime('%Y-%m-%d') if row.time else "-" }}</td>{% endfor %}</tr>
+      <tr>
+        {% for row in rows %}
+        <td class="stamp-cell">
+          {% if row.stamp %}
+          <img class="electronic-stamp" src="{{ row.stamp.image_url }}" alt="{{ row.name }}電子職章">
+          {% else %}
+          <span class="stamp-placeholder">-</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    </tbody>
+  </table>
+{% endmacro %}
+{% macro field_table(rows) %}
+  <table class="print-field-table">
+    <colgroup>
+      <col class="label-col"><col class="value-col"><col class="label-col"><col class="value-col">
+    </colgroup>
+    {% for row in rows %}
+    <tr>
+      <th>{{ row[0] }}</th><td {% if row|length < 4 %}colspan="3"{% endif %}>{{ row[1] }}</td>
+      {% if row|length >= 4 %}<th>{{ row[2] }}</th><td>{{ row[3] }}</td>{% endif %}
+    </tr>
+    {% endfor %}
+  </table>
+{% endmacro %}
+{% macro content_block(title, content) %}
+  <div class="print-section-title">{{ title }}</div>
+  <div class="print-content-box">{{ content or "-" }}</div>
+{% endmacro %}
+{% block title %}{{ selected_kind.value }}列印{% endblock %}
+{% block content %}
+  <style>
+    .print-toolbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .complaint-print-case { background:#fff; border:2px solid #8fb6b5; padding:0.75rem; margin:0 0 1.2rem; break-after:page; page-break-after:always; }
+    .complaint-print-case:last-child { break-after:auto; page-break-after:auto; }
+    .print-case-header { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; border-bottom:2px solid #2c7a7b; padding-bottom:0.35rem; margin-bottom:0.45rem; }
+    .print-case-header h1 { margin:0; font-size:1.35rem; color:#153f40; }
+    .print-case-header span { font-weight:800; color:#475; }
+    .print-section-title { margin:0.55rem 0 0.22rem; font-size:1.05rem; font-weight:900; color:#1f5f60; }
+    .print-field-table { table-layout:fixed; box-shadow:none; border:1px solid #b7caca; margin-bottom:0.35rem; }
+    .print-field-table .label-col { width:8.6rem; }
+    .print-field-table .value-col { width:auto; }
+    .print-field-table th, .print-field-table td { border:1px solid #cbdada; padding:0.26rem 0.38rem; font-size:1rem; line-height:1.35; vertical-align:top; }
+    .print-field-table th { background:#eaf1f1; color:#173b3d; white-space:nowrap; }
+    .print-content-box { border:1px solid #cbdada; min-height:2.7rem; padding:0.35rem 0.45rem; white-space:pre-line; line-height:1.45; font-size:1rem; }
+    .print-signature-table { table-layout:fixed; box-shadow:none; border:2px solid #9ec3c3; margin:0.35rem 0 0.55rem; }
+    .print-signature-table th, .print-signature-table td { border:1px solid #b9cdcd; text-align:center; padding:0.18rem 0.32rem; font-size:0.96rem; line-height:1.25; }
+    .print-signature-table th { background:#e4f0f0; color:#154f51; font-size:1rem; }
+    .print-signature-table td span { margin-left:0.4rem; color:#667; }
+    .print-signature-table .note-cell { height:2.4rem; text-align:left; vertical-align:top; white-space:pre-line; }
+    .print-signature-table .stamp-cell { height:3.15rem; }
+    .print-signature-table .electronic-stamp { position:static; transform:none; width:44px; height:44px; }
+    @media print {
+      .print-toolbar { display:none !important; }
+      .complaint-print-case { border:0; padding:0; margin:0; }
+      .print-case-header h1 { font-size:16pt; }
+      .print-section-title { font-size:11.5pt; margin-top:0.42rem; }
+      .print-field-table th, .print-field-table td, .print-content-box { font-size:10.5pt; }
+      .print-field-table .label-col { width:26mm; }
+    }
+  </style>
+
+  <div class="print-toolbar screen-only">
+    <div>
+      <h2 style="margin:0;">{{ selected_kind.value }}列印</h2>
+      <p style="margin:0.25rem 0 0; color:#566;">{{ start_date }} 至 {{ end_date }}{% if status_filter %}｜{{ status_filter }}{% endif %}</p>
+    </div>
+    <div>
+      <a class="btn btn-secondary" href="/exports">返回列印中心</a>
+      <button class="btn" type="button" onclick="window.print()">列印</button>
+    </div>
+  </div>
+
+  {% set print_reports = reports if reports else [None] %}
+  {% for report in print_reports %}
+  <section class="complaint-print-case">
+    <div class="print-case-header">
+      <h1>{{ report.report_kind.value if report else selected_kind.value }}</h1>
+      <span>{% if report %}受理日期：{{ report.received_date }}｜狀態：{{ report.status.value }}{% else %}樣式預覽｜篩選區間無資料{% endif %}</span>
+    </div>
+
+    {% if report %}
+      {{ field_table([
+        ["申訴表", report.report_kind.value, "申訴人類型", report.reporter_type.value],
+        ["受理日期", report.received_date, "目前狀態", report.status.value],
+        ["首次記錄陳核期限", report.initial_record_due_date, "結案期限" if report.report_kind.value == "性侵害申訴" else "最終處理期限", report.final_result_due_date],
+        ["主責人員", report.responsible_user.display_name if report.responsible_user else "-", "審核者", report.assigned_reviewer.display_name if report.assigned_reviewer else "-"],
+        ["送出人", report.submitted_by.display_name if report.submitted_by else "-", "送出日期", report.submitted_at.strftime('%Y-%m-%d') if report.submitted_at else "-"],
+      ]) }}
+
+      <div class="print-section-title">申訴內容</div>
+      {{ field_table([
+        ["主旨", report.subject],
+      ]) }}
+      {% if report.case %}
+      {{ field_table([["個案", report.case.org_case_no ~ "｜" ~ report.case.name, "申訴人", (report.complainant_name or "-") ~ " " ~ (report.complainant_relation or "")]]) }}
+      {% endif %}
+      {% if report.report_kind.value == "一般申訴" %}
+        {{ field_table([["問題類別", report.employee_category.value if report.employee_category else report.recipient_category.value if report.recipient_category else "-"]]) }}
+        {{ content_block("申訴內容", report.content) }}
+        {{ content_block("期待處理方式", report.expected_resolution) }}
+      {% else %}
+        {{ field_table([
+          ["事件日期", report.incident_date or "-", "事件地點", report.incident_location or "-"],
+          ["相對人", report.accused_name or "-", "相對人關係", report.accused_relationship or "-"],
+        ]) }}
+        {{ content_block("事件經過", report.content) }}
+        {{ content_block("證人或相關人員", report.witness_info) }}
+        {{ content_block("希望提供協助", report.requested_support) }}
+      {% endif %}
+
+      <div class="print-section-title">首次處理紀錄</div>
+      {{ content_block("紀錄內容", report.initial_record_content) }}
+      {{ signature_table(complaint_stage_signature_rows(db, report, "initial")) }}
+
+      <div class="print-section-title">{% if report.report_kind.value == "性侵害申訴" %}結案紀錄{% elif report.report_kind.value == "性騷擾申訴" %}調查及最終處理結果{% else %}最終處理結果{% endif %}</div>
+      {{ content_block("紀錄內容", report.final_result_content) }}
+      {{ signature_table(complaint_stage_signature_rows(db, report, "final")) }}
+
+      {% if report.report_kind.value != "性侵害申訴" %}
+      <div class="print-section-title">回覆申訴人紀錄</div>
+      {{ content_block("回覆內容", report.reply_content) }}
+      {{ signature_table(complaint_stage_signature_rows(db, report, "reply")) }}
+      {% endif %}
+    {% else %}
+      {{ field_table([
+        ["申訴表", selected_kind.value, "申訴人類型", "員工本人申訴／代服務對象申訴"],
+        ["受理日期", "____-__-__", "目前狀態", "________"],
+        ["首次記錄陳核期限", "____-__-__", "結案期限" if selected_kind.value == "性侵害申訴" else "最終處理期限", "____-__-__"],
+        ["主責人員", "", "審核者", ""],
+      ]) }}
+      <div class="print-section-title">申訴內容</div>
+      {{ field_table([["主旨", ""]]) }}
+      {% if selected_kind.value == "一般申訴" %}
+        {{ field_table([["問題類別", "員工申訴類別／服務對象申訴類別"]]) }}
+        {{ content_block("申訴內容", "") }}
+        {{ content_block("期待處理方式", "") }}
+      {% else %}
+        {{ field_table([["事件日期", "", "事件地點", ""], ["相對人", "", "相對人關係", ""]]) }}
+        {{ content_block("事件經過", "") }}
+        {{ content_block("證人或相關人員", "") }}
+        {{ content_block("希望提供協助", "") }}
+      {% endif %}
+      {{ content_block("首次處理紀錄", "") }}
+      {{ content_block("結案紀錄" if selected_kind.value == "性侵害申訴" else "最終處理結果", "") }}
+      {% if selected_kind.value != "性侵害申訴" %}{{ content_block("回覆申訴人紀錄", "") }}{% endif %}
+    {% endif %}
+  </section>
+  {% endfor %}
+{% endblock %}

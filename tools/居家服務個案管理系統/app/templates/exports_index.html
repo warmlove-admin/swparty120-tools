@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}列印／匯出中心{% endblock %}
+{% block content %}
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:1rem;">
+    <div>
+      <h2 style="margin:0;">列印／匯出中心</h2>
+      <p style="margin:0.35rem 0 0; color:#445;">先選表單紀錄，再依表單類型切換下一步篩選條件。</p>
+    </div>
+  </div>
+
+  <section class="card export-panel">
+    <div class="section-title" style="margin-top:0;">表單紀錄列印</div>
+    <form id="record-print-form" method="get" action="/exports/contact-records/print" class="export-form">
+      <div>
+        <label>表單紀錄</label>
+        <select id="record-print-type" name="record_type">
+          <option value="contact" selected>電訪紀錄</option>
+          <option value="complaint">申訴表</option>
+          <option value="service">服務紀錄表</option>
+          <option value="assessment">評估紀錄</option>
+        </select>
+      </div>
+
+      <div class="print-filter print-filter-contact">
+        <label>起始月份</label>
+        <input type="month" name="start" value="{{ default_start.strftime('%Y-%m') }}">
+      </div>
+      <div class="print-filter print-filter-contact">
+        <label>結束月份</label>
+        <input type="month" name="end" value="{{ default_end.strftime('%Y-%m') }}">
+      </div>
+      <div class="print-filter print-filter-contact">
+        <label>個案狀態</label>
+        <select name="status_filter">
+          {% for option in status_options %}
+          <option value="{{ option.value }}" {% if option.value == "active" %}selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="print-filter print-filter-contact">
+        <label>指定個案（可不選）</label>
+        <input class="case-search-input" type="search" placeholder="輸入個案姓名或案號後點選" data-case-search-target="export-contact-case-select">
+        <select id="export-contact-case-select" name="case_id" data-case-search-select>
+          <option value="">全部符合條件個案</option>
+          {% for case in active_cases %}
+          <option value="{{ case.id }}" data-search="{{ case.org_case_no }} {{ case.name }} {{ case.status.value }}">{{ case.org_case_no }}　{{ case.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="print-filter print-filter-complaint" style="display:none;">
+        <label>申訴表類型</label>
+        <select name="kind" disabled>
+          {% for kind in complaint_kinds %}
+          <option value="{{ kind.value }}">{{ kind.value }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="print-filter print-filter-complaint" style="display:none;">
+        <label>起始日期</label>
+        <input type="date" name="start" value="{{ default_start.strftime('%Y-%m-%d') }}" disabled>
+      </div>
+      <div class="print-filter print-filter-complaint" style="display:none;">
+        <label>結束日期</label>
+        <input type="date" name="end" value="{{ today.strftime('%Y-%m-%d') }}" disabled>
+      </div>
+      <div class="print-filter print-filter-complaint" style="display:none;">
+        <label>處理狀態</label>
+        <select name="status_filter" disabled>
+          {% for option in complaint_status_options %}
+          <option value="{{ option.value }}">{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="print-filter print-filter-service" style="display:none;">
+        <label>服務月份</label>
+        <input type="month" name="month" value="{{ next_month.strftime('%Y-%m') }}" disabled>
+      </div>
+      <div class="print-filter print-filter-service" style="display:none;">
+        <label>個案狀態</label>
+        <select name="status_filter" disabled>
+          <option value="active" selected>服務中</option>
+          <option value="all">全部個案</option>
+        </select>
+      </div>
+
+      <div class="print-filter print-filter-assessment" style="display:none;">
+        <label>評估月份</label>
+        <input type="month" value="{{ default_end.strftime('%Y-%m') }}" disabled>
+      </div>
+      <div class="print-filter print-filter-assessment" style="display:none;">
+        <label>簽核狀態</label>
+        <select disabled>
+          <option>全部</option>
+          <option>草稿</option>
+          <option>待核</option>
+          <option>已決行</option>
+        </select>
+      </div>
+
+      <div class="full">
+        <button id="record-print-submit" class="btn" type="submit">產生電訪紀錄</button>
+        <span id="record-print-note" class="export-note" style="margin-left:0.75rem;"></span>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="section-title" style="margin-top:0;">目前列印項目</div>
+    <table class="export-table">
+      <thead><tr><th>表單／報表</th><th>篩選欄位</th><th>狀態</th></tr></thead>
+      <tbody>
+        <tr><td>電訪紀錄</td><td>起訖月份、個案狀態、指定個案</td><td>可列印</td></tr>
+        <tr><td>申訴表</td><td>申訴表類型、受理日期、處理狀態</td><td>可列印三種樣式</td></tr>
+        <tr><td>服務紀錄表</td><td>服務月份、個案狀態</td><td>入口已保留，列印版待建立</td></tr>
+        <tr><td>評估紀錄</td><td>評估月份、簽核狀態</td><td>入口已保留，列印版待建立</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <script>
+    const printType = document.getElementById('record-print-type');
+    const printForm = document.getElementById('record-print-form');
+    const submitButton = document.getElementById('record-print-submit');
+    const printNote = document.getElementById('record-print-note');
+    const config = {
+      contact: { action: '/exports/contact-records/print', label: '產生電訪紀錄', note: '' },
+      complaint: { action: '/exports/complaints/print', label: '產生申訴表', note: '' },
+      service: { action: '/exports/service-records/print', label: '先建立服務紀錄入口', note: '服務紀錄表列印版會接續建立。' },
+      assessment: { action: '/exports', label: '評估紀錄尚未建立', note: '目前先顯示預定篩選欄位，尚未送出列印。' },
+    };
+    function setPrintType() {
+      const selected = printType.value;
+      document.querySelectorAll('.print-filter').forEach(group => {
+        const active = group.classList.contains(`print-filter-${selected}`);
+        group.style.display = active ? '' : 'none';
+        group.querySelectorAll('input, select, textarea').forEach(field => {
+          field.disabled = !active;
+        });
+      });
+      printForm.action = config[selected].action;
+      submitButton.textContent = config[selected].label;
+      submitButton.disabled = selected === 'assessment';
+      submitButton.classList.toggle('btn-secondary', selected === 'assessment');
+      printNote.textContent = config[selected].note;
+    }
+    printType.addEventListener('change', setPrintType);
+    setPrintType();
+  </script>
+{% endblock %}

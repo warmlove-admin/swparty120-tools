@@ -1,13 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{{ assessment_type.value }} - {{ case.name }}{% endblock %}
+{% block title %}{{ "編輯" if assessment else "新增" }}{{ assessment_type.value }} - {{ case.name }}{% endblock %}
 {% block content %}
-  <h2>{{ assessment_type.value }}：{{ case.name }}</h2>
-  <form method="post" action="/cases/{{ case.id }}/assessments">
+  <h2>{{ "編輯" if assessment else "新增" }}{{ assessment_type.value }}：{{ case.name }}</h2>
+  {% if prefill_source %}
+  <div class="card" style="background:#f7fbfb; border-left:5px solid #2c7a7b;">
+    <strong>已帶入前次評估值</strong><br>
+    <span style="color:#555;">本表單已預填 {{ prefill_source.assessment_date }} 的{{ prefill_source.assessment_type.value }}內容；請填寫新的評估日期，並只修改本次有變動的項目。</span>
+  </div>
+  {% endif %}
+  <form method="post" action="/cases/{{ case.id }}/assessments{{ '/' + assessment.id + '/edit' if assessment else '' }}">
     <input type="hidden" name="assessment_type" value="{{ assessment_type.value }}">
     <div class="card">
       <div class="section-title">基本資訊</div>
       <div class="form-grid">
-        <div><label>評估日期 *</label><input type="date" name="assessment_date" required></div>
+        <div><label>評估日期 *</label><input type="date" name="assessment_date" value="{{ form_values.get('assessment_date', '') }}" required></div>
       </div>
     </div>
 
@@ -19,7 +25,7 @@
         <select name="score_{{ code }}" required>
           <option value="">請選擇</option>
           {% for score, desc in options %}
-          <option value="{{ score }}">{{ score }}分：{{ desc }}</option>
+          <option value="{{ score }}" {% if form_values.get('score_' + code) == score|string %}selected{% endif %}>{{ score }}分：{{ desc }}</option>
           {% endfor %}
         </select>
       </div>
@@ -34,13 +40,13 @@
         <select name="score_{{ code }}" required>
           <option value="">請選擇</option>
           {% for score, desc in options %}
-          <option value="{{ score }}">{{ score }}分：{{ desc }}</option>
+          <option value="{{ score }}" {% if form_values.get('score_' + code) == score|string %}selected{% endif %}>{{ score }}分：{{ desc }}</option>
           {% endfor %}
         </select>
       </div>
       {% endfor %}
       <div class="form-grid" style="margin-top:1rem;">
-        <div><label>本季平均每週外出次數（開案時為基準次數）</label><input type="number" step="0.1" min="0" name="outing_frequency"></div>
+        <div><label>本季平均每週外出次數（開案時為基準次數）</label><input type="number" step="0.1" min="0" name="outing_frequency" value="{{ form_values.get('outing_frequency', '') }}"></div>
       </div>
     </div>
 
@@ -51,10 +57,10 @@
         <div>
           <label>{{ label }}</label>
           <select name="select_{{ code }}">
-            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+            {% for o in options %}<option {% if form_values.get('select_' + code) == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
           </select>
         </div>
-        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}" value="{{ form_values.get('note_' + code, '') }}"></div>
         {% endfor %}
       </div>
     </div>
@@ -67,15 +73,15 @@
         <div>
           <label>{{ label }}</label>
           <select name="burden_{{ code }}">
-            <option value="0">否</option>
-            <option value="1">是</option>
+            <option value="0" {% if form_values.get('burden_' + code, '0') == '0' %}selected{% endif %}>否</option>
+            <option value="1" {% if form_values.get('burden_' + code) == '1' %}selected{% endif %}>是</option>
           </select>
         </div>
         {% endfor %}
         <div>
           <label>主要照顧者主觀感受照顧壓力分數（0最輕～5最重）</label>
           <select name="burden_subjective_score">
-            {% for i in range(6) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+            {% for i in range(6) %}<option value="{{ i }}" {% if form_values.get('burden_subjective_score', '0') == i|string %}selected{% endif %}>{{ i }}</option>{% endfor %}
           </select>
         </div>
       </div>
@@ -84,10 +90,10 @@
         <div>
           <label>{{ label }}</label>
           <select name="select_{{ code }}">
-            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+            {% for o in options %}<option {% if form_values.get('select_' + code) == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
           </select>
         </div>
-        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}" value="{{ form_values.get('note_' + code, '') }}"></div>
         {% endfor %}
       </div>
     </div>
@@ -99,7 +105,7 @@
       <div style="margin-bottom:0.8rem;">
         <label>{{ label }}</label>
         <select name="envrisk_{{ code }}">
-          {% for o in env_risk_options %}<option>{{ o }}</option>{% endfor %}
+          {% for o in env_risk_options %}<option {% if form_values.get('envrisk_' + code) == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
         </select>
       </div>
       {% endfor %}
@@ -108,10 +114,10 @@
         <div>
           <label>{{ label }}</label>
           <select name="select_{{ code }}">
-            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+            {% for o in options %}<option {% if form_values.get('select_' + code) == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
           </select>
         </div>
-        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}" value="{{ form_values.get('note_' + code, '') }}"></div>
         {% endfor %}
       </div>
     </div>
@@ -123,11 +129,11 @@
         <div>
           <label>{{ label }}{% if code == "ECON_satisfaction" %}（選填，開案時尚無服務經驗可留空）{% endif %}</label>
           <select name="select_{{ code }}">
-            <option value="">請選擇{% if code == "ECON_satisfaction" %}（可留空）{% endif %}</option>
-            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+            <option value="" {% if not form_values.get('select_' + code) %}selected{% endif %}>請選擇{% if code == "ECON_satisfaction" %}（可留空）{% endif %}</option>
+            {% for o in options %}<option {% if form_values.get('select_' + code) == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
           </select>
         </div>
-        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}" value="{{ form_values.get('note_' + code, '') }}"></div>
         {% endfor %}
       </div>
     </div>
@@ -139,16 +145,16 @@
         <div>
           <label>{{ label }}</label>
           <select name="select_{{ code }}">
-            {% for o in options %}<option>{{ o }}</option>{% endfor %}
+            {% for o in options %}<option {% if form_values.get('select_' + code) == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
           </select>
         </div>
-        <div><label>{{ label }}備註</label><input name="note_{{ code }}"></div>
+        <div><label>{{ label }}備註</label><input name="note_{{ code }}" value="{{ form_values.get('note_' + code, '') }}"></div>
         {% endfor %}
-        <div class="full"><label>文化或飲食習俗注意事項</label><textarea name="note_CUL_note" rows="2"></textarea></div>
+        <div class="full"><label>文化或飲食習俗注意事項</label><textarea name="note_CUL_note" rows="2">{{ form_values.get('note_CUL_note', '') }}</textarea></div>
       </div>
     </div>
 
-    <button type="submit" class="btn">送出評估（草稿）</button>
-    <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
+    <button type="submit" class="btn">{{ "儲存評估" if assessment else "送出評估（草稿）" }}</button>
+    <a href="{% if assessment %}/cases/{{ case.id }}/assessments/{{ assessment.id }}{% else %}/cases/{{ case.id }}?tab=assessment{% endif %}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
   </form>
 {% endblock %}

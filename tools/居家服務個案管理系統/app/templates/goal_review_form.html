@@ -1,1 +1,21 @@
-{% extends "base.html" %}{% block title %}目標檢討{% endblock %}{% block content %}<h2>{{ case.name }}｜{{ assessment.assessment_date }} 目標檢討</h2><form method="post" action="/cases/{{ case.id }}/assessments/{{ assessment.id }}/goal-review">{% for goal in goals %}<div class="card"><strong>[{{ goal.domain }}] {{ goal.description }}</strong><div class="form-grid" style="margin-top:1rem;"><div><label>達成情形</label><select name="achievement_{{ goal.id }}"><option>達成</option><option>部分達成</option><option>未達成</option></select></div><div><label>後續決定</label><select name="decision_{{ goal.id }}"><option>結案</option><option>繼續延用</option><option>更換為新目標</option></select></div><div class="full"><label>原因／評估說明（沿用或更換時必填）</label><textarea name="reason_{{ goal.id }}" rows="2"></textarea></div></div></div>{% else %}<div class="card">目前沒有進行中的目標。</div>{% endfor %}<button class="btn">儲存目標檢討</button><a class="btn btn-secondary" href="/cases/{{ case.id }}/assessments/{{ assessment.id }}">取消</a></form>{% endblock %}
+{% extends "base.html" %}
+{% block title %}目標檢討 - {{ case.name }}{% endblock %}
+{% block content %}
+  <h2>{{ case.name }}｜{{ assessment.assessment_date }} 目標檢討</h2>
+  <p style="color:#555;">請逐一檢視進行中的目標。除「已達成並結案」外，其餘情況均須留下原因；選擇「繼續沿用」時，系統會自動建立下一期相同的目標與對應照顧計畫，之後可再個別修改。</p>
+  {% if errors %}<div class="card" style="background:#fff2f2; border-color:#e7a5a5;"><strong>尚未儲存，請補齊以下內容：</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+  <form method="post" action="/cases/{{ case.id }}/assessments/{{ assessment.id }}/goal-review">
+    {% for goal in goals %}
+    {% set log = existing_logs.get(goal.id) %}
+    <div class="card">
+      <strong>[{{ goal.domain }}] {{ goal.description }}</strong>
+      <div class="form-grid" style="margin-top:1rem;">
+        <div><label>達成情形 *</label><select name="achievement_{{ goal.id }}"><option value="達成" {% if (submitted and submitted.get('achievement_' ~ goal.id) == '達成') or (not submitted and log and log.achievement_level.value == '達成') %}selected{% endif %}>達成</option><option value="部分達成" {% if (submitted and submitted.get('achievement_' ~ goal.id) == '部分達成') or (not submitted and log and log.achievement_level.value == '部分達成') %}selected{% endif %}>部分達成</option><option value="未達成" {% if (submitted and submitted.get('achievement_' ~ goal.id) == '未達成') or (not submitted and log and log.achievement_level.value == '未達成') %}selected{% endif %}>未達成</option></select></div>
+        <div><label>後續決定 *</label><select name="decision_{{ goal.id }}"><option value="結案" {% if (submitted and submitted.get('decision_' ~ goal.id) == '結案') or (not submitted and log and log.decision.value == '結案') %}selected{% endif %}>結案</option><option value="繼續延用" {% if (submitted and submitted.get('decision_' ~ goal.id) == '繼續延用') or (not submitted and log and log.decision.value == '繼續延用') %}selected{% endif %}>繼續延用</option><option value="更換為新目標" {% if (submitted and submitted.get('decision_' ~ goal.id) == '更換為新目標') or (not submitted and log and log.decision.value == '更換為新目標') %}selected{% endif %}>更換為新目標</option></select></div>
+        <div class="full"><label>原因／評估說明（沿用、更換或未達成時必填）</label><textarea name="reason_{{ goal.id }}" rows="2">{{ submitted.get('reason_' ~ goal.id) if submitted else (log.change_reason if log and log.change_reason else '') }}</textarea></div>
+      </div>
+    </div>
+    {% else %}<div class="card">目前沒有進行中的目標。</div>{% endfor %}
+    {% if goals %}<button class="btn">儲存目標檢討</button>{% endif %}<a class="btn btn-secondary" href="/cases/{{ case.id }}/assessments/{{ assessment.id }}">取消</a>
+  </form>
+{% endblock %}

@@ -30,6 +30,7 @@ class GoalStatus(str, enum.Enum):
     in_progress = "進行中"
     achieved = "已達成"
     replaced = "已更換"
+    continued = "已延續"
 
 
 class Goal(Base):
@@ -40,6 +41,10 @@ class Goal(Base):
     id = Column(String, primary_key=True, default=gen_uuid)
     case_id = Column(String, ForeignKey("cases.id"), nullable=False)
     template_id = Column(String, ForeignKey("goal_templates.id"), nullable=True)
+    # 建立此目標所回應的評估；舊資料允許為空，避免既有個案無法使用。
+    origin_assessment_id = Column(String, ForeignKey("assessments.id"), nullable=True)
+    # 定期評估選擇「繼續沿用」時，自動建立下一期新目標並保留來源追溯。
+    predecessor_goal_id = Column(String, ForeignKey("goals.id"), nullable=True)
 
     domain = Column(String, nullable=False)
     description = Column(String, nullable=False)
@@ -53,6 +58,8 @@ class Goal(Base):
 
     case = relationship("Case", backref="goals")
     template = relationship("GoalTemplate")
+    origin_assessment = relationship("Assessment", foreign_keys=[origin_assessment_id])
+    predecessor_goal = relationship("Goal", remote_side=[id], foreign_keys=[predecessor_goal_id])
 
 
 class AchievementLevel(str, enum.Enum):
@@ -82,3 +89,6 @@ class GoalProgressLog(Base):
     system_reference_summary = Column(String)  # 系統整理之分數變化摘要，僅供參考
 
     judged_at = Column(DateTime, default=datetime.utcnow)
+
+    goal = relationship("Goal", backref="progress_logs")
+    assessment = relationship("Assessment", foreign_keys=[assessment_id])

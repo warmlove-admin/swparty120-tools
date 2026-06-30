@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}特休未休金計算 - 居家服務個案管理系統{% endblock %}
+{% block content %}
+<h2 class="section-title">特休未休金計算結果</h2>
+
+{% if error %}
+<div class="card" style="border-left:4px solid #c0392b;background:#fdf2f2;">
+  <strong style="color:#c0392b;">錯誤：</strong>{{ error }}
+</div>
+{% endif %}
+
+<div class="card" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+  <label style="margin:0;white-space:nowrap;">選擇月份：</label>
+  <select id="month-select" onchange="window.location.href=this.value"
+    style="width:auto;min-width:180px;padding:0.4rem 0.6rem;">
+    {% for ym in files %}
+    <option value="/leave-calc/{{ ym }}" {% if ym == current_month %}selected{% endif %}>
+      {{ ym[:4] }}-{{ ym[5:] }}
+    </option>
+    {% endfor %}
+  </select>
+  {% if not files %}
+  <span style="color:#667;">尚無計算結果</span>
+  {% endif %}
+  {% if data %}
+  <span style="color:#2c7a7b;font-weight:800;margin-left:auto;">
+    共 {{ data|length }} 人
+    {% set ns = namespace(total=0) %}
+    {% for r in data %}
+      {% if r["特休未休金(元)"] %}{% set ns.total = ns.total + r["特休未休金(元)"] %}{% endif %}
+    {% endfor %}
+    ｜未休金總計：{{ ns.total | int }} 元
+  </span>
+  {% endif %}
+  {% if user.role.value in ["主任"] %}
+  <form method="post" action="/leave-calc/run" style="margin:0;" onsubmit="return confirm('確定要執行特休未休金計算嗎？\n這會自動登入 Apollo 下載在職名單，\n過程可能需要數分鐘。')">
+    <button type="submit" class="btn">執行計算</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if data %}
+<div class="card" style="overflow-x:auto;padding:0;">
+  <table>
+    <thead>
+      <tr>
+        {% for col in cols %}
+        <th>{{ col_labels[col] }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data %}
+      <tr>
+        {% for col in cols %}
+        <td style="{% if col == '未休特休時數' and row[col] is none %}background:#fff2cc;{% endif %}
+          {% if col == '時薪(元)' or col == '特休未休金(元)' %}text-align:right;{% endif %}
+          {% if col == '備註' and row[col] and '全數未休' in row[col]|string %}color:#1e8449;font-weight:800;{% endif %}
+          {% if col == '備註' and row[col] and '離職' in row[col]|string %}color:#b9770e;font-weight:800;{% endif %}">
+          {% if row[col] is none %}
+            <span style="color:#bbb;">—</span>
+          {% elif col == '特休未休金(元)' %}
+            {{ row[col] | int }}
+          {% elif col == '時薪(元)' %}
+            {{ row[col] }}
+          {% else %}
+            {{ row[col] }}
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% elif files %}
+<div class="card" style="text-align:center;color:#667;padding:2rem;">
+  該月份無資料
+</div>
+{% else %}
+<div class="card" style="text-align:center;color:#667;padding:2rem;">
+  尚無任何計算結果。<br>
+  點擊「執行計算」按鈕產出第一份報表。
+</div>
+{% endif %}
+
+{% if user.role.value in ["主任"] %}
+<hr style="margin:2rem 0;border:0;border-top:3px solid #2c7a7b;">
+<h3 class="section-title">離職人員清冊</h3>
+<p style="color:#667;font-size:0.95rem;">
+  此清冊將合併 Apollo 自動下載的離職名單，於執行計算時一併產生離職結算。
+</p>
+
+<div class="card" style="overflow-x:auto;padding:0;">
+  <table>
+    <thead>
+      <tr>
+        <th>姓名</th>
+        <th>到職日</th>
+        <th>離職日</th>
+        <th>職稱</th>
+        <th>單位</th>
+        <th>未休時數</th>
+        <th style="width:5rem;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if resigned %}
+      {% for r in resigned %}
+      <tr>
+        <td>{{ r["姓名"] }}</td>
+        <td>{{ r["到職日"] or "—" }}</td>
+        <td>{{ r["離職日"] or "—" }}</td>
+        <td>{{ r["職稱"] or "—" }}</td>
+        <td>{{ r["所屬單位"] or "—" }}</td>
+        <td>{% if r["未休特休時數"] is not none %}{{ r["未休特休時數"] }}{% else %}<span style="color:#bbb;">—</span>{% endif %}</td>
+        <td>
+          <form method="post" action="/leave-calc/resigned/delete" style="margin:0;">
+            <input type="hidden" name="idx" value="{{ loop.index0 }}">
+            <button type="submit" class="btn" style="background:#b94a48;padding:0.25rem 0.5rem;font-size:0.85rem;">刪除</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr>
+        <td colspan="7" style="text-align:center;color:#667;padding:1rem;">
+          尚無手動離職資料（Apollo 自動下載的離職名單不在此顯示）
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h4 style="margin:0 0 0.75rem;color:#2c7a7b;">新增離職人員</h4>
+  <form method="post" action="/leave-calc/resigned/add"
+        style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;align-items:end;">
+    <div>
+      <label>姓名 *</label>
+      <input type="text" name="name" required>
+    </div>
+    <div>
+      <label>到職日 *</label>
+      <input type="date" name="hire_date" required>
+    </div>
+    <div>
+      <label>離職日 *</label>
+      <input type="date" name="resign_date" required>
+    </div>
+    <div>
+      <label>職稱</label>
+      <input type="text" name="job_title" placeholder="居服員">
+    </div>
+    <div>
+      <label>單位</label>
+      <input type="text" name="unit" placeholder="居家服務(汐止區)">
+    </div>
+    <div>
+      <label>未休時數（選填）</label>
+      <input type="number" step="0.5" name="unused_hours" placeholder="留空自動推算">
+    </div>
+    <div style="grid-column:1/-1;">
+      <button type="submit" class="btn">新增</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -13,7 +13,7 @@
             {% endfor %}
           </select>
         </div>
-        <div><label>設定日期 *</label><input type="date" name="set_date" value="{{ goal.set_date }}" required></div>
+        <div><label>目標日期</label><div style="padding:0.45rem; background:#f4f6f8; border-radius:4px;">{{ goal.origin_assessment.assessment_date if goal.origin_assessment else goal.set_date }}</div></div>
         <div>
           <label>目標狀態 *</label>
           <select name="status" required>

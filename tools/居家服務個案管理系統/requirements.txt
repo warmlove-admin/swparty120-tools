@@ -9,3 +9,4 @@ beautifulsoup4
 lxml
 python-dotenv
 pydantic-settings
+xlrd

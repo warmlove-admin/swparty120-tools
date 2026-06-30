@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}電訪紀錄列印 - {{ case.name }}{% endblock %}
+{% block content %}
+  <div class="screen-only" style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem;">
+    <div>
+      <h2 style="margin:0;">{{ case.name }} - 電訪紀錄列印</h2>
+      <p style="margin:0.35rem 0 0; color:#445;">{{ start_month.strftime('%Y-%m') }} 至 {{ end_month.strftime('%Y-%m') }}</p>
+    </div>
+    <div>
+      <button class="btn" type="button" onclick="window.print()">列印</button>
+      <a class="btn btn-secondary" href="/cases/{{ case.id }}?tab=contact">返回個案</a>
+    </div>
+  </div>
+
+  <div class="card screen-only">
+    <form method="get" action="/cases/{{ case.id }}/contact-records/print" class="schedule-filter" style="max-width:720px;">
+      <div><label>起始月份</label><input type="month" name="start" value="{{ start_month.strftime('%Y-%m') }}"></div>
+      <div><label>結束月份</label><input type="month" name="end" value="{{ end_month.strftime('%Y-%m') }}"></div>
+      <div style="align-self:end;"><button class="btn" type="submit">套用區間</button></div>
+    </form>
+  </div>
+
+  <div class="print-title">
+    <h1>電訪／LINE 聯繫紀錄</h1>
+    <p>{{ case.name }}（{{ case.org_case_no }}）｜{{ start_month.strftime('%Y-%m') }} 至 {{ end_month.strftime('%Y-%m') }}</p>
+  </div>
+
+  {% for month, records in records_by_month.items() %}
+  <section class="monthly-contact-block">
+    <div class="monthly-contact-header">
+      <span>{{ month.strftime('%Y 年 %m 月') }}</span>
+      <span>{{ records|length }} 筆</span>
+    </div>
+    {% if records %}
+      {% for record in records %}
+      <div class="monthly-contact-row">
+        <strong>{{ record.contact_date.strftime('%m/%d') }}｜{{ record.phone_call_type_label }}</strong>
+        <span>　電訪對象：{{ record.contact_detail_label }}</span>
+        <br>
+        <div style="white-space:pre-line;">{{ record.summary or "-" }}</div>
+        {% set review_rows = review_rows_by_record.get(record.id, []) %}
+        <table class="contact-review-table">
+          <thead><tr><th style="width:10rem;">簽核人員</th><th style="width:8rem;">簽核狀態</th><th>簽核意見</th><th style="width:8rem;">簽核時間</th></tr></thead>
+          <tbody>
+            {% if review_rows %}
+              {% for row in review_rows %}
+              <tr>
+                <td class="signer-cell">
+                  {% if row.stamp %}
+                  <img class="electronic-stamp" src="{{ row.stamp.image_url }}" alt="{{ row.role }} {{ row.name }} 電子核章">
+                  {% endif %}
+                  <div class="signer-text">{{ row.role }}<br>{{ row.name }}</div>
+                </td>
+                <td>{{ row.status }}</td>
+                <td>{{ row.note }}</td>
+                <td>{{ row.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td>-</td><td>{{ record.status.value }}</td><td></td><td>-</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="monthly-contact-row monthly-empty">本月尚無電訪／LINE 聯繫紀錄</div>
+    {% endif %}
+  </section>
+  {% endfor %}
+{% endblock %}

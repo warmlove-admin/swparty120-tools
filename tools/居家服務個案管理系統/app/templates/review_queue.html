@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}待辦中心{% endblock %}
+{% block content %}
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2 style="margin:0;">待辦中心</h2>
+    <span class="status-badge status-paused">紀錄簽審 {{ record_todo_count }} 筆｜未完工作 {{ followup_todo_count }} 筆</span>
+  </div>
+  <p style="color:#555;">待辦中心集中處理未完工作、紀錄簽審、電訪期限與例行業務。</p>
+
+  <div class="view-tabs">
+    <a href="#contact-followups">未完工作</a>
+    <a class="active" href="#record-review">紀錄簽審</a>
+    <a href="#contact-deadline">通知／電訪期限</a>
+    <a href="#routine-work">例行業務</a>
+  </div>
+
+  <div id="contact-followups" class="card" style="{% if contact_followups or complaint_todos %}border-left:7px solid #b45309;{% endif %}">
+    <div class="section-title" style="margin-top:0; color:{% if contact_followups or complaint_todos %}#7c2d12{% else %}inherit{% endif %};">未完工作提醒</div>
+    {% if contact_followups or complaint_todos %}
+    <div style="background:#fff4e5; border:1px solid #d97706; padding:0.8rem 1rem; margin-bottom:0.8rem; color:#7c2d12; font-weight:700;">
+      目前有 {{ followup_todo_count }} 筆未完工作，包含電訪追蹤與待處理申訴，請優先處理。
+    </div>
+    {% if complaint_todos %}
+    <h3 style="font-size:1rem; margin:0.2rem 0 0.6rem;">待處理申訴</h3>
+    <table style="margin-bottom:1rem;">
+      <thead><tr><th>申訴表</th><th>申訴人類型</th><th>送出人</th><th>初次紀錄期限</th><th>最終處理期限</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for report in complaint_todos %}
+        <tr>
+          <td>{{ report.report_kind.value }}</td>
+          <td>{{ report.reporter_type.value }}</td>
+          <td>{{ report.submitted_by.display_name if report.submitted_by else "-" }}</td>
+          <td style="color:#7c2d12; font-weight:700;">{{ report.initial_record_due_date }}</td>
+          <td style="color:#7c2d12; font-weight:700;">{{ report.final_result_due_date }}</td>
+          <td><a class="btn btn-secondary" href="/complaints/{{ report.id }}">處理</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if contact_followups %}
+    <h3 style="font-size:1rem; margin:0.2rem 0 0.6rem;">電訪追蹤</h3>
+    <table>
+      <thead><tr><th>個案</th><th>日期</th><th>內容類型</th><th>提醒事項</th><th>紀錄內容</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for record in contact_followups %}
+        <tr>
+          <td>{{ record.case.name if record.case else "-" }}</td>
+          <td>{{ record.contact_date }}</td>
+          <td>{{ record.phone_call_type_label }}</td>
+          <td style="color:#7c2d12; font-weight:700;">{{ record.followup_note or "需確認回覆或處理結果" }}</td>
+          <td style="white-space:pre-line;">{{ (record.summary or "-")[:140] }}{% if record.summary and record.summary|length > 140 %}...{% endif %}</td>
+          <td>
+            <a class="btn btn-secondary" href="/contact-records/{{ record.id }}">查看</a>
+            <form method="post" action="/contact-records/{{ record.id }}/followup-complete" style="display:inline;" onsubmit="return confirm('確定此未完工作已處理完成？');">
+              <button class="btn" type="submit">標記完成</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% else %}
+    <p style="color:#999;">目前沒有未完工作提醒。</p>
+    {% endif %}
+  </div>
+
+  <div id="record-review" class="card">
+    <div class="section-title" style="margin-top:0;">紀錄簽審</div>
+    {% if pending_assessments %}
+    <h3 style="font-size:1rem; margin:0.2rem 0 0.6rem;">待審評估</h3>
+    <table>
+      <thead><tr><th>個案</th><th>評估</th><th>居督送審說明</th><th>送審時間</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for assessment in pending_assessments %}
+        <tr>
+          <td>{{ assessment.case.name }}</td>
+          <td>{{ assessment.assessment_type.value }}｜{{ assessment.assessment_date }}</td>
+          <td>{{ pending_logs[assessment.id].change_note if assessment.id in pending_logs and pending_logs[assessment.id].change_note else "-" }}</td>
+          <td>{{ pending_logs[assessment.id].created_at.strftime('%Y-%m-%d %H:%M') if assessment.id in pending_logs else (assessment.updated_at.strftime('%Y-%m-%d %H:%M') if assessment.updated_at else '-') }}</td>
+          <td>
+            <a class="btn btn-secondary" href="/cases/{{ assessment.case_id }}/assessments/{{ assessment.id }}/review-preview">預覽審核</a>
+            <form method="post" action="/cases/{{ assessment.case_id }}/assessments/{{ assessment.id }}/approve" style="display:inline;">
+              <button class="btn" type="submit">核章／決行</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if returned_assessments %}
+    <h3 style="font-size:1rem; margin:1.2rem 0 0.6rem;">退回待修正</h3>
+    <table>
+      <thead><tr><th>個案</th><th>評估</th><th>退回原因</th><th>退回時間</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for item in returned_assessments %}
+        <tr>
+          <td>{{ item.assessment.case.name }}</td>
+          <td>{{ item.assessment.assessment_type.value }}｜{{ item.assessment.assessment_date }}</td>
+          <td>{{ item.return_log.change_note or "-" }}</td>
+          <td>{{ item.return_log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td><a class="btn btn-secondary" href="/cases/{{ item.assessment.case_id }}/assessments/{{ item.assessment.id }}/review-preview">查看與修正</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if contact_drafts %}
+    <h3 style="font-size:1rem; margin:1.2rem 0 0.6rem;">待主責居督確認電訪紀錄</h3>
+    <table>
+      <thead><tr><th>個案</th><th>日期</th><th>內容類型</th><th>摘要</th><th>下一關</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for record in contact_drafts %}
+        <tr>
+          <td>{{ record.case.name if record.case else "-" }}</td>
+          <td>{{ record.contact_date }}</td>
+          <td>{{ record.phone_call_type_label }}</td>
+          <td style="white-space:pre-line;">{{ (record.summary or "-")[:120] }}{% if record.summary and record.summary|length > 120 %}...{% endif %}</td>
+          <td>主管核章</td>
+          <td>
+            <a class="btn btn-secondary" href="/contact-records/{{ record.id }}">查看</a>
+            <form method="post" action="/contact-records/{{ record.id }}/submit-review" style="display:inline;">
+              <button class="btn" type="submit">確認無誤並送主管</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if contact_pending %}
+    <h3 style="font-size:1rem; margin:1.2rem 0 0.6rem;">待{{ user.role.value }}核章／決行電訪紀錄</h3>
+    <form method="post" action="/contact-records/batch-approve">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.6rem;">
+        <label style="margin:0;"><input type="checkbox" style="width:auto;" onclick="document.querySelectorAll('[data-contact-batch]').forEach(item => item.checked = this.checked)"> 全選本頁</label>
+        <button class="btn" type="submit">批次核章／決行</button>
+      </div>
+      <table>
+        <thead><tr><th></th><th>個案</th><th>日期</th><th>內容類型</th><th>摘要</th><th>操作</th></tr></thead>
+        <tbody>
+          {% for record in contact_pending %}
+          <tr>
+            <td><input data-contact-batch type="checkbox" name="record_ids" value="{{ record.id }}" style="width:auto;"></td>
+            <td>{{ record.case.name if record.case else "-" }}</td>
+            <td>{{ record.contact_date }}</td>
+            <td>{{ record.phone_call_type_label }}</td>
+            <td style="white-space:pre-line;">{{ (record.summary or "-")[:120] }}{% if record.summary and record.summary|length > 120 %}...{% endif %}</td>
+            <td><a class="btn btn-secondary" href="/contact-records/{{ record.id }}">查看</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </form>
+    {% endif %}
+
+    {% if not pending_assessments and not returned_assessments and not contact_drafts and not contact_pending %}
+    <p style="color:#999;">目前沒有紀錄簽審待辦。</p>
+    {% endif %}
+  </div>
+
+  <div id="contact-deadline" class="card">
+    <div class="section-title" style="margin-top:0;">通知／電訪期限</div>
+    <p style="color:#999;">尚未建立電訪紀錄與期限規則。之後電訪、通知家屬、到期未完成提醒會放在這裡。</p>
+  </div>
+
+  <div id="routine-work" class="card">
+    <div class="section-title" style="margin-top:0;">例行業務</div>
+    <p style="color:#999;">尚未建立例行業務規則。之後可放每月追蹤、定期表單、固定行政作業等待辦。</p>
+  </div>
+{% endblock %}

@@ -4,49 +4,181 @@
   <meta charset="UTF-8">
   <title>{% block title %}居家服務個案管理系統{% endblock %}</title>
   <style>
-    body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f6f8; margin: 0; color: #2d3436; }
+    body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f6f8; margin: 0; color: #1f2d2f; font-size: 17px; font-weight:500; }
     header { background: #2c7a7b; color: white; padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     header a { color: white; text-decoration: none; }
     header nav a { margin-right: 1rem; }
-    main { padding: 1.5rem; max-width: 1000px; margin: 0 auto; }
+    main { padding: 1.25rem 1rem; max-width: 1360px; margin: 0 auto; }
     table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    th, td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #eee; text-align: left; font-size: 0.9rem; }
-    th { background: #edf2f2; }
+    th, td { padding: 0.64rem 0.58rem; border-bottom: 1px solid #e2e8e8; text-align: left; font-size: 1.03rem; color:#172729; font-weight:650; }
+    th { background: #eaf1f1; color:#102d30; font-weight:900; }
+    small { font-size:0.92rem; font-weight:700; color:#26393c; }
     tr:hover { background: #f9fafa; }
-    .btn { display: inline-block; padding: 0.5rem 1rem; background: #2c7a7b; color: white; border-radius: 4px; text-decoration: none; font-size: 0.9rem; border: none; cursor: pointer; }
+    .btn { display: inline-block; padding: 0.5rem 1rem; background: #2c7a7b; color: white; border-radius: 4px; text-decoration: none; font-size: 0.98rem; font-weight:800; border: none; cursor: pointer; }
     .btn-secondary { background: #95a5a6; }
     .card { background: white; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 1rem; }
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
     .form-grid .full { grid-column: span 2; }
-    label { display: block; margin-bottom: 0.3rem; font-size: 0.85rem; color: #555; }
-    input, select, textarea { width: 100%; padding: 0.45rem; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
-    .status-badge { padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; }
+    label { display: block; margin-bottom: 0.32rem; font-size: 0.98rem; color: #344447; font-weight:800; }
+    input, select, textarea { width: 100%; padding: 0.52rem; box-sizing: border-box; border: 1px solid #c5cece; border-radius: 4px; font-family: inherit; font-size:1rem; font-weight:650; color:#142527; }
+    .status-badge { display:inline-block; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.95rem; font-weight:800; white-space:nowrap; line-height:1.25; }
     .status-active { background: #d4efdf; color: #1e8449; }
     .status-paused { background: #fdebd0; color: #b9770e; }
     .status-closed { background: #ecf0f1; color: #7f8c8d; }
-    .section-title { font-weight: bold; margin: 1.2rem 0 0.5rem; color: #2c7a7b; }
+    .status-returned { background:#fdebd0; color:#9a5d05; }
+    .btn-returned { background:#b9770e; }
+    .section-title { font-weight: 900; margin: 1.2rem 0 0.5rem; color: #23696a; font-size:1.08rem; }
     .error { color: #c0392b; margin-bottom: 1rem; }
-    .calendar-table { min-width: 900px; table-layout: fixed; }
-    .calendar-cell { height: 150px; min-width: 125px; vertical-align: top; border-right:1px solid #e1e8e8; }
-    .calendar-week td { border-top: 5px solid #d7e7e6; }
-    .calendar-week.week-0 td { background: #fbfdfd; }
-    .calendar-week.week-1 td { background: #f2f8f7; }
-    .calendar-day { display:block; color:#426b6c; margin-bottom:0.35rem; padding-bottom:0.25rem; border-bottom:1px dashed #bad0cf; }
-    .schedule-item { display: block; margin: 0.4rem 0; padding: 0.45rem; border-radius: 3px; border-left:4px solid #cc8530; background: #f8c77e; color: #52340d; text-decoration: none; font-size: 0.78rem; line-height: 1.4; }
-    .schedule-item span { font-size: 0.72rem; }
+    main:has(.schedule-shell) { max-width: 1440px; }
+    .calendar-wrap { overflow-x:auto; border:1px solid #d9e5e5; border-radius:6px; background:#fff; }
+    .calendar-table { min-width: 1180px; table-layout: fixed; box-shadow:none; }
+    .calendar-table th { position:sticky; top:0; z-index:1; text-align:center; font-size:0.84rem; padding:0.5rem; }
+    .calendar-cell { height: 190px; min-width: 170px; vertical-align: top; border-right:1px solid #e1e8e8; background:#fbfdfd; padding:0.42rem; }
+    .calendar-week td { border-top: 1px solid #d7e7e6; }
+    .calendar-week.week-1 td { background: #f6fbfb; }
+    .calendar-day { display:flex; align-items:center; justify-content:center; width:1.7rem; height:1.7rem; color:#2c7a7b; background:#e8f3f3; border-radius:50%; margin-bottom:0.35rem; font-weight:bold; }
+    .schedule-item { display: block; margin: 0.36rem 0; padding: 0.48rem 0.52rem; border-radius: 5px; border:1px solid #e6c58e; border-left:4px solid #cc8530; background: #fff8e9; color: #3f301c; text-decoration: none; font-size: 0.88rem; line-height: 1.35; font-weight:600; }
+    .schedule-item .schedule-time, .schedule-item span.schedule-time { display:block; text-align:right; font-weight:900 !important; color:#6b450d; font-size:1rem; letter-spacing:0; }
+    .schedule-name { font-weight:800; color:#253a3a; font-size:0.9rem; margin-top:0.1rem; }
+    .schedule-meta, .schedule-item span { font-size: 0.82rem; color:#465858; }
+    .schedule-caregiver { font-weight:800; color:#243536; font-size:0.86rem; margin-top:0.08rem; }
+    .service-code-row { display:grid; grid-template-columns:1fr auto; gap:0.35rem; align-items:baseline; margin-top:0.08rem; }
+    .service-code-row .code { font-weight:800; color:#273535; }
+    .service-code-row .code-name { font-weight:700; color:#273535; margin-left:0.22rem; }
+    .service-code-row .qty { font-weight:800; color:#273535; white-space:nowrap; }
+    .service-name-row { font-size:0.72rem; color:#667; font-weight:500; line-height:1.25; }
+    .schedule-item.imported { border-color:#d8c8ea; border-left-color:#7c4d99; background:#f8f3fd; color:#33233f; }
+    .schedule-item.imported .schedule-time, .schedule-item.imported span.schedule-time { color:#5a3470; font-weight:900 !important; }
+    .schedule-status { display:inline-block; padding:0.08rem 0.35rem; border-radius:3px; background:rgba(255,255,255,0.75); font-size:0.68rem; margin-left:0.25rem; }
+    .schedule-status.pending { background:#fdebd0; color:#9a5d05; }
     .view-tabs { display:flex; gap:0.5rem; margin-bottom:0.8rem; }
-    .view-tabs a { padding:0.4rem 0.75rem; border-radius:4px; background:#edf2f2; color:#2d3436; text-decoration:none; font-size:0.85rem; }
+    .view-tabs a { padding:0.4rem 0.75rem; border-radius:4px; background:#edf2f2; color:#2d3436; text-decoration:none; font-size:0.98rem; font-weight:800; }
     .view-tabs a.active { background:#2c7a7b; color:#fff; }
     .schedule-filter { display:flex; align-items:center; gap:0.5rem; max-width:420px; }
     .schedule-filter label { margin:0; white-space:nowrap; }
     .case-status-tabs, .case-detail-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin:0 0 1rem; }
-    .case-status-tabs a, .case-detail-tabs a { padding:0.5rem 0.9rem; border-radius:4px; background:#edf2f2; color:#2d3436; text-decoration:none; font-size:0.9rem; }
+    .case-status-tabs a, .case-detail-tabs a { padding:0.55rem 0.95rem; border-radius:4px; background:#edf2f2; color:#243437; text-decoration:none; font-size:1rem; font-weight:850; }
     .case-status-tabs a.active, .case-detail-tabs a.active { background:#2c7a7b; color:#fff; }
     .goal-plan-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; align-items:start; }
+    .goal-plan-pair { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; margin-bottom:0.8rem; }
+    .goal-plan-pair .card { margin-bottom:0; }
+    .compact-card-heading { display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+    .compact-card-heading .section-title { margin:0; }
+    .compact-card-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0.3rem; }
+    .compact-card-actions form { margin:0; }
+    .btn.btn-compact { padding:0.28rem 0.52rem; font-size:0.78rem; line-height:1.25; }
     .goal-plan-grid .card { margin-bottom:0; overflow-x:auto; }
+    .care-period > .goal-plan-grid { display:none; }
     .linked-note { color:#2c7a7b; font-size:0.78rem; }
     .assessment-summary-card { border-left: 5px solid #2c7a7b; background: #f7fbfb; }
-    @media (max-width: 800px) { .goal-plan-grid { grid-template-columns:1fr; } }
+    .assessment-trend-chart { max-width:780px; overflow-x:auto; padding:0.35rem 0; }
+    .assessment-trend-chart svg { width:100%; min-width:500px; display:block; background:#fbfdfd; border-radius:5px; }
+    .trend-grid { stroke:#dce8e8; stroke-width:1; stroke-dasharray:4 4; }
+    .trend-axis { fill:#688080; font-size:12px; }
+    .trend-value { font-size:13px; font-weight:bold; }
+    .trend-legend { display:flex; gap:1rem; font-size:0.85rem; margin:0.35rem 0 0.4rem; }
+    .trend-legend .adl { color:#2c7a7b; } .trend-legend .iadl { color:#7c4d99; }
+    .trend-summary { background:#f7fbfb; border-left:4px solid #c7dfdf; padding:0.65rem; font-size:0.88rem; }
+    .context-trend-card { margin-top:1rem; padding-top:1rem; border-top:1px solid #dce8e8; }
+    .context-trend-card small { color:#688080; }
+    .trend-delta { margin-left:0.2rem; }
+    .account-table th, .account-table td { padding:0.48rem 0.78rem; vertical-align:middle; font-size:1.02rem; font-weight:700; }
+    .account-editor { display:flex; align-items:center; gap:0.3rem; }
+    .account-editor input, .account-editor select { height:36px; padding:0.3rem 0.48rem; font-size:0.98rem; font-weight:700; }
+    .account-editor .btn, .account-table > tbody .btn { padding:0.35rem 0.6rem; font-size:0.94rem; }
+    .care-period { margin-bottom:1.35rem; border-top:3px solid #2c7a7b; padding-top:0.65rem; }
+    .care-period-header { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; margin:0 0 0.5rem 0.15rem; }
+    .care-period-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0.35rem; }
+    .care-period-label { font-weight:bold; color:#2c7a7b; }
+    .goal-block, .plan-block { padding:0.85rem 0; border-bottom:1px solid #e5eeee; line-height:1.55; }
+    .goal-block:last-child, .plan-block:last-child { border-bottom:0; }
+    .review-pair-header, .review-pair-row { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:1.25rem; }
+    .review-pair-header { margin-bottom:0.4rem; color:#2d3436; }
+    .review-pair-row { border-top:1px solid #e5eeee; align-items:stretch; }
+    .review-pair-cell { padding:0.9rem 0; line-height:1.55; }
+    .review-pair-cell .plan-block { padding:0 0 0.8rem; margin-bottom:0.8rem; }
+    .review-pair-cell .plan-block:last-child { padding-bottom:0; margin-bottom:0; }
+    .returned-review-alert { border-left:5px solid #b9770e; background:#fffaf2; }
+    .review-thread { margin-top:1.1rem; padding-top:1rem; border-top:1px solid #cfe2e2; }
+    .review-thread-item { margin-top:0.65rem; padding:0.75rem; background:#fff; border-left:4px solid #c7dfdf; border-radius:4px; line-height:1.55; }
+    .review-thread-item small { color:#688080; }
+    .screen-only { }
+    .assessment-action-card { display:flex; justify-content:space-between; align-items:center; gap:1rem; background:#f1f7ff; }
+    .assessment-detail-layout { display:grid; grid-template-columns:minmax(0, 2fr) minmax(280px, 0.9fr); gap:1rem; align-items:start; }
+    .assessment-detail-layout aside { position:sticky; top:1rem; }
+    .assessment-detail-layout aside table { box-shadow:none; }
+    .assessment-detail-layout aside th, .assessment-detail-layout aside td { font-size:0.82rem; vertical-align:top; }
+    .print-title, .print-only { display:none; }
+    .signature-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1rem; }
+    .signature-line { height:2.2rem; border-bottom:1px solid #777; margin:0.8rem 0 0.35rem; }
+    .narrow-col { width:2.2rem; min-width:2.2rem; max-width:2.2rem; white-space:nowrap; }
+    .case-no-col { width:4.2rem; white-space:nowrap; }
+    .status-col { width:4.4rem; white-space:nowrap; }
+    .monthly-contact-block { border:2px solid #8fb6b5; margin-bottom:1rem; background:#fff; break-inside:avoid; page-break-inside:avoid; }
+    .monthly-contact-header { background:#e2f0ef; padding:0.65rem 0.8rem; font-weight:800; display:flex; justify-content:space-between; color:#1f5556; }
+    .monthly-contact-row { padding:0.72rem 0.8rem; border-top:1px solid #d8e5e5; line-height:1.65; }
+    .monthly-contact-row strong { color:#1f3335; }
+    .monthly-empty { color:#9a5d05; font-weight:700; }
+    .contact-review-table { width:100%; margin-top:0.65rem; border:1px solid #d8e5e5; box-shadow:none; }
+    .contact-review-table th, .contact-review-table td { font-size:0.88rem; padding:0.38rem 0.45rem; vertical-align:middle; }
+    .electronic-stamp { width:58px; height:58px; object-fit:contain; display:block; margin:auto; }
+    .signer-cell { position:relative; min-height:64px; }
+    .signer-cell .electronic-stamp { position:absolute; left:0.35rem; top:50%; transform:translateY(-50%); opacity:0.9; }
+    .signer-text { position:relative; z-index:1; padding-left:4.2rem; min-height:58px; display:flex; flex-direction:column; justify-content:center; font-weight:800; }
+    .stamp-placeholder { color:#899; font-size:0.82rem; text-align:center; }
+    .export-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; align-items:start; }
+    .export-panel { margin-bottom:0; }
+    .export-form { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.75rem; align-items:end; }
+    .export-form .full { grid-column:1 / -1; }
+    .export-note { color:#667; font-size:0.88rem; margin:0.8rem 0 0; }
+    .export-table td, .export-table th { vertical-align:middle; }
+    .print-case-block { break-inside:avoid; page-break-inside:avoid; }
+    .print-case-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.75rem; border-bottom:1px solid #dce8e8; padding-bottom:0.55rem; }
+    .print-case-heading h3 { margin:0; font-size:1.05rem; color:#1f3335; }
+    .print-case-heading span { color:#566; font-size:0.9rem; }
+    .case-search-input { margin-bottom:0.35rem; }
+    @media (max-width: 900px) { .assessment-detail-layout { grid-template-columns:1fr; } .assessment-detail-layout aside { position:static; } .assessment-action-card { align-items:flex-start; flex-direction:column; } }
+    @media (max-width: 800px) { .goal-plan-grid, .goal-plan-pair, .export-grid, .export-form { grid-template-columns:1fr; } .compact-card-heading { align-items:flex-start; } .account-editor { flex-wrap:wrap; } .care-period-header { align-items:flex-start; flex-direction:column; } .care-period-actions { justify-content:flex-start; } }
+    @media (max-width: 620px) { .review-pair-header, .review-pair-row { grid-template-columns:1fr; } .review-pair-header strong:nth-child(2) { display:none; } }
+    @media print {
+      @page { size: A4 portrait; margin: 12mm; }
+      body { background:#fff; color:#111; font-size:11pt; }
+      header, .screen-only, .view-tabs, .case-detail-tabs, .case-status-tabs { display:none !important; }
+      main { max-width:none; margin:0; padding:0; }
+      .print-title, .print-only { display:block !important; }
+      .print-title { text-align:center; margin:0 0 0.8rem; border-bottom:2px solid #111; padding-bottom:0.5rem; }
+      .print-title h1 { font-size:18pt; margin:0 0 0.25rem; }
+      .print-title p { margin:0; font-size:11pt; }
+      .card { box-shadow:none; border:1px solid #999; border-radius:0; padding:0.8rem; margin:0 0 0.65rem; break-inside:avoid; page-break-inside:avoid; }
+      .review-action-card { display:none !important; }
+      .section-title { color:#111; margin:0 0 0.4rem; font-size:12pt; }
+      .form-grid { grid-template-columns:repeat(2, 1fr); gap:0.45rem 0.8rem; }
+      label { color:#333; font-size:9.5pt; }
+      table { box-shadow:none; border:1px solid #999; }
+      th { background:#eee !important; color:#111; }
+      th, td { border:1px solid #bbb; padding:0.35rem 0.45rem; font-size:9.5pt; }
+      tr:hover { background:transparent; }
+      .status-badge { border:1px solid #999; background:#fff !important; color:#111 !important; }
+      .assessment-trend-chart { max-width:none; overflow:visible; padding:0; }
+      .assessment-trend-chart svg { min-width:0; background:#fff; border:1px solid #bbb; }
+      .trend-summary { background:#fff; border-left:2px solid #777; padding:0.35rem; }
+      .review-pair-header, .review-pair-row { grid-template-columns:1fr 1fr; column-gap:0.75rem; }
+      .review-pair-row { break-inside:avoid; page-break-inside:avoid; }
+      .review-pair-cell { padding:0.55rem 0; }
+      .review-thread { margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid #999; }
+      .review-thread-item { background:#fff; border-left:2px solid #777; padding:0.45rem; break-inside:avoid; page-break-inside:avoid; }
+      .print-review-history { break-before:page; page-break-before:always; }
+      .print-signatures { break-inside:avoid; page-break-inside:avoid; }
+      .print-case-heading { border-bottom:1px solid #999; }
+      .print-case-block { break-after:page; page-break-after:always; }
+      .print-case-block:last-child { break-after:auto; page-break-after:auto; }
+      .contact-review-table { margin-top:0.45rem; border:1px solid #999; }
+      .contact-review-table th, .contact-review-table td { font-size:8.8pt; padding:0.22rem 0.32rem; }
+      .electronic-stamp { width:44px; height:44px; }
+      .signer-cell { min-height:48px; }
+      .signer-cell .electronic-stamp { left:0.18rem; }
+      .signer-text { padding-left:3.2rem; min-height:44px; }
+    }
   </style>
 </head>
 <body>
@@ -55,7 +187,12 @@
     <nav>
       <a href="/cases">個案列表</a>
       <a href="/schedules">服務班表</a>
-      {% if user and user.role.value == "主管" %}<a href="/users">帳號管理</a>{% endif %}
+      {% if user %}<a href="/complaints">申訴單</a>{% endif %}
+      {% if user and user.role.value in ["主管", "主任"] %}<a href="/users">人員管理</a>{% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/line/sources">LINE來源</a>{% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/todos">待辦中心</a>{% endif %}
+      {% if user and user.role.value in ["主任", "會計"] %}<a href="/leave-calc">特休未休金</a>{% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/exports">列印／匯出</a>{% endif %}
       {% if user %}
         <span style="margin-right:1rem;">{{ user.display_name }}（{{ user.role.value }}）</span>
         <a href="/logout">登出</a>
@@ -65,5 +202,35 @@
   <main>
     {% block content %}{% endblock %}
   </main>
+  <script>
+    document.querySelectorAll('select[data-case-search-select]').forEach(select => {
+      const input = document.querySelector(`input[data-case-search-target="${select.id}"]`);
+      if (!input) return;
+      const originalOptions = Array.from(select.options).map(option => ({
+        value: option.value,
+        text: option.textContent,
+        search: option.dataset.search || option.textContent,
+        selected: option.selected,
+      }));
+      input.addEventListener('input', () => {
+        const keyword = input.value.trim().toLowerCase();
+        const currentValue = select.value;
+        select.innerHTML = '';
+        originalOptions
+          .filter(option => !keyword || option.search.toLowerCase().includes(keyword))
+          .forEach(option => {
+            const node = document.createElement('option');
+            node.value = option.value;
+            node.textContent = option.text;
+            node.dataset.search = option.search;
+            node.selected = option.value === currentValue || (!currentValue && option.selected);
+            select.appendChild(node);
+          });
+        if (!Array.from(select.options).some(option => option.value === currentValue)) {
+          select.value = '';
+        }
+      });
+    });
+  </script>
 </body>
 </html>

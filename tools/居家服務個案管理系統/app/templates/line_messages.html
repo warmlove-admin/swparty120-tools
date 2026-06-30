@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}LINE 原始訊息{% endblock %}
+{% block content %}
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2 style="margin:0;">LINE 原始訊息</h2>
+    <a class="btn btn-secondary" href="/line/sources">返回 LINE 來源</a>
+  </div>
+  <p style="color:#555; line-height:1.7;">這裡顯示系統實際收到的最近 100 則 webhook 訊息。若官方 LINE 有訊息但這裡沒有，代表 webhook 當時沒有送到本系統。</p>
+  {% if request.query_params.get("deleted") %}
+  <div class="card" style="background:#f2fbf7; border-left:5px solid #2c7a7b;">
+    <strong>已刪除 {{ request.query_params.get("deleted") }} 則原始訊息。</strong>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    {% if messages %}
+    <form method="post" action="/line/messages/delete" onsubmit="return confirm('確定刪除勾選的原始 LINE 訊息？已產生的電訪草稿不會自動刪除。');">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.7rem;">
+      <label style="margin:0;"><input type="checkbox" style="width:auto;" onclick="document.querySelectorAll('[data-line-message-check]').forEach(item => item.checked = this.checked)"> 全選本頁</label>
+      <button class="btn btn-secondary" type="submit">刪除勾選訊息</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th></th><th>時間</th><th>來源ID</th><th>個案</th><th>顯示名稱</th><th>類型</th><th>內容</th></tr>
+      </thead>
+      <tbody>
+        {% for message in messages %}
+        <tr>
+          <td><input data-line-message-check type="checkbox" name="message_ids" value="{{ message.id }}" style="width:auto;"></td>
+          <td>{{ message.event_timestamp }}</td>
+          <td style="font-size:0.82rem;">{{ message.line_user_id or message.line_platform_group_id or "-" }}</td>
+          <td>{{ case_names.get(message.case_id, "-") }}</td>
+          <td>{{ message.sender_name or "-" }}</td>
+          <td>{{ message.message_type or "-" }}</td>
+          <td>{{ message_display_text(message) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </form>
+    {% else %}
+    <p style="color:#999;">尚未收到 LINE webhook 訊息。</p>
+    {% endif %}
+  </div>
+{% endblock %}
