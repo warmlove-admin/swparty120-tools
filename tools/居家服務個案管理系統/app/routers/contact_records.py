@@ -62,7 +62,7 @@ templates = Jinja2Templates(directory="app/templates")
 IGNORED_LINE_MESSAGE_TYPES = {"sticker", "image"}
 
 # 來自這些群組的訊息不建立來源、不寫入資料庫
-IGNORED_LINE_GROUP_IDS = {"U163f222a603b102c34be2dc5c9f65f6a"}
+IGNORED_LINE_SOURCE_IDS = {"U163f222a603b102c34be2dc5c9f65f6a"}
 
 
 def _line_case_sort_key(case: Case) -> tuple[int, int, str]:
@@ -154,10 +154,13 @@ def _cleanup_ignored_line_messages(db: Session) -> int:
         .filter(LineMessage.message_type.in_(IGNORED_LINE_MESSAGE_TYPES))
         .delete(synchronize_session=False)
     )
-    if IGNORED_LINE_GROUP_IDS:
+    if IGNORED_LINE_SOURCE_IDS:
         deleted_messages += (
             db.query(LineMessage)
-            .filter(LineMessage.line_platform_group_id.in_(IGNORED_LINE_GROUP_IDS))
+            .filter(
+                LineMessage.line_platform_group_id.in_(IGNORED_LINE_SOURCE_IDS)
+                | LineMessage.line_user_id.in_(IGNORED_LINE_SOURCE_IDS)
+            )
             .delete(synchronize_session=False)
         )
     orphan_sources = db.query(LineSourceLink).all()
@@ -584,7 +587,10 @@ async def line_webhook(request: Request, db: Session = Depends(get_db)):
         if _is_ignored_line_message_type(message_type):
             continue
         group_id = source.get("groupId") or source.get("roomId")
-        if group_id and group_id in IGNORED_LINE_GROUP_IDS:
+        if group_id and group_id in IGNORED_LINE_SOURCE_IDS:
+            continue
+        user_id = source.get("userId")
+        if user_id and user_id in IGNORED_LINE_SOURCE_IDS:
             continue
         source_type = source.get("type")
         source_id = source.get("groupId") or source.get("roomId") or source.get("userId")

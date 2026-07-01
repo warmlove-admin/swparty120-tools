@@ -4,6 +4,7 @@ import subprocess
 import glob as glob_mod
 import sys
 from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 
 import pandas as pd
 from fastapi import APIRouter, Depends, Form, Request
@@ -129,8 +130,9 @@ def leave_calc_run(
         return RedirectResponse(url="/leave-calc?error=計算逾時", status_code=302)
     except Exception as e:
         return RedirectResponse(url=f"/leave-calc?error={str(e)[:300]}", status_code=302)
-    today = date.today()
-    report_yyyymm = today.replace(day=1).strftime("%Y-%m")
+    # 計算的是上個月（run_monthly 邏輯）
+    report_month = date.today().replace(day=1) - relativedelta(months=1)
+    report_yyyymm = report_month.strftime("%Y-%m")
     return RedirectResponse(url=f"/leave-calc/{report_yyyymm}", status_code=302)
 
 
