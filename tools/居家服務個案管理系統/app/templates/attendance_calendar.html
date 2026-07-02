@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}出勤管理 - 居家服務個案管理系統{% endblock %}
+{% block content %}
+<h2 class="section-title">出勤管理</h2>
+
+<div class="card" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+  <a class="btn btn-compact" href="/attendance?month={{ previous_month.strftime('%Y-%m') }}&view={{ view }}{% if selected_caregiver %}&caregiver_id={{ selected_caregiver.id }}{% endif %}">&larr; 上月</a>
+  <strong style="font-size:1.15rem;color:#2c7a7b;">{{ current_month.strftime('%Y年%m月') }}</strong>
+  <a class="btn btn-compact" href="/attendance?month={{ next_month.strftime('%Y-%m') }}&view={{ view }}{% if selected_caregiver %}&caregiver_id={{ selected_caregiver.id }}{% endif %}">下月 &rarr;</a>
+  <div class="view-tabs" style="margin:0 0 0 auto;">
+    <a href="/attendance?month={{ current_month.strftime('%Y-%m') }}&view=single{% if selected_caregiver %}&caregiver_id={{ selected_caregiver.id }}{% endif %}" class="{% if view == 'single' %}active{% endif %}">個人日曆</a>
+    <a href="/attendance?month={{ current_month.strftime('%Y-%m') }}&view=overview" class="{% if view == 'overview' %}active{% endif %}">全員總覽</a>
+  </div>
+</div>
+
+{% if view == 'single' %}
+<div style="display:flex;gap:1rem;align-items:flex-start;">
+  <div style="flex:2;min-width:0;">
+    <div class="card" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+      <label style="margin:0;white-space:nowrap;">居服員：</label>
+      <select onchange="window.location.href='/attendance?month={{ current_month.strftime('%Y-%m') }}&caregiver_id='+this.value" style="width:auto;min-width:160px;">
+        {% for cg in caregivers %}
+        <option value="{{ cg.id }}" {% if selected_caregiver and cg.id == selected_caregiver.id %}selected{% endif %}>{{ cg.display_name }}</option>
+        {% endfor %}
+      </select>
+      {% if selected_caregiver %}
+      <span style="margin-left:auto;color:#566;font-size:0.95rem;">
+        出勤天：{% if selected_caregiver.work_weekdays %}{% for i in selected_caregiver.work_weekdays %}{{ weekday_labels[i] }} {% endfor %}{% else %}未設定{% endif %}
+        {% if selected_caregiver.is_part_time %}<span style="color:#b9770e;">⚡兼職</span>{% endif %}
+        {% if selected_caregiver.hourly_wage %}｜時薪：{{ selected_caregiver.hourly_wage }}元{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if selected_caregiver and calendar_days %}
+    <div class="card" style="padding:0;overflow-x:auto;">
+      <table style="min-width:490px;">
+        <thead>
+          <tr>
+            {% for label in sun_first_labels %}
+            <th style="text-align:center;padding:0.4rem 0.2rem;font-size:0.85rem;">{{ label[:1] }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% set cells = padding + calendar_days %}
+          {% set ns = namespace(idx=0) %}
+          {% for week in range(0, (cells|length / 7)|round(0, 'ceil')|int) %}
+          <tr>
+            {% for i in range(7) %}
+              {% set cell = cells[ns.idx] if ns.idx < cells|length else {"day": None} %}
+              {% if cell.day %}
+              <td style="background:{{ cell.color }};height:48px;min-width:60px;text-align:center;padding:0.2rem;border:1px solid #d0d8d8;{% if cell.warning %}box-shadow:inset 0 0 0 2px #c0392b;{% endif %}">
+                <div style="font-size:1.15rem;font-weight:900;color:#1a1a1a;">{{ cell.day }}</div>
+                <div style="font-size:0.82rem;font-weight:800;color:{% if cell.date_type == 'national_holiday' %}#1b5e20{% elif cell.date_type == 'regular_off' %}#c0392b{% elif cell.date_type == 'rest_day' %}#b9770e{% else %}#2c7a7b{% endif %};">{{ cell.date_type_label[:1] }}</div>
+                {% if cell.holiday_name %}
+                <div style="font-size:0.65rem;color:#1b5e20;font-weight:700;">{{ cell.holiday_name[:2] }}</div>
+                {% endif %}
+              </td>
+              {% else %}
+              <td style="background:#f5f5f5;height:48px;min-width:60px;"></td>
+              {% endif %}
+              {% set ns.idx = ns.idx + 1 %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">出勤設定</div>
+      <form method="post" action="/attendance/settings/{{ selected_caregiver.id }}">
+        <div class="form-grid">
+          <div class="full">
+            <label>出勤天（可複選）</label>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.25rem;">
+              {% for i in range(7) %}
+              <label style="font-weight:normal;display:inline-flex;align-items:center;gap:0.2rem;">
+                <input type="checkbox" name="work_weekdays" value="{{ i }}"
+                  {% if selected_caregiver.work_weekdays and i in selected_caregiver.work_weekdays %}checked{% endif %}
+                  onchange="togglePtHint(this)" style="width:auto;">
+                {{ weekday_labels[i] }}
+              </label>
+              {% endfor %}
+            </div>
+            <small id="pt-hint" style="color:#b9770e;{% if not (selected_caregiver.work_weekdays and selected_caregiver.work_weekdays|length == 2 and 5 in selected_caregiver.work_weekdays and 6 in selected_caregiver.work_weekdays) %}display:none{% endif %};margin-top:0.2rem;display:block;">⚡ 僅週六週日 → 兼職人員，六日出勤視為一般工時</small>
+          </div>
+          <div>
+            <label>時薪（元）</label>
+            <input type="number" name="hourly_wage" value="{{ selected_caregiver.hourly_wage or '' }}" placeholder="預設 230">
+          </div>
+        </div>
+        <button type="submit" class="btn" style="margin-top:0.75rem;">儲存設定</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if selected_caregiver and calendar_days %}
+  <div style="flex:1;min-width:0;">
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">出勤判斷規則</div>
+      <div style="font-size:0.82rem;line-height:1.7;color:#344;">
+        <p style="margin:0 0 0.5rem 0;padding:0.3rem 0.5rem;background:#eaf1f1;border-radius:4px;font-weight:800;font-size:0.85rem;">基本原則：一週以星期日為第 1 天</p>
+        <p style="font-weight:800;margin:0 0 0.25rem 0;">優先順序：國定假日 &gt; 週末判斷 &gt; 平日</p>
+        <hr style="border:none;border-top:1px solid #dde5e5;margin:0.3rem 0;">
+        <p><strong>① 國定假日</strong><br>最高優先，含補假。<br>加班費率 ×2.00（前 8 小時）</p>
+        <p><strong>② 兼職（僅六日出勤）</strong><br>六日出勤 &rarr; 一般工時（非加班）</p>
+        <p><strong>③ 平日（週一～五）</strong><br>非國定假日 &rarr; 一般出勤日</p>
+        <p><strong>④ 六日「皆有」出勤</strong><br>觸發 14 天關聯視窗判斷：</p>
+        <ul style="margin:0 0 0.3rem 1rem;padding:0;">
+          <li>該六往前找最近日 = Day 1（例假）</li>
+          <li>該日往後找最近六 = Day 14（例假）</li>
+          <li>中間的六/日 &rarr; 休息日</li>
+          <li>月總時數 ≥ 172h &rarr; 適用彈性工時</li>
+          <li>&lt; 172h &rarr; 標⚠（仍依彈性工時邏輯）</li>
+        </ul>
+        <p><strong>⑤ 六日僅一天出勤</strong><br>出勤日 &rarr; 休息日，另一天 &rarr; 例假</p>
+        <p><strong>⑥ 六日皆未出勤</strong><br>週六 &rarr; 休息日，週日 &rarr; 例假日</p>
+        <hr style="border:none;border-top:1px solid #dde5e5;margin:0.3rem 0;">
+        <p style="margin:0.3rem 0;font-size:0.78rem;color:#667;">
+          <strong>14 天週期不可重疊</strong> — 第 14 天的次日自動為下個週期的第 1 天。<br>
+          <strong>172h 門檻</strong> — 勞動部函釋：部分工時 v.s. 全時工時實務分界點（非勞基法直接條文），用以判斷是否適用二週變形工時（做12休2）。
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% elif view == 'overview' %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+    <div class="section-title" style="margin:0;">全員出勤總覽 — {{ current_month.strftime('%Y年%m月') }}</div>
+    <div style="display:flex;gap:0.5rem;align-items:center;font-size:0.88rem;">
+      <span style="display:inline-block;width:14px;height:14px;background:{{ date_type_colors['weekday'] }};border:1px solid #ccc;border-radius:2px;"></span> 平日
+      <span style="display:inline-block;width:14px;height:14px;background:{{ date_type_colors['rest_day'] }};border:1px solid #ccc;border-radius:2px;margin-left:0.5rem;"></span> 休息日
+      <span style="display:inline-block;width:14px;height:14px;background:{{ date_type_colors['regular_off'] }};border:1px solid #ccc;border-radius:2px;margin-left:0.5rem;"></span> 例假
+      <span style="display:inline-block;width:14px;height:14px;background:{{ date_type_colors['national_holiday'] }};border:1px solid #ccc;border-radius:2px;margin-left:0.5rem;"></span> 國定假日
+    </div>
+  </div>
+  {% if overview_data %}
+  <div style="overflow-x:auto;">
+      <table style="min-width:650px;font-size:0.75rem;">
+        <thead>
+          <tr>
+            <th style="position:sticky;left:0;background:#eaf1f1;z-index:1;min-width:50px;padding:0.25rem;">人員</th>
+            <th style="min-width:50px;padding:0.25rem;text-align:center;">出勤天</th>
+            {% for day in range(1, days_in_month + 1) %}
+            <th style="text-align:center;min-width:22px;padding:0.2rem;">{{ day }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for cg, days in overview_data.items() %}
+          <tr>
+            <td style="position:sticky;left:0;background:#fff;z-index:1;font-weight:800;white-space:nowrap;padding:0.2rem;">
+              {{ cg.display_name }}{% if cg.is_part_time %}<span style="color:#b9770e;font-size:0.65rem;">⚡</span>{% endif %}
+              <a href="/attendance?view=single&caregiver_id={{ cg.id }}&month={{ current_month.strftime('%Y-%m') }}" style="font-size:0.65rem;color:#2c7a7b;text-decoration:none;margin-left:0.15rem;">✎</a>
+            </td>
+            <td style="text-align:center;font-size:0.65rem;padding:0.2rem;">
+              {% if cg.work_weekdays %}{% for i in cg.work_weekdays %}{{ weekday_labels[i][:1] }}{% if not loop.last %}/{% endif %}{% endfor %}{% else %}—{% endif %}
+            </td>
+            {% for d in days %}
+            <td style="text-align:center;background:{{ date_type_colors[d.date_type] }};font-size:0.68rem;font-weight:700;padding:0.15rem 0.1rem;color:{% if d.date_type == 'national_holiday' %}#1e8449{% elif d.date_type == 'regular_off' %}#c0392b{% elif d.date_type == 'rest_day' %}#b9770e{% else %}#555{% endif %};" title="{{ d.date_type_label }}{% if d.holiday_name %} {{ d.holiday_name }}{% endif %}{% if d.warning %} {{ d.warning }}{% endif %}">
+            {% if d.warning %}<span style="color:#c0392b;font-weight:900;">⚠</span>{% endif %}{% if d.date_type == 'national_holiday' %}假{% elif d.date_type == 'regular_off' %}例{% elif d.date_type == 'rest_day' %}休{% else %}·{% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:#667;text-align:center;padding:2rem;">無居服員資料</p>
+  {% endif %}
+</div>
+
+<form method="post" action="/attendance/settings/batch">
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">批次設定出勤規則</div>
+    <p style="color:#566;font-size:0.92rem;margin-bottom:0.75rem;">可在此一次設定所有居服員的出勤天與時薪。</p>
+    <div style="overflow-x:auto;">
+      <table style="min-width:800px;">
+        <thead>
+          <tr>
+            <th>居服員</th>
+            <th>出勤天</th>
+            <th>時薪</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if overview_data %}
+          {% for cg, _ in overview_data.items() %}
+          <tr>
+            <td style="font-weight:800;white-space:nowrap;">{{ cg.display_name }}</td>
+            <td>
+              <div style="display:flex;gap:0.25rem;flex-wrap:wrap;">
+                {% for i in range(7) %}
+                <label style="font-weight:normal;font-size:0.78rem;">
+                  <input type="checkbox" name="wk_{{ cg.id }}" value="{{ i }}"
+                    {% if cg.work_weekdays and i in cg.work_weekdays %}checked{% endif %} style="width:auto;">
+                  {{ weekday_labels[i] }}
+                </label>
+                {% endfor %}
+              </div>
+            </td>
+            <td>
+              <input type="number" name="wage_{{ cg.id }}" value="{{ cg.hourly_wage or '' }}" placeholder="230" style="width:80px;">
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <button type="submit" class="btn" style="margin-top:0.75rem;">批次儲存</button>
+  </div>
+</form>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+  <div class="card">
+    <div class="section-title" style="margin-top:0;">國定假日（{{ current_month.year }}年）</div>
+    {% if holidays %}
+    <table style="font-size:0.92rem;">
+      <thead><tr><th>日期</th><th>名稱</th><th style="width:3rem;"></th></tr></thead>
+      <tbody>
+        {% for h in holidays %}
+        <tr>
+          <td>{{ h.holiday_date.strftime('%m/%d') }}（{{ weekday_labels[h.holiday_date.weekday()] }}）</td>
+          <td>{{ h.name }}</td>
+          <td>
+            <form method="post" action="/attendance/holidays/delete/{{ h.id }}" style="margin:0;" onsubmit="return confirm('確定刪除 {{ h.name }}？')">
+              <button type="submit" class="btn btn-compact" style="background:#c0392b;padding:0.2rem 0.4rem;font-size:0.78rem;">刪除</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#667;">尚未設定國定假日</p>
+    {% endif %}
+    <form method="post" action="/attendance/holidays/add" style="display:flex;gap:0.5rem;align-items:end;margin-top:0.75rem;flex-wrap:wrap;">
+      <div><label>日期</label><input type="date" name="holiday_date" required style="width:auto;"></div>
+      <div><label>名稱</label><input name="name" required placeholder="例：端午節" style="width:120px;"></div>
+      <button type="submit" class="btn btn-compact">新增</button>
+    </form>
+    <form method="post" action="/attendance/holidays/seed" style="margin-top:0.5rem;">
+      <button type="submit" class="btn btn-secondary btn-compact" onclick="return confirm('確定要匯入 2026-2027 年國定假日預設清單嗎？')">匯入預設假日</button>
+    </form>
+  </div>
+
+  <script>
+function togglePtHint(checkbox) {
+  var form = checkbox.closest('form');
+  var checks = form.querySelectorAll('input[name="work_weekdays"]');
+  var checked = [];
+  checks.forEach(function(cb) { if (cb.checked) checked.push(parseInt(cb.value)); });
+  var hint = document.getElementById('pt-hint');
+  if (checked.length === 2 && checked.includes(5) && checked.includes(6)) {
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+</script>
+<div class="card">
+    <div class="section-title" style="margin-top:0;">加班倍率參考</div>
+    <table style="font-size:0.88rem;">
+      <thead>
+        <tr><th>日期類型</th><th>時段</th><th>倍率</th></tr>
+      </thead>
+      <tbody>
+        {% for date_type, brackets in overtime_multipliers.items() %}
+          {% for bracket, mult in brackets.items() %}
+          <tr>
+            {% if loop.first %}
+            <td rowspan="{{ brackets|length }}" style="font-weight:800;vertical-align:middle;">{{ date_type_labels[date_type] }}</td>
+            {% endif %}
+            <td>第 {{ bracket }} 小時</td>
+            <td style="font-weight:800;color:#2c7a7b;">{{ mult }}</td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="color:#667;font-size:0.82rem;margin-top:0.5rem;">
+      例假日原則上不可加班。若因天災事變等法定事由加班，前 8 小時倍率為 2.00。
+    </p>
+  </div>
+</div>
+{% endblock %}

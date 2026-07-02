@@ -8,6 +8,7 @@ from datetime import date
 from app.auth import hash_password, must_change_password, require_roles
 from app.database import get_db
 from app.models.user import User, UserRole
+from app.services.attendance_engine import WEEKDAY_LABELS
 
 router = APIRouter(prefix="/users")
 templates = Jinja2Templates(directory="app/templates")
@@ -61,6 +62,7 @@ def _page_context(
         "keyword": keyword,
         "roles": list(UserRole),
         "must_change_password": must_change_password,
+        "weekday_labels": WEEKDAY_LABELS,
         "supervisors": db.query(User)
         .filter(User.role.in_([UserRole.supervisor, UserRole.manager, UserRole.director]), User.is_active.is_(True))
         .order_by(User.display_name)
@@ -93,6 +95,11 @@ def _apply_profile_form(target: User, form) -> None:
     target.emergency_contact_relation = (form.get("emergency_contact_relation") or "").strip() or None
     target.emergency_contact_phone = (form.get("emergency_contact_phone") or "").strip() or None
     target.note = (form.get("note") or "").strip() or None
+    target.regular_off_weekday = int(form.get("regular_off_weekday")) if form.get("regular_off_weekday") else None
+    target.rest_weekday = int(form.get("rest_weekday")) if form.get("rest_weekday") else None
+    target.hourly_wage = int(form.get("hourly_wage")) if form.get("hourly_wage") else None
+    wkdays = form.getlist("work_weekdays")
+    target.work_weekdays = sorted({int(v) for v in wkdays if v.strip()}) if wkdays else None
 
 
 @router.get("", response_class=HTMLResponse)

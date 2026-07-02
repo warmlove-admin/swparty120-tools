@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Date, DateTime, Enum, Boolean, ForeignKey
+from sqlalchemy import Column, JSON, String, Date, DateTime, Enum, Boolean, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -50,6 +50,17 @@ class User(Base):
     emergency_contact_phone = Column(String)
     note = Column(String)
 
+    regular_off_weekday = Column(Integer)
+    rest_weekday = Column(Integer)
+    hourly_wage = Column(Integer)
+    work_weekdays = Column(JSON)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     supervisor = relationship("User", remote_side=[id], foreign_keys=[supervisor_id])
+
+    @property
+    def is_part_time(self) -> bool:
+        if not self.work_weekdays:
+            return False
+        return sorted(self.work_weekdays) == [5, 6]

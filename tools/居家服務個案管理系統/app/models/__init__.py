@@ -16,3 +16,4 @@ from app.models.contact_record import ContactRecord  # noqa: F401
 from app.models.complaint import Complaint, ComplaintProgressEntry  # noqa: F401
 from app.models.complaint_report import ComplaintReport  # noqa: F401
 from app.models.record_status_log import RecordStatusLog  # noqa: F401
+from app.models.national_holiday import NationalHoliday  # noqa: F401

@@ -2,6 +2,7 @@ import calendar
 import re
 from datetime import date, datetime, timedelta
 from typing import Optional
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -120,6 +121,35 @@ def _imported_calendar_item(record: CaregiverServiceRecord) -> dict:
     }
 
 
+def _check_weekend_schedule_warning(schedule: ServiceSchedule, db: Session) -> str | None:
+    """Check if caregiver has both Sat and Sun schedules but monthly hours < 172."""
+    from app.services.attendance_engine import _get_month_hours
+    from sqlalchemy import func as sa_func
+    caregiver_id = schedule.caregiver_id
+    if not caregiver_id:
+        return None
+    active_schedules = db.query(ServiceSchedule).filter(
+        ServiceSchedule.caregiver_id == caregiver_id,
+        ServiceSchedule.effective_from <= date.today(),
+        sa_func.coalesce(ServiceSchedule.effective_until, date(9999, 12, 31)) >= date.today(),
+    ).all()
+    all_weekdays = set()
+    for s in active_schedules:
+        all_weekdays.update(s.weekdays)
+    has_both_weekend = 5 in all_weekdays and 6 in all_weekdays
+    if not has_both_weekend:
+        return None
+    today = date.today()
+    monthly_hours = _get_month_hours(caregiver_id, today.year, today.month, db)
+    if monthly_hours >= 172.0:
+        return None
+    return (
+        f"⚠️ {schedule.caregiver.display_name} 目前已排定六日皆有班表，"
+        f"但本月({today.year}/{today.month})總服務時數 {monthly_hours:.0f}h "
+        f"未達彈性工時門檻 172h。請注意休息日／例假日之出勤規範。"
+    )
+
+
 def _get_case_or_404(db: Session, case_id: str) -> Case:
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -209,14 +239,24 @@ def monthly_schedule(
     elif view not in {"all", "caregiver", "case"}:
         view = "all"
 
-    caregivers = db.query(User).filter(User.role == UserRole.caregiver, User.is_active.is_(True)).order_by(User.display_name).all()
+    today = date.today()
+    caregivers = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.caregiver,
+            User.is_active.is_(True),
+            (User.termination_date.is_(None)) | (User.termination_date > today),
+        )
+        .order_by(User.display_name)
+        .all()
+    )
     case_by_id = {}
-    case_query = db.query(Case).join(ServiceSchedule).distinct()
+    case_query = db.query(Case).join(ServiceSchedule).distinct().filter(Case.status != CaseStatus.closed)
     if user.role == UserRole.caregiver:
         case_query = case_query.filter(ServiceSchedule.caregiver_id == user.id)
     for case in case_query.all():
         case_by_id[case.id] = case
-    imported_case_query = db.query(Case).join(CaregiverServiceRecord).distinct()
+    imported_case_query = db.query(Case).join(CaregiverServiceRecord).distinct().filter(Case.status != CaseStatus.closed)
     if user.role == UserRole.caregiver:
         imported_case_query = imported_case_query.filter(CaregiverServiceRecord.caregiver_id == user.id)
     for case in imported_case_query.all():
@@ -275,10 +315,14 @@ def new_form(case_id: str, request: Request, db: Session = Depends(get_db), user
 @router.post("/cases/{case_id}/schedules")
 async def create(case_id: str, request: Request, db: Session = Depends(get_db), user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager))):
     case = _get_case_or_404(db, case_id)
-    _, error = await _save(case, request, db)
+    schedule, error = await _save(case, request, db)
     if error:
         return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, error=error), status_code=400)
-    return RedirectResponse(url=f"/cases/{case.id}", status_code=302)
+    warning = _check_weekend_schedule_warning(schedule, db)
+    redirect_url = f"/cases/{case.id}"
+    if warning:
+        redirect_url += f"?schedule_warning={quote(warning)}"
+    return RedirectResponse(url=redirect_url, status_code=302)
 
 
 @router.get("/cases/{case_id}/schedules/{schedule_id}/edit", response_class=HTMLResponse)
@@ -296,10 +340,14 @@ async def edit(case_id: str, schedule_id: str, request: Request, db: Session = D
     schedule = db.query(ServiceSchedule).filter_by(id=schedule_id, case_id=case.id).first()
     if not schedule:
         raise HTTPException(404, "找不到服務班表")
-    _, error = await _save(case, request, db, schedule)
+    schedule_obj, error = await _save(case, request, db, schedule)
     if error:
         return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, schedule=schedule, error=error), status_code=400)
-    return RedirectResponse(url=f"/cases/{case.id}", status_code=302)
+    warning = _check_weekend_schedule_warning(schedule_obj or schedule, db)
+    redirect_url = f"/cases/{case.id}"
+    if warning:
+        redirect_url += f"?schedule_warning={quote(warning)}"
+    return RedirectResponse(url=redirect_url, status_code=302)
 
 
 @router.post("/cases/{case_id}/schedules/{schedule_id}/delete")

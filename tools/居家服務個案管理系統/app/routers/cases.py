@@ -438,6 +438,7 @@ def case_detail(
     case_id: str,
     request: Request,
     tab: str = "basic",
+    schedule_warning: str = "",
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -551,6 +552,7 @@ def case_detail(
             "pause_reasons": list(PauseReasonType),
             "close_reasons": list(CloseReasonType),
             "today": date.today(),
+            "schedule_warning": schedule_warning,
         },
     )
 

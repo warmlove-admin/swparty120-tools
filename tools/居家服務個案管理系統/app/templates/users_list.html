@@ -129,6 +129,32 @@
           <div class="full"><label>常用語言</label>{% for lang in ["國語", "台語", "客語", "其他"] %}<label style="display:inline-flex; align-items:center; margin-right:0.75rem; font-weight:normal;"><input type="checkbox" name="languages" value="{{ lang }}" {% if lang in account_languages %}checked{% endif %} style="width:auto; margin-right:0.25rem;">{{ lang }}</label>{% endfor %}</div>
         </div>
 
+        <div class="section-title">出勤與薪資</div>
+        <div class="form-grid">
+          <div class="full">
+            <label>出勤天（可複選）</label>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.25rem;">
+              {% for i in range(7) %}
+              <label style="font-weight:normal;display:inline-flex;align-items:center;gap:0.2rem;">
+                <input type="checkbox" name="work_weekdays" value="{{ i }}"
+                  {% if account.work_weekdays and i in account.work_weekdays %}checked{% endif %}
+                  onchange="toggleParttimeHint(this)" style="width:auto;">
+                {{ weekday_labels[i] }}
+              </label>
+              {% endfor %}
+            </div>
+            <small id="parttime-hint" style="color:#b9770e;{% if not (account.work_weekdays and account.work_weekdays|length == 2 and 5 in account.work_weekdays and 6 in account.work_weekdays) %}display:none{% endif %};margin-top:0.2rem;display:block;">⚡ 僅週六週日 → 此為兼職人員，六日出勤視為一般工時</small>
+          </div>
+          <div><label>時薪（元）</label><input type="number" name="hourly_wage" value="{{ account.hourly_wage or '' }}" placeholder="預設 230"></div>
+        </div>
+        <details style="margin-top:0.5rem;font-size:0.85rem;color:#667;">
+          <summary style="cursor:pointer;">進階：例假日／休息日手動設定（未使用 work_weekdays 時作為備援）</summary>
+          <div class="form-grid" style="margin-top:0.5rem;">
+            <div><label>例假日（固定不出勤）</label><select name="regular_off_weekday"><option value="">未設定</option>{% for i in range(7) %}<option value="{{ i }}" {% if account.regular_off_weekday == i %}selected{% endif %}>{{ weekday_labels[i] }}</option>{% endfor %}</select></div>
+            <div><label>休息日（可加班）</label><select name="rest_weekday"><option value="">未設定</option>{% for i in range(7) %}<option value="{{ i }}" {% if account.rest_weekday == i %}selected{% endif %}>{{ weekday_labels[i] }}</option>{% endfor %}</select></div>
+          </div>
+        </details>
+
         <div class="section-title">緊急聯絡</div>
         <div class="form-grid">
           <div><label>緊急聯絡人</label><input name="emergency_contact_name" value="{{ account.emergency_contact_name or '' }}"></div>
@@ -147,4 +173,18 @@
       {% endif %}
     </div>
   </div>
+<script>
+function toggleParttimeHint(checkbox) {
+  var form = checkbox.closest('form');
+  var checks = form.querySelectorAll('input[name="work_weekdays"]');
+  var checked = [];
+  checks.forEach(function(cb) { if (cb.checked) checked.push(parseInt(cb.value)); });
+  var hint = document.getElementById('parttime-hint');
+  if (checked.length === 2 && checked.includes(5) && checked.includes(6)) {
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+</script>
 {% endblock %}

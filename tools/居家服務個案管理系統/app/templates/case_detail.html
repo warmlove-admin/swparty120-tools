@@ -152,6 +152,11 @@
   </section>
 
   <section class="case-tab-panel" data-panel="schedule">
+  {% if schedule_warning %}
+  <div class="card" style="background:#fff8e1;border-left:5px solid #b9770e;">
+    <strong style="color:#b9770e;">{{ schedule_warning }}</strong>
+  </div>
+  {% endif %}
   {% if pending_imported_schedule_count %}
   <div class="card returned-review-alert">
     <strong>此個案已有照顧計畫，但仍有 {{ pending_imported_schedule_count }} 筆外部匯入班表待轉正式。</strong><br>
