@@ -192,7 +192,8 @@
       {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/line/sources">LINE來源</a>{% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/todos">待辦中心</a>{% endif %}
       {% if user and user.role.value in ["主任", "會計"] %}<a href="/leave-calc">特休未休金</a>{% endif %}
-      {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/attendance">出勤管理</a>{% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任", "會計"] %}<a href="/attendance">出勤管理</a>{% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任", "會計"] %}<a href="/transport-salary">交通津貼</a>{% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/exports">列印／匯出</a>{% endif %}
       {% if user %}
         <span style="margin-right:1rem;">{{ user.display_name }}（{{ user.role.value }}）</span>

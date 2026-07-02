@@ -23,6 +23,7 @@ from app.routers import exports as exports_router
 from app.routers import complaints as complaints_router
 from app.routers import leave_calc as leave_calc_router
 from app.routers import attendance as attendance_router
+from app.routers import transport_salary as transport_salary_router
 from app.services.goal_template_seed import seed_goal_templates_if_empty
 from app.models.user import UserRole
 
@@ -72,6 +73,7 @@ include_project_router(exports_router.router)
 include_project_router(complaints_router.router)
 include_project_router(leave_calc_router.router)
 include_project_router(attendance_router.router)
+include_project_router(transport_salary_router.router)
 
 
 @app.on_event("startup")

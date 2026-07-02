@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ caregiver.display_name }} 每日明細 - {{ month_display }}{% endblock %}
+{% block content %}
+
+<div style="margin-bottom:1rem;">
+  <a href="/transport-salary?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" style="color:#2c7a7b;">← 返回總表</a>
+</div>
+
+<h2>{{ caregiver.display_name }} — {{ month_display }} 每日明細</h2>
+
+{% if salary %}
+<div class="card" style="margin-bottom:1rem; display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:0.75rem;">
+  <div><small>不含交通薪資</small><br><strong>{{ salary.salary_no_transport }}</strong></div>
+  <div><small>含交通薪資</small><br><strong>{{ salary.salary_with_transport }}</strong></div>
+  <div><small>交通津貼</small><br><strong style="color:#1e8449;">{{ salary.transport_allowance }}</strong></div>
+  <div><small>久任獎金</small><br><strong>{{ salary.long_term_bonus }}</strong></div>
+  <div><small>總薪資</small><br><strong style="font-size:1.2rem;">{{ salary.total_salary }}</strong></div>
+  <div><small>時薪</small><br><strong>{{ caregiver.hourly_wage or 230 }}</strong></div>
+</div>
+{% endif %}
+
+{% if daily_details %}
+<div class="card" style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>日別</th>
+        <th>服務分鐘</th>
+        <th>轉場分鐘</th>
+        <th>轉場公里</th>
+        <th>未加權<br>分鐘(不含交)</th>
+        <th>未加權<br>分鐘(含交)</th>
+        <th>未加權<br>加權(不含)</th>
+        <th>加權(含交)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% set total_minutes = namespace(v=0) %}
+      {% set total_transfer_min = namespace(v=0) %}
+      {% set total_weighted_no = namespace(v=0.0) %}
+      {% set total_weighted_with = namespace(v=0.0) %}
+      {% for d in daily_details %}
+      {% set total_minutes.v = total_minutes.v + d.total_minutes %}
+      {% set total_transfer_min.v = total_transfer_min.v + d.transfer_minutes %}
+      {% set total_weighted_no.v = total_weighted_no.v + d.weighted_no_transport %}
+      {% set total_weighted_with.v = total_weighted_with.v + d.weighted_with_transport %}
+      <tr>
+        <td>{{ d.date.month }}/{{ d.date.day }}</td>
+        <td><span class="status-badge" style="background:#e8f4f8;">{{ d.date_type_label }}</span></td>
+        <td>{{ d.total_minutes }}</td>
+        <td>{{ '%0.1f'|format(d.transfer_minutes) }}</td>
+        <td>{{ '%0.1f'|format(d.transfer_km) }}</td>
+        <td>
+          {% for bn, bm in d.brackets_no_transport.items() %}
+          <small>{{ bn }}: {{ bm }}分</small>{% if not loop.last %}<br>{% endif %}
+          {% endfor %}
+        </td>
+        <td>
+          {% for bn, bm in d.brackets_with_transport.items() %}
+          <small>{{ bn }}: {{ bm }}分</small>{% if not loop.last %}<br>{% endif %}
+          {% endfor %}
+        </td>
+        <td>{{ '%0.1f'|format(d.weighted_no_transport) }}</td>
+        <td>{{ '%0.1f'|format(d.weighted_with_transport) }}</td>
+      </tr>
+      {% endfor %}
+      <tr style="font-weight:900; background:#eaf1f1;">
+        <td colspan="2">合計</td>
+        <td>{{ total_minutes.v }}</td>
+        <td>{{ '%0.1f'|format(total_transfer_min.v) }}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{ '%0.1f'|format(total_weighted_no.v) }}</td>
+        <td>{{ '%0.1f'|format(total_weighted_with.v) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center; color:#888; padding:2rem;">
+  {{ month_display }} 無服務紀錄。
+</div>
+{% endif %}
+
+{% endblock %}
