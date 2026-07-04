@@ -22,12 +22,13 @@ from app.routers import contact_records as contact_records_router
 from app.routers import exports as exports_router
 from app.routers import complaints as complaints_router
 from app.routers import leave_calc as leave_calc_router
+from app.routers import annual_leave as annual_leave_router
 from app.routers import attendance as attendance_router
 from app.routers import transport_salary as transport_salary_router
 from app.services.goal_template_seed import seed_goal_templates_if_empty
 from app.models.user import UserRole
 
-app = FastAPI(title="居家服務個案管理系統")
+app = FastAPI(title="居家服務個案管理系統", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
@@ -72,6 +73,7 @@ include_project_router(contact_records_router.router)
 include_project_router(exports_router.router)
 include_project_router(complaints_router.router)
 include_project_router(leave_calc_router.router)
+include_project_router(annual_leave_router.router)
 include_project_router(attendance_router.router)
 include_project_router(transport_salary_router.router)
 

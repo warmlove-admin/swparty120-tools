@@ -19,3 +19,4 @@ from app.models.record_status_log import RecordStatusLog  # noqa: F401
 from app.models.national_holiday import NationalHoliday  # noqa: F401
 from app.models.caregiver_transfer import CaregiverTransfer  # noqa: F401
 from app.models.monthly_salary import MonthlySalary  # noqa: F401
+from app.models.import_salary_record import ImportSalaryRecord  # noqa: F401

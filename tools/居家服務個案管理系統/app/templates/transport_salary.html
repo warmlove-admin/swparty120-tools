@@ -4,30 +4,43 @@
 
 <h2>🚚 交通津貼／薪資試算</h2>
 
-<form method="get" action="/transport-salary" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
-  <label style="margin:0; white-space:nowrap;">月份：</label>
-  <select name="month" style="width:auto; min-width:140px;" onchange="this.form.submit()">
-    {% for mo in month_options %}
-    <option value="{{ mo.year }}-{{ '%02d' % mo.month }}" {% if current_month == mo %}selected{% endif %}>
-      {{ mo.year }}年{{ mo.month }}月
-    </option>
-    {% endfor %}
-  </select>
+<div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
+  <form method="get" action="/transport-salary" style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+    <label style="margin:0; white-space:nowrap;">月份：</label>
+    <select name="month" style="width:auto; min-width:140px;" onchange="this.form.submit()">
+      {% for mo in month_options %}
+      <option value="{{ mo.year }}-{{ '%02d' % mo.month }}" {% if current_month == mo %}selected{% endif %}>
+        {{ mo.year }}年{{ mo.month }}月
+      </option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit" class="btn btn-secondary" style="padding:0.3rem 0.6rem;">切換</button></noscript>
+  </form>
 
   <div style="display:flex; gap:0.5rem; margin-left:auto;">
     {% if user and user.role.value in ["居督", "主管", "主任"] %}
     <form method="post" action="/transport-salary/calculate-transfers" style="margin:0;">
       <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <button type="submit" class="btn" onclick="this.disabled=true;this.textContent='計算中…'">計算轉場距離</button>
+      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場距離</button>
     </form>
     <form method="post" action="/transport-salary/calculate-salaries" style="margin:0;">
       <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <button type="submit" class="btn" onclick="this.disabled=true;this.textContent='試算中…'">試算薪資</button>
+      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資</button>
     </form>
+    {% if has_import_data %}
+    <form method="post" action="/transport-salary/calculate-import-transfers" style="margin:0;">
+      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場（實際服務）</button>
+    </form>
+    <form method="post" action="/transport-salary/calculate-salaries-from-import" style="margin:0;">
+      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+      <button type="submit" class="btn btn-success" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資（實際服務）</button>
+    </form>
+    {% endif %}
     {% endif %}
     <a href="/transport-salary/export?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" class="btn btn-secondary">匯出 Excel</a>
   </div>
-</form>
+</div>
 
 {% if error %}
 <div class="error">{{ error }}</div>
@@ -40,7 +53,7 @@
 {% endif %}
 
 <div class="card" style="margin-bottom:1rem;">
-  <div style="display:flex; gap:2rem; font-size:0.95rem;">
+  <div style="display:flex; gap:2rem; font-size:0.95rem; align-items:center;">
     <span>轉場距離狀態：</span>
     {% if transfer_stats.total == 0 %}
     <span style="color:#888;">尚未計算</span>
@@ -49,7 +62,27 @@
     {% if transfer_stats.failed > 0 %}<span style="color:#c0392b;">失敗 {{ transfer_stats.failed }} 筆</span>{% endif %}
     <span style="color:#888;">共 {{ transfer_stats.total }} 筆</span>
     {% endif %}
+    <span style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
+      {% if has_import_data %}
+      <span style="background:#d4efdf; color:#1e8449; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem; font-weight:700;">實際服務已匯入</span>
+      {% else %}
+      <span style="background:#fef9e7; color:#9a7d0a; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem;">使用預排班表</span>
+      {% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任"] %}
+      <a href="#" onclick="document.getElementById('uploadForm').style.display='block'; return false;" style="font-size:0.85rem; margin-left:0.5rem;">上傳實際服務時數</a>
+      {% endif %}
+    </span>
   </div>
+  {% if user and user.role.value in ["居督", "主管", "主任"] %}
+  <div id="uploadForm" style="display:none; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #ddd;">
+    <form method="post" action="/transport-salary/upload" enctype="multipart/form-data" style="display:flex; align-items:center; gap:0.5rem; margin:0;">
+      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+      <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
+      <button type="submit" class="btn" style="font-size:0.85rem;">上傳</button>
+      <span style="color:#888; font-size:0.82rem;">格式：時薪明細表_無轉場地址.xlsx</span>
+    </form>
+  </div>
+  {% endif %}
 </div>
 
 {% if results %}

@@ -49,6 +49,25 @@
       </div>
     </div>
 
+    <div class="card">
+      <div class="section-title">洗腎接送設定</div>
+      <div class="form-grid">
+        <div><label><input type="checkbox" name="is_dialysis" value="Y" {% if case.is_dialysis == 'Y' %}checked{% endif %} onchange="document.getElementById('dialysis-settings').style.display=this.checked?'block':'none'"> 此個案為洗腎接送案</label></div>
+      </div>
+      <div id="dialysis-settings" class="form-grid" style="{% if case.is_dialysis != 'Y' %}display:none;{% endif %} margin-top:0.8rem;">
+        <div class="full"><label>醫院/診所地址</label><input name="dialysis_hospital_address" value="{{ case.dialysis_hospital_address or '' }}" placeholder="縣市區路名..." style="width:100%;"></div>
+        <div>
+          <label>接送方向</label>
+          <select name="dialysis_direction">
+            <option value="">請選擇</option>
+            <option value="送" {% if case.dialysis_direction == '送' %}selected{% endif %}>送（案家→醫院，轉場終點用醫院）</option>
+            <option value="接" {% if case.dialysis_direction == '接' %}selected{% endif %}>接（醫院→案家，轉場起點用醫院）</option>
+            <option value="送+接" {% if case.dialysis_direction == '送+接' %}selected{% endif %}>送+接（兩段都改醫院）</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <button type="submit" class="btn">儲存變更</button>
     <a href="/cases/{{ case.id }}" class="btn btn-secondary" style="margin-left:0.5rem;">取消</a>
   </form>

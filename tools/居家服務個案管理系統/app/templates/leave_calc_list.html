@@ -1,7 +1,128 @@
 {% extends "base.html" %}
-{% block title %}特休未休金計算 - 居家服務個案管理系統{% endblock %}
+{% block title %}特休未休金 - 居家服務個案管理系統{% endblock %}
 {% block content %}
-<h2 class="section-title">特休未休金計算結果</h2>
+<h2 class="section-title">特休未休金</h2>
+
+{% if user.role.value in ["主任"] and caregivers is not none %}
+<div style="display:flex;gap:1rem;align-items:flex-start;margin-bottom:1.5rem;">
+  <div style="flex:2;min-width:0;">
+    <div class="card" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+      <label style="margin:0;white-space:nowrap;font-weight:800;">線上試算：</label>
+      <select onchange="window.location.href='/leave-calc' + (this.value ? '?calc_caregiver_id='+this.value : '')" style="width:auto;min-width:160px;">
+        <option value="">— 請選擇居服員 —</option>
+        {% for cg in caregivers %}
+        <option value="{{ cg.id }}" {% if cg.id == calc_caregiver_id %}selected{% endif %}>{{ cg.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if calc and calc.error %}
+    <div class="card" style="border-left:4px solid #c0392b;background:#fdf2f2;">
+      <strong style="color:#c0392b;">錯誤：</strong>{{ calc.error }}
+    </div>
+    {% elif calc %}
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">基本資料</div>
+      <table style="font-size:0.95rem;">
+        <tr><td style="width:140px;font-weight:800;">姓名</td><td>{{ calc.caregiver_name }}</td></tr>
+        <tr><td style="font-weight:800;">到職日</td><td>{{ calc.hire_date }}</td></tr>
+        <tr><td style="font-weight:800;">最近周年日</td><td>{{ calc.anniversary }}（滿 {{ calc.anniversary_age }} 年）</td></tr>
+        <tr><td style="font-weight:800;">結算迄日</td><td>{{ calc.ref_date }}</td></tr>
+        <tr><td style="font-weight:800;">計算區間</td><td>{{ calc.calc_period }}</td></tr>
+        <tr><td style="font-weight:800;">時薪</td><td>{{ calc.wage }} 元</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">特休試算結果</div>
+      <table style="font-size:0.95rem;">
+        <tr>
+          <td style="width:220px;font-weight:800;">結算特休天數</td>
+          <td>{{ calc.leave_days }} 天</td>
+        </tr>
+        <tr>
+          <td style="font-weight:800;">過去12月實際工時</td>
+          <td>{{ calc.total_hours_12m }} 小時<br><small style="color:#667;">（{{ calc.past_12m_start }} ~ {{ calc.past_12m_end }}，轉場分鐘+平日0-8）</small></td>
+        </tr>
+        <tr>
+          <td style="font-weight:800;">工時比例（vs 全時2088H）</td>
+          <td>{{ calc.ratio_percent }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight:800;">應享特休時數</td>
+          <td>{{ calc.entitled_hours }} 小時<br><small style="color:#667;">（{{ calc.leave_days }}天 × 8小時 × {{ calc.ratio_percent }}）</small></td>
+        </tr>
+        <tr>
+          <td style="font-weight:800;">未休特休時數</td>
+          <td>{{ calc.unused_hours }} 小時（居服員全數未休）</td>
+        </tr>
+        <tr style="background:#eaf5ea;">
+          <td style="font-weight:800;font-size:1.05rem;">特休未休金</td>
+          <td style="font-weight:900;font-size:1.2rem;color:#1e8449;">{{ calc.payout | int }} 元</td>
+        </tr>
+      </table>
+    </div>
+    {% else %}
+    <div class="card" style="text-align:center;color:#667;padding:2rem;">
+      請選擇居服員進行線上試算
+    </div>
+    {% endif %}
+  </div>
+
+  {% if calc and not calc.error %}
+  <div style="flex:1;min-width:0;">
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">計算方式與規則</div>
+      <div style="font-size:0.82rem;line-height:1.7;color:#344;">
+        <p style="margin:0 0 0.5rem 0;padding:0.3rem 0.5rem;background:#eaf1f1;border-radius:4px;font-weight:800;font-size:0.85rem;">
+          勞基法第38條 — 特別休假
+        </p>
+        <hr style="border:none;border-top:1px solid #dde5e5;margin:0.3rem 0;">
+        <p><strong>① 特休天數（年資制）</strong></p>
+        <table style="font-size:0.78rem;width:100%;">
+          <tr><th>年資</th><th>天數</th></tr>
+          <tr><td>滿6個月~1年</td><td>3 天</td></tr>
+          <tr><td>1~2年</td><td>7 天</td></tr>
+          <tr><td>2~3年</td><td>10 天</td></tr>
+          <tr><td>3~5年</td><td>14 天</td></tr>
+          <tr><td>5~10年</td><td>15 天</td></tr>
+          <tr><td>10年以上</td><td>每1年+1天（最多30天）</td></tr>
+        </table>
+        <p><strong>② 結算時點</strong><br>
+          特休在<strong>到職週年日</strong>發放，下一個週年日到時結算未休金。<br>
+          <small>結算迄日 = 週年日 - 1 天</small>
+        </p>
+        <p><strong>③ 結算天數</strong><br>
+          結算的是<strong>上次週年日發放</strong>的特休天數。<br>
+          <small>例：滿5年 → 結算14天（[3~5年] 區間）<br>
+          例：滿3年 → 結算10天（[2~3年] 區間）</small>
+        </p>
+        <p><strong>④ 工時計算</strong><br>
+          過去12個月 = 結算迄日所在月往前推12個月<br>
+          <strong>不含結算迄日當月</strong>。<br>
+          <small>例：結算迄日在4月 → 計算 3月 回推至 上一年4月<br>
+          （即上一年4月～今年3月，共12個月整）</small><br>
+          月工時 = <strong>轉場分鐘 + 平日0-8</strong> 加總<br>
+          <small>（不含加班、休假日工時）</small>
+        </p>
+        <p><strong>⑤ 未休金計算</strong><br>
+          比例 = 實際工時 ÷ 2088H<br>
+          應享時數 = 天數 × 8 × 比例<br>
+          未休金 = 應享時數 × 時薪<br>
+          <small>（居服員全數未休）</small>
+        </p>
+        <hr style="border:none;border-top:1px solid #dde5e5;margin:0.3rem 0;">
+        <p style="margin:0.3rem 0;font-size:0.78rem;color:#667;">
+          <strong>注意</strong>：此頁面為試算參考，實際金額請依公司政策及勞工實際請假紀錄為準。
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<hr style="margin:1.5rem 0;border:0;border-top:2px solid #2c7a7b;">
 
 {% if error %}
 <div class="card" style="border-left:4px solid #c0392b;background:#fdf2f2;">

@@ -289,7 +289,7 @@ def list_cases(
 def new_case_form(
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     supervisors = db.query(User).filter(User.role.in_([UserRole.supervisor, UserRole.manager])).all()
     return templates.TemplateResponse(
@@ -301,7 +301,7 @@ def new_case_form(
 async def import_ltc_html(
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
     file: UploadFile = File(...),
 ):
     """5.4 步驟1-4：居督上傳衛福部HTML匯出檔，系統解析後預填開案表單，
@@ -326,7 +326,7 @@ def _parse_date(value: Optional[str]) -> Optional[date]:
 def create_case(
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
     org_case_no: str = Form(...),
     name: str = Form(...),
     id_number: str = Form(...),
@@ -574,7 +574,7 @@ def update_case_status(
     close_reason_type: str = Form("other"),
     close_reason_note: str = Form(""),
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     case = _get_case_or_404(db, case_id)
     try:
@@ -609,7 +609,7 @@ def pause_case_form(
     case_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     case = _get_case_or_404(db, case_id)
     return templates.TemplateResponse(
@@ -621,7 +621,7 @@ def pause_case_form(
 def pause_case(
     case_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
     pause_date: str = Form(...),
     pause_reason_type: str = Form(...),
     pause_reason_note: str = Form(""),
@@ -640,7 +640,7 @@ def pause_case(
 def resume_case(
     case_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     case = _get_case_or_404(db, case_id)
     case.status = CaseStatus.active
@@ -654,7 +654,7 @@ def close_case_form(
     case_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     case = _get_case_or_404(db, case_id)
     return templates.TemplateResponse(
@@ -666,7 +666,7 @@ def close_case_form(
 def close_case(
     case_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
     close_date: str = Form(...),
     close_reason_type: str = Form(...),
     close_reason_note: str = Form(""),
@@ -685,7 +685,7 @@ def edit_case_form(
     case_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     case = _get_case_or_404(db, case_id)
     supervisors = db.query(User).filter(User.role.in_([UserRole.supervisor, UserRole.manager])).all()
@@ -699,7 +699,7 @@ def edit_case(
     case_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager)),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
     org_case_no: str = Form(...),
     name: str = Form(...),
     id_number: str = Form(...),
@@ -720,6 +720,9 @@ def edit_case(
     primary_supervisor_id: str = Form(""),
     open_date: str = Form(""),
     line_group_id: str = Form(""),
+    is_dialysis: str = Form("N"),
+    dialysis_hospital_address: str = Form(""),
+    dialysis_direction: str = Form(""),
 ):
     case = _get_case_or_404(db, case_id)
     supervisors = db.query(User).filter(User.role.in_([UserRole.supervisor, UserRole.manager])).all()
@@ -752,5 +755,8 @@ def edit_case(
     case.primary_supervisor_id = primary_supervisor_id or None
     case.open_date = _parse_date(open_date)
     case.line_group_id = line_group_id or None
+    case.is_dialysis = is_dialysis
+    case.dialysis_hospital_address = dialysis_hospital_address or None
+    case.dialysis_direction = dialysis_direction or None
     db.commit()
     return RedirectResponse(url=f"/cases/{case.id}", status_code=302)

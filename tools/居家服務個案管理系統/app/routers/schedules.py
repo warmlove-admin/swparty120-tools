@@ -157,12 +157,70 @@ def _get_case_or_404(db: Session, case_id: str) -> Case:
     return case
 
 
-def _form_context(case: Case, user: User, schedule=None, error=None):
+def _get_adjacent_schedules(caregiver_id: str, case_id: str, weekday: int, start_time, exclude_id: str | None, db: Session) -> dict:
+    """Find schedules before and after this case for the same caregiver on a given weekday."""
+    others = db.query(ServiceSchedule).filter(
+        ServiceSchedule.caregiver_id == caregiver_id,
+        ServiceSchedule.id != exclude_id,
+    ).all()
+    same_day = [s for s in others if weekday in s.weekdays]
+    same_day.sort(key=lambda s: (s.start_time, s.case.name if s.case else ""))
+    prev_s = next_s = None
+    for i, s in enumerate(same_day):
+        if s.start_time >= start_time:
+            prev_s = same_day[i - 1] if i > 0 else None
+            next_s = s
+            break
+    else:
+        prev_s = same_day[-1] if same_day else None
+    return {"prev": prev_s, "next": next_s, "all": same_day}
+
+
+def _route_summary(case: Case, schedule, caregiver_name: str, prev_case_name: str, next_case_name: str) -> str:
+    parts = []
+    if case.dialysis_direction in ("接", "送+接") and prev_case_name:
+        parts.append(f"前一段：{prev_case_name} → {case.name}，轉場終點改為醫院")
+    if case.dialysis_direction in ("送", "送+接") and next_case_name:
+        parts.append(f"後一段：{case.name} → {next_case_name}，轉場起點改為醫院")
+    if not parts:
+        parts.append("此個案為洗腎案，但未影響轉場路線（無前後案或方向未設定）")
+    return "；".join(parts)
+
+
+def _need_dialysis_confirmation(case: Case, service_code: str) -> bool:
+    return case.is_dialysis == "Y" and "BA13" in service_code.upper()
+
+
+def _dialysis_adjacent_context(case: Case, schedule, db: Session):
+    """Build route confirmation context for a dialysis case's schedule."""
+    if not schedule or not _need_dialysis_confirmation(case, schedule.service_code):
+        return {}
+    caregiver = schedule.caregiver
+    caregiver_name = caregiver.display_name if caregiver else "?"
+    adj_by_weekday = {}
+    for wd in schedule.weekdays:
+        adj = _get_adjacent_schedules(schedule.caregiver_id, case.id, wd, schedule.start_time, schedule.id, db)
+        prev_name = adj["prev"].case.name if adj["prev"] and adj["prev"].case else None
+        next_name = adj["next"].case.name if adj["next"] and adj["next"].case else None
+        adj_by_weekday[wd] = {"prev_name": prev_name, "next_name": next_name, "route": _route_summary(case, schedule, caregiver_name, prev_name, next_name)}
+    weekday_labels = WEEKDAY_LABELS
     return {
+        "dialysis_case": case,
+        "dialysis_caregiver_name": caregiver_name,
+        "dialysis_adjacent": adj_by_weekday,
+        "weekday_labels": weekday_labels,
+    }
+
+
+def _form_context(case: Case, user: User, schedule=None, error=None, db=None):
+    ctx = {
         "case": case, "user": user, "schedule": schedule, "error": error,
         "plans": [plan for plan in case.care_plans if plan.assigned_caregiver_id],
         "weekday_labels": list(enumerate(WEEKDAY_LABELS)),
     }
+    if db and schedule and _need_dialysis_confirmation(case, schedule.service_code):
+        ctx.update(_dialysis_adjacent_context(case, schedule, db))
+    return ctx
 
 
 def _selected_item(case: Case, selection: str):
@@ -318,6 +376,12 @@ async def create(case_id: str, request: Request, db: Session = Depends(get_db), 
     schedule, error = await _save(case, request, db)
     if error:
         return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, error=error), status_code=400)
+    # 洗腎接送路線確認
+    form = await request.form()
+    if schedule and _need_dialysis_confirmation(case, schedule.service_code) and form.get("dialysis_confirmed") != "yes":
+        ctx = _form_context(case, user, schedule=schedule, db=db, error="請確認下方洗腎接送路線後打勾再儲存。")
+        ctx["dialysis_needs_confirmation"] = True
+        return templates.TemplateResponse(request, "schedule_form.html", ctx, status_code=400)
     warning = _check_weekend_schedule_warning(schedule, db)
     redirect_url = f"/cases/{case.id}"
     if warning:
@@ -331,7 +395,7 @@ def edit_form(case_id: str, schedule_id: str, request: Request, db: Session = De
     schedule = db.query(ServiceSchedule).filter_by(id=schedule_id, case_id=case.id).first()
     if not schedule:
         raise HTTPException(404, "找不到服務班表")
-    return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, schedule=schedule))
+    return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, schedule=schedule, db=db))
 
 
 @router.post("/cases/{case_id}/schedules/{schedule_id}/edit")
@@ -342,7 +406,13 @@ async def edit(case_id: str, schedule_id: str, request: Request, db: Session = D
         raise HTTPException(404, "找不到服務班表")
     schedule_obj, error = await _save(case, request, db, schedule)
     if error:
-        return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, schedule=schedule, error=error), status_code=400)
+        return templates.TemplateResponse(request, "schedule_form.html", _form_context(case, user, schedule=schedule, db=db, error=error), status_code=400)
+    # 洗腎接送路線確認
+    form = await request.form()
+    if _need_dialysis_confirmation(case, schedule.service_code) and form.get("dialysis_confirmed") != "yes":
+        ctx = _form_context(case, user, schedule=schedule, db=db, error="請確認下方洗腎接送路線後打勾再儲存。")
+        ctx["dialysis_needs_confirmation"] = True
+        return templates.TemplateResponse(request, "schedule_form.html", ctx, status_code=400)
     warning = _check_weekend_schedule_warning(schedule_obj or schedule, db)
     redirect_url = f"/cases/{case.id}"
     if warning:

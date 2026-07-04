@@ -3,7 +3,7 @@
 {% block content %}
   <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <h2 style="margin:0;">個案列表（{{ cases|length }}）</h2>
-    {% if user.role.value in ["居督", "主管"] %}
+    {% if user.role.value in ["居督", "主管", "主任"] %}
       <a href="/cases/new" class="btn">+ 新增開案</a>
     {% endif %}
   </div>

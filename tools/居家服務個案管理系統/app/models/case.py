@@ -76,6 +76,11 @@ class Case(Base):
     line_group_id = Column(String)
     photo_path = Column(String)
 
+    # 洗腎接送設定
+    is_dialysis = Column(String, default="N")  # "Y" / "N"
+    dialysis_hospital_address = Column(String)
+    dialysis_direction = Column(String)  # "送" / "接" / "送+接"
+
     # 個案狀態流動：服務中 / 暫停中 / 已結案
     status = Column(Enum(CaseStatus), nullable=False, default=CaseStatus.active)
 

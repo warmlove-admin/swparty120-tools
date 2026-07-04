@@ -123,7 +123,21 @@ def apply_compatible_schema_updates():
                     UPDATE caregiver_service_records
                     SET formalization_status = 'external_import'
                     WHERE formalization_status IS NULL OR formalization_status = ''
-                """))
+            """))
+        if "cases" in inspector.get_table_names():
+            columns = {c["name"] for c in inspector.get_columns("cases")}
+            for col in ("is_dialysis", "dialysis_hospital_address", "dialysis_direction"):
+                if col not in columns:
+                    connection.execute(text(f"ALTER TABLE cases ADD COLUMN {col} VARCHAR"))
+        if "import_salary_records" not in inspector.get_table_names():
+            from app.models.import_salary_record import ImportSalaryRecord
+            ImportSalaryRecord.__table__.create(connection)
+        else:
+            isr_cols = {c["name"] for c in inspector.get_columns("import_salary_records")}
+            for col in ("visit_order", "transfer_minutes", "weighted_total"):
+                if col not in isr_cols:
+                    col_type = "INTEGER" if col == "visit_order" else "FLOAT"
+                    connection.execute(text(f"ALTER TABLE import_salary_records ADD COLUMN {col} {col_type}"))
         # 本功能上線前建立的目標／計畫沒有評估來源；依實務將它們歸回個案的初次評估，
         # 讓既有資料在新的評估分組畫面仍可被找到與檢討。
         for table_name in ("goals", "care_plans"):

@@ -12,7 +12,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.auth import require_roles
+from app.database import get_db
 from app.models.user import User, UserRole
+from app.routers.annual_leave import caregiver_annual_leave_data
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -81,9 +84,11 @@ def _read_calc_data(path: str) -> list[dict]:
 def leave_calc_index(
     request: Request,
     error: str | None = None,
+    calc_caregiver_id: str | None = None,
+    db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.director, UserRole.accountant)),
 ):
-    return leave_calc_view(request, None, error, user)
+    return leave_calc_view(request, None, error=error, calc_caregiver_id=calc_caregiver_id, db=db, user=user)
 
 
 @router.get("/leave-calc/{yyyymm}", response_class=HTMLResponse)
@@ -91,9 +96,13 @@ def leave_calc_view(
     request: Request,
     yyyymm: str | None,
     error: str | None = None,
+    calc_caregiver_id: str | None = None,
+    db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.director, UserRole.accountant)),
 ):
     files = _scan_calc_files()
+    if yyyymm and "/" in yyyymm:
+        yyyymm = None
     if yyyymm and yyyymm not in files:
         error = f"找不到 {_month_display(yyyymm)} 的計算結果"
         yyyymm = None
@@ -101,12 +110,35 @@ def leave_calc_view(
         yyyymm = next(iter(files.keys())) if files else None
     data = _read_calc_data(files[yyyymm]) if yyyymm else None
     resigned = _read_resigned_list() if user.role == UserRole.director else None
+
+    # 試算區塊（僅主任可見）
+    calc_result = None
+    caregivers = []
+    if user.role == UserRole.director:
+        from datetime import date as _date
+        today = _date.today()
+        caregivers = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.caregiver,
+                User.is_active.is_(True),
+                (User.termination_date.is_(None)) | (User.termination_date > today),
+            )
+            .order_by(User.display_name)
+            .all()
+        )
+        if calc_caregiver_id:
+            calc_result = caregiver_annual_leave_data(calc_caregiver_id, db)
+
     return templates.TemplateResponse(
         request, "leave_calc_list.html", {
             "files": files, "current_month": yyyymm,
             "month_display": _month_display(yyyymm) if yyyymm else None,
             "data": data, "col_labels": COL_LABELS, "cols": COLUMNS,
             "error": error, "user": user, "resigned": resigned,
+            "caregivers": caregivers,
+            "calc_caregiver_id": calc_caregiver_id,
+            "calc": calc_result,
         },
     )
 

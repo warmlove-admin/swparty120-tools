@@ -19,6 +19,53 @@
 </div>
 {% endif %}
 
+{% if daily_visits %}
+<div class="card" style="overflow-x:auto; margin-bottom:1.5rem;">
+  {% for dv in daily_visits %}
+  <details style="margin-bottom:0.5rem; border:1px solid #ddd; border-radius:6px; overflow:hidden;">
+    <summary style="cursor:pointer; padding:0.5rem 0.75rem; background:#f7f9fa; font-weight:700;">
+      {{ dv.date.month }}/{{ dv.date.day }} — {{ dv.visits|length }} 位個案
+      <span style="font-weight:400; color:#888; margin-left:0.5rem;">
+        {% for v in dv.visits %}{{ v.case_name }}{% if not loop.last %} → {% endif %}{% endfor %}
+      </span>
+    </summary>
+    <div style="padding:0.5rem 0.75rem;">
+      <table style="width:100%; font-size:0.9rem;">
+        <thead>
+          <tr>
+            <th>個案</th>
+            <th>開始</th>
+            <th>結束</th>
+            <th>服務分鐘</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in dv.visits %}
+          <tr>
+            <td>{{ v.case_name }}</td>
+            <td>{{ v.start_time }}</td>
+            <td>{{ v.end_time }}</td>
+            <td>{{ v.minutes }}</td>
+          </tr>
+          {% if not loop.last and dv.transfers[loop.index0] %}
+          {% set t = dv.transfers[loop.index0] %}
+          <tr style="background:#f0f7f7;">
+            <td colspan="4" style="padding:0.25rem 0.75rem; font-size:0.85rem; color:#2c7a7b;">
+              ⤵ 轉場：{{ t.from_case }} → {{ t.to_case }}
+              ｜{{ t.km }} km｜{{ t.minutes }} 分
+              {% if t.status == "SAME_ADDR" %}<span style="color:#888;">（同地址）</span>{% endif %}
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% if daily_details %}
 <div class="card" style="overflow-x:auto;">
   <table>
@@ -29,10 +76,10 @@
         <th>服務分鐘</th>
         <th>轉場分鐘</th>
         <th>轉場公里</th>
-        <th>未加權<br>分鐘(不含交)</th>
-        <th>未加權<br>分鐘(含交)</th>
-        <th>未加權<br>加權(不含)</th>
-        <th>加權(含交)</th>
+        <th>原始<br>分鐘(不含交)</th>
+        <th>原始<br>分鐘(含交)</th>
+        <th>加權<br>(不含交)</th>
+        <th>加權<br>(含交)</th>
       </tr>
     </thead>
     <tbody>
