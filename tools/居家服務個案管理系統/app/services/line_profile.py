@@ -42,3 +42,26 @@ def fetch_line_group_member_display_name(group_id: str | None, user_id: str | No
         return None
     data = _line_get_json(f"/group/{quote(group_id, safe='')}/member/{quote(user_id, safe='')}")
     return (data or {}).get("displayName") or None
+
+
+def line_reply_message(reply_token: str, messages: list[dict]) -> bool:
+    """透過 LINE Reply API 回覆訊息。回傳成功與否。"""
+    if not settings.line_channel_access_token or not reply_token:
+        return False
+    import json as _json
+    from urllib.request import Request as _Req, urlopen as _urlopen
+    from urllib.error import HTTPError as _HTTPErr
+    body = _json.dumps({"replyToken": reply_token, "messages": messages}).encode("utf-8")
+    req = _Req(
+        f"{LINE_API_BASE}/message/reply",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {settings.line_channel_access_token}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with _urlopen(req, timeout=5):
+            return True
+    except (_HTTPErr, OSError):
+        return False

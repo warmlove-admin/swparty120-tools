@@ -8,7 +8,7 @@
     header { background: #2c7a7b; color: white; padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     header a { color: white; text-decoration: none; }
     header nav a { margin-right: 1rem; }
-    main { padding: 1.25rem 1rem; max-width: 1360px; margin: 0 auto; }
+    main { padding: 1.25rem 1rem; max-width: 100%; margin: 0 auto; box-sizing:border-box; }
     table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     th, td { padding: 0.64rem 0.58rem; border-bottom: 1px solid #e2e8e8; text-align: left; font-size: 1.03rem; color:#172729; font-weight:650; }
     th { background: #eaf1f1; color:#102d30; font-weight:900; }
@@ -29,7 +29,7 @@
     .btn-returned { background:#b9770e; }
     .section-title { font-weight: 900; margin: 1.2rem 0 0.5rem; color: #23696a; font-size:1.08rem; }
     .error { color: #c0392b; margin-bottom: 1rem; }
-    main:has(.schedule-shell) { max-width: 1440px; }
+    main:has(.schedule-shell) { max-width: 100%; }
     .calendar-wrap { overflow-x:auto; border:1px solid #d9e5e5; border-radius:6px; background:#fff; }
     .calendar-table { min-width: 1180px; table-layout: fixed; box-shadow:none; }
     .calendar-table th { position:sticky; top:0; z-index:1; text-align:center; font-size:0.84rem; padding:0.5rem; }
@@ -111,9 +111,14 @@
     .print-title, .print-only { display:none; }
     .signature-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:1rem; }
     .signature-line { height:2.2rem; border-bottom:1px solid #777; margin:0.8rem 0 0.35rem; }
-    .narrow-col { width:2.2rem; min-width:2.2rem; max-width:2.2rem; white-space:nowrap; }
-    .case-no-col { width:4.2rem; white-space:nowrap; }
-    .status-col { width:4.4rem; white-space:nowrap; }
+    .narrow-col { width:3%; white-space:nowrap; }
+    .case-no-col { width:8%; white-space:nowrap; }
+    .name-col { width:10%; white-space:nowrap; }
+    .cms-col { width:6%; white-space:nowrap; }
+    .status-col { width:8%; white-space:nowrap; }
+    .due-col { width:25%; }
+    .supervisor-col { width:10%; white-space:nowrap; }
+    .cg-col { width:30%; }
     .monthly-contact-block { border:2px solid #8fb6b5; margin-bottom:1rem; background:#fff; break-inside:avoid; page-break-inside:avoid; }
     .monthly-contact-header { background:#e2f0ef; padding:0.65rem 0.8rem; font-weight:800; display:flex; justify-content:space-between; color:#1f5556; }
     .monthly-contact-row { padding:0.72rem 0.8rem; border-top:1px solid #d8e5e5; line-height:1.65; }
@@ -192,8 +197,9 @@
       {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/line/sources">LINE來源</a>{% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/todos">待辦中心</a>{% endif %}
       {% if user and user.role.value in ["主任", "會計"] %}<a href="/leave-calc">特休未休金</a>{% endif %}
+      {% if user %}<a href="/leave">請假</a>{% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任", "會計"] %}<a href="/attendance">出勤管理</a>{% endif %}
-      {% if user and user.role.value in ["居督", "主管", "主任", "會計"] %}<a href="/transport-salary">交通津貼</a>{% endif %}
+      {% if user and user.role.value in ["居督", "主管", "主任", "會計"] %}<a href="/transport-salary">交通津貼／薪資</a>{% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}<a href="/exports">列印／匯出</a>{% endif %}
       {% if user %}
         <span style="margin-right:1rem;">{{ user.display_name }}（{{ user.role.value }}）</span>

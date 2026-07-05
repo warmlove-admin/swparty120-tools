@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}薪資明細 - {{ month_display }}{% endblock %}
+{% block content %}
+
+<h2 class="section-title">薪資明細</h2>
+
+<div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+  <form method="get" action="/salary" style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+    <label style="margin:0; white-space:nowrap;">月份：</label>
+    <select name="month" style="width:auto; min-width:140px;" onchange="this.form.submit()">
+      {% for mo in month_options %}
+      <option value="{{ mo.year }}-{{ '%02d' % mo.month }}" {% if current_month == mo %}selected{% endif %}>
+        {{ mo.year }}年{{ mo.month }}月
+      </option>
+      {% endfor %}
+    </select>
+  </form>
+  {% if rows %}
+  <label style="margin:0 0 0 0.5rem; white-space:nowrap;">人員篩選：</label>
+  <select id="cg-filter" onchange="filterCaregiver()" style="width:auto; min-width:160px;">
+    <option value="">全部</option>
+    {% for r in rows %}
+    <option value="{{ r.caregiver.id }}">{{ r.caregiver.display_name }}</option>
+    {% endfor %}
+  </select>
+  {% endif %}
+</div>
+
+{% if rows %}
+<script>
+function filterCaregiver() {
+  var v = document.getElementById('cg-filter').value;
+  document.querySelectorAll('.salary-block').forEach(function(block) {
+    block.style.display = (!v || block.dataset.cg === v) ? '' : 'none';
+  });
+}
+function toggleSection(btn) {
+  var content = btn.nextElementSibling;
+  var isHidden = content.style.display === 'none';
+  content.style.display = isHidden ? '' : 'none';
+  btn.querySelector('.toggle-icon').textContent = isHidden ? '▼' : '▶';
+}
+</script>
+<style>
+.salary-block { margin-bottom: 1.5rem; border: 1px solid #e2e8e8; border-radius: 6px; background: #fff; overflow: hidden; }
+.salary-block h3 { margin: 0; padding: 0.7rem 1rem; background: #eaf1f1; color: #102d30; font-size: 1rem; }
+.section-toggle { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.55rem 1rem; background: #f4f8f8; border-bottom: 1px solid #e2e8e8; font-weight: 800; font-size: 0.95rem; color: #1f3335; user-select: none; }
+.section-toggle:hover { background: #eaf3f3; }
+.toggle-icon { font-size: 0.75rem; color: #688080; }
+.section-content { padding: 0.5rem 1rem 1rem; }
+.item-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f0f4f4; font-size: 0.95rem; }
+.item-row:last-child { border-bottom: none; }
+.item-name { font-weight: 700; color: #1f2d2f; }
+.item-name .freq-tag { display: inline-block; font-size: 0.72rem; padding: 0.08rem 0.35rem; border-radius: 3px; margin-left: 0.4rem; font-weight: 600; background: #ecf0f1; color: #7f8c8d; }
+.item-name .freq-tag.monthly { background: #d4efdf; color: #1e8449; }
+.item-name .freq-tag.semi_annual { background: #fdebd0; color: #b9770e; }
+.item-name .freq-tag.annual { background: #d5f4e6; color: #117a65; }
+.item-name .freq-tag.irregular { background: #ebdef0; color: #7d3c98; }
+.item-amount { font-weight: 800; font-size: 1.02rem; }
+.item-amount.empty { color: #bbb; font-weight: 400; }
+.total-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; font-size: 1rem; border-top: 2px solid #2c7a7b; margin-top: 0.3rem; }
+.total-row .label { font-weight: 800; color: #102d30; }
+.total-row .amount { font-weight: 900; font-size: 1.15rem; color: #1e8449; }
+.net-row { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #d4efdf; font-size: 1.1rem; }
+.net-row .label { font-weight: 900; color: #102d30; }
+.net-row .amount { font-weight: 900; font-size: 1.3rem; color: #1e8449; }
+.deduction-total .amount { color: #c0392b; }
+</style>
+
+{% for r in rows %}
+<div class="salary-block" data-cg="{{ r.caregiver.id }}">
+  <h3>{{ r.caregiver.display_name }}（時薪 {{ r.caregiver.hourly_wage or 230 }} 元）</h3>
+
+  <div class="section-toggle" onclick="toggleSection(this)">
+    <span class="toggle-icon">▼</span> 應領項目
+    <span style="margin-left:auto; font-weight:800; color:#1e8449;">{{ r.earnings_total | int }} 元</span>
+  </div>
+  <div class="section-content">
+    {% set ns = namespace(has_earnings=false) %}
+    {% for ei_id, ev in r.earnings.items() %}
+      {% if ev.amount is not none and ev.amount > 0 %}
+        {% set ns.has_earnings = true %}
+      {% endif %}
+    {% endfor %}
+    {% if ns.has_earnings %}
+      {% for ei_id, ev in r.earnings.items() %}
+        {% if ev.amount is not none and ev.amount > 0 %}
+        <div class="item-row">
+          <span class="item-name">{{ ev.item.name }}<span class="freq-tag {{ ev.item.frequency }}">{{ ev.item.frequency }}</span></span>
+          <span class="item-amount">{{ ev.amount | int }} 元</span>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <div class="item-row" style="color:#888; justify-content:center;">無應領資料</div>
+    {% endif %}
+    <div class="total-row">
+      <span class="label">應領合計</span>
+      <span class="amount">{{ r.earnings_total | int }} 元</span>
+    </div>
+  </div>
+
+  <div class="section-toggle" onclick="toggleSection(this)">
+    <span class="toggle-icon">▶</span> 應扣項目
+    <span style="margin-left:auto; font-weight:800; color:#c0392b;">{{ r.deductions_total | int }} 元</span>
+  </div>
+  <div class="section-content" style="display:none;">
+    {% set ns2 = namespace(has_deductions=false) %}
+    {% for di_id, dv in r.deductions.items() %}
+      {% if dv.amount is not none and dv.amount > 0 %}
+        {% set ns2.has_deductions = true %}
+      {% endif %}
+    {% endfor %}
+    {% if ns2.has_deductions %}
+      {% for di_id, dv in r.deductions.items() %}
+        {% if dv.amount is not none and dv.amount > 0 %}
+        <div class="item-row">
+          <span class="item-name">{{ dv.item.name }}<span class="freq-tag {{ dv.item.frequency }}">{{ dv.item.frequency }}</span></span>
+          <span class="item-amount" style="color:#c0392b;">—{{ dv.amount | int }} 元</span>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <div class="item-row" style="color:#888; justify-content:center;">無應扣資料</div>
+    {% endif %}
+    <div class="total-row deduction-total">
+      <span class="label">應扣合計</span>
+      <span class="amount">—{{ r.deductions_total | int }} 元</span>
+    </div>
+  </div>
+
+  <div class="net-row">
+    <span class="label">實領金額</span>
+    <span class="amount">{{ (r.earnings_total - r.deductions_total) | int }} 元</span>
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="card" style="text-align:center; color:#888; padding:2rem;">
+  {{ month_display }} 尚無薪資資料。
+</div>
+{% endif %}
+
+{% endblock %}

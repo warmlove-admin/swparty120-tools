@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}薪資單 - {{ caregiver.display_name }} {{ month_display }}{% endblock %}
+{% block content %}
+<style>
+  .slip-wrap { max-width:680px; margin:0 auto; }
+  .slip-header { text-align:center; border-bottom:2px solid #1f3335; padding-bottom:0.8rem; margin-bottom:1.2rem; }
+  .slip-header .company { font-size:1.15rem; font-weight:900; color:#1f3335; }
+  .slip-header .title { font-size:1.4rem; font-weight:900; margin-top:0.3rem; color:#2c7a7b; }
+  .slip-meta { display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid #dce8e8; margin-bottom:1rem; font-size:0.95rem; }
+  .slip-meta .label { font-weight:700; color:#566; }
+  .slip-meta .value { font-weight:800; color:#1f3335; }
+  .slip-table { width:100%; border-collapse:collapse; margin-bottom:0.8rem; }
+  .slip-table th { background:#eaf1f1; text-align:left; padding:0.5rem 0.6rem; font-size:0.95rem; }
+  .slip-table td { padding:0.4rem 0.6rem; border-bottom:1px solid #eef3f3; font-size:0.93rem; }
+  .slip-table .item { font-weight:700; }
+  .slip-table .amt { text-align:right; font-weight:800; }
+  .slip-section { margin-bottom:1.2rem; }
+  .slip-section h3 { margin:0 0 0.3rem; font-size:1.02rem; color:#2c7a7b; border-left:4px solid #2c7a7b; padding-left:0.5rem; }
+  .slip-total td { border-top:2px solid #1f3335; padding-top:0.55rem; font-weight:900; font-size:1rem; }
+  .slip-total td.amt { font-size:1.1rem; }
+  .slip-net { text-align:right; padding:0.8rem 0.6rem; background:#d4efdf; border-radius:4px; margin-top:0.5rem; }
+  .slip-net .label { font-weight:900; font-size:1.05rem; color:#1f3335; }
+  .slip-net .amount { font-weight:900; font-size:1.35rem; color:#1e8449; margin-left:0.8rem; }
+  .slip-footer { text-align:center; color:#888; font-size:0.85rem; margin-top:1.5rem; padding-top:0.8rem; border-top:1px solid #dce8e8; }
+  @media print {
+    header, .btn, .no-print { display:none !important; }
+    .slip-wrap { max-width:none; }
+    body { background:#fff; font-size:12pt; }
+    .slip-header .company { font-size:14pt; }
+    .slip-header .title { font-size:16pt; }
+  }
+</style>
+
+<div class="no-print" style="margin-bottom:1rem;">
+  <a href="/transport-salary?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" style="color:#2c7a7b;">← 返回總表</a>
+  <button onclick="window.print()" class="btn" style="float:right;">列印</button>
+</div>
+
+<div class="slip-wrap">
+  <div class="slip-header">
+    <div class="company">沃恩有限公司附設新北市私立耆樂居家長照機構</div>
+    <div class="title">薪　資　單</div>
+  </div>
+
+  <div class="slip-meta">
+    <div><span class="label">姓名</span>　<span class="value">{{ caregiver.display_name }}</span></div>
+    <div><span class="label">月份</span>　<span class="value">{{ month_display }}</span></div>
+    <div><span class="label">時薪</span>　<span class="value">{{ caregiver.hourly_wage or 230 }} 元</span></div>
+    <div><span class="label">給付日期</span>　<span class="value">{{ month_display }}</span></div>
+  </div>
+
+  <div class="slip-section">
+    <h3>應領項目</h3>
+    <table class="slip-table">
+      <thead>
+        <tr><th>項目</th><th style="text-align:right;">金額</th></tr>
+      </thead>
+      <tbody>
+        {% for e in slip_earnings %}
+        <tr>
+          <td class="item">{{ e.name }}</td>
+          <td class="amt">{{ e.amount | int }} 元</td>
+        </tr>
+        {% endfor %}
+        <tr class="slip-total">
+          <td class="item">應領合計</td>
+          <td class="amt">{{ earnings_total | int }} 元</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="slip-section">
+    <h3>應扣項目</h3>
+    <table class="slip-table">
+      <thead>
+        <tr><th>項目</th><th style="text-align:right;">金額</th></tr>
+      </thead>
+      <tbody>
+        {% for d in slip_deductions %}
+        <tr>
+          <td class="item">{{ d.name }}</td>
+          <td class="amt" style="color:#c0392b;">—{{ d.amount | int }} 元</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2" style="text-align:center; color:#888;">無</td></tr>
+        {% endfor %}
+        <tr class="slip-total">
+          <td class="item">應扣合計</td>
+          <td class="amt" style="color:#c0392b;">—{{ deductions_total | int }} 元</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="slip-net">
+    <span class="label">實領金額</span>
+    <span class="amount">{{ net_pay | int }} 元</span>
+  </div>
+
+  {% if ms %}
+  <div style="margin-top:0.8rem; font-size:0.88rem; color:#688080; border-top:1px solid #dce8e8; padding-top:0.6rem;">
+    <div>服務分鐘：{{ ms.total_service_minutes }} 分</div>
+    <div>轉場分鐘：{{ '%0.1f'|format(ms.total_transfer_minutes) }} 分</div>
+    <div>加權分鐘（含交通）：{{ '%0.1f'|format(ms.weighted_minutes_with_transport) }} 分</div>
+  </div>
+  {% endif %}
+
+  <div class="slip-footer">
+    本薪資單僅供參考，如有疑問請洽管理單位。
+  </div>
+</div>
+
+<script>
+  // auto-print when accessed directly (for LINE integration)
+  if (window.location.search.includes('print=1')) { window.print(); }
+</script>
+{% endblock %}

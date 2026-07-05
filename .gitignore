@@ -15,3 +15,7 @@ credentials.*
 # Node.js
 node_modules/
 package-lock.json
+
+# temp
+cookies.txt
+-D

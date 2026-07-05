@@ -1,11 +1,24 @@
 {% extends "base.html" %}
-{% block title %}交通津貼／薪資試算 - {{ month_display }}{% endblock %}
+{% block title %}交通津貼／薪資 - {{ month_display }}{% endblock %}
 {% block content %}
 
-<h2>🚚 交通津貼／薪資試算</h2>
+<h2>🚚 交通津貼／薪資</h2>
 
-<div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
+<div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:1rem;">
+  <form method="get" action="/transport-salary" style="margin:0; display:flex; align-items:center; gap:0.4rem;">
+    <label style="margin:0; white-space:nowrap; font-weight:800;">分類：</label>
+    <select name="tab" style="width:auto; min-width:110px;" onchange="this.form.submit()">
+      <option value="salary" {% if tab == 'salary' %}selected{% endif %}>薪資</option>
+      <option value="long_term_bonus" {% if tab == 'long_term_bonus' %}selected{% endif %}>久任獎金</option>
+      <option value="travel_allowance" {% if tab == 'travel_allowance' %}selected{% endif %}>差旅油資</option>
+      <option value="year_end_bonus" {% if tab == 'year_end_bonus' %}selected{% endif %}>年終獎金</option>
+      <option value="incentive_bonus" {% if tab == 'incentive_bonus' %}selected{% endif %}>激勵獎金</option>
+      <option value="performance_bonus" {% if tab == 'performance_bonus' %}selected{% endif %}>考核獎金</option>
+    </select>
+  </form>
+
   <form method="get" action="/transport-salary" style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+    <input type="hidden" name="tab" value="{{ tab }}">
     <label style="margin:0; white-space:nowrap;">月份：</label>
     <select name="month" style="width:auto; min-width:140px;" onchange="this.form.submit()">
       {% for mo in month_options %}
@@ -17,26 +30,36 @@
     <noscript><button type="submit" class="btn btn-secondary" style="padding:0.3rem 0.6rem;">切換</button></noscript>
   </form>
 
+  {% if tab == "salary" and results %}
+  <form style="margin:0; display:flex; align-items:center; gap:0.5rem;">
+    <label style="margin:0; white-space:nowrap; font-weight:800;">人員篩選：</label>
+    <select id="cg-filter" onchange="filterCaregiver()" style="width:auto; min-width:160px;">
+      <option value="">— 全部 —</option>
+      {% for r in results %}
+      <option value="{{ r.caregiver.id }}">{{ r.caregiver.display_name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  {% endif %}
+
   <div style="display:flex; gap:0.5rem; margin-left:auto;">
-    {% if user and user.role.value in ["居督", "主管", "主任"] %}
-    <form method="post" action="/transport-salary/calculate-transfers" style="margin:0;">
-      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場距離</button>
-    </form>
-    <form method="post" action="/transport-salary/calculate-salaries" style="margin:0;">
-      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資</button>
-    </form>
-    {% if has_import_data %}
-    <form method="post" action="/transport-salary/calculate-import-transfers" style="margin:0;">
-      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場（實際服務）</button>
-    </form>
-    <form method="post" action="/transport-salary/calculate-salaries-from-import" style="margin:0;">
-      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <button type="submit" class="btn btn-success" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資（實際服務）</button>
-    </form>
-    {% endif %}
+    {% if tab == "salary" %}
+      {% if user and user.role.value in ["居督", "主管", "主任"] %}
+      <form method="post" action="/transport-salary/calculate-transfers" style="margin:0;">
+        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場</button>
+      </form>
+      {% if has_import_data %}
+      <form method="post" action="/transport-salary/calculate-import-transfers" style="margin:0;">
+        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">轉場（實際）</button>
+      </form>
+      <form method="post" action="/transport-salary/calculate-salaries-from-import" style="margin:0;">
+        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資</button>
+      </form>
+      {% endif %}
+      {% endif %}
     {% endif %}
     <a href="/transport-salary/export?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" class="btn btn-secondary">匯出 Excel</a>
   </div>
@@ -52,6 +75,7 @@
 </div>
 {% endif %}
 
+{% if tab == "salary" %}
 <div class="card" style="margin-bottom:1rem;">
   <div style="display:flex; gap:2rem; font-size:0.95rem; align-items:center;">
     <span>轉場距離狀態：</span>
@@ -86,45 +110,55 @@
 </div>
 
 {% if results %}
+<script>
+function filterCaregiver() {
+  var v = document.getElementById('cg-filter').value;
+  document.querySelectorAll('#salary-table tbody tr').forEach(function(tr) {
+    tr.style.display = (!v || tr.dataset.cg === v) ? '' : 'none';
+  });
+}
+</script>
 <div class="card" style="overflow-x:auto;">
-  <table>
+  <table id="salary-table">
     <thead>
       <tr>
         <th>員工姓名</th>
         <th>時薪</th>
-        <th>服務分鐘</th>
-        <th>加權分鐘<br><small>不含交通</small></th>
-        <th>加權分鐘<br><small>含交通</small></th>
-        <th>轉場公里</th>
-        <th>轉場分鐘</th>
-        <th>不含交通<br>薪資</th>
-        <th>含交通<br>薪資</th>
-        <th>交通津貼</th>
-        <th>久任獎金</th>
-        <th>總薪資</th>
-        <th></th>
+        <th style="text-align:right;">服務薪資</th>
+        <th style="text-align:right;">交通津貼</th>
+        <th style="text-align:right;">AA碼<br>獎金</th>
+        {% for di in deductions_items %}
+        <th style="text-align:right; background:#fce4e4;">{{ di.name }}</th>
+        {% endfor %}
+        <th style="text-align:right;">應領合計</th>
+        <th style="text-align:right;">實領</th>
       </tr>
     </thead>
     <tbody>
       {% for r in results %}
-      <tr>
-        <td><strong>{{ r.caregiver.display_name }}</strong></td>
+      <tr data-cg="{{ r.caregiver.id }}">
+        <td><strong><a href="/transport-salary/salary-slip/{{ r.caregiver.id }}?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" target="_blank" style="color:#2c7a7b;">{{ r.caregiver.display_name }}</a></strong></td>
         <td>{{ r.caregiver.hourly_wage or 230 }}</td>
-        <td>{{ r.salary.total_service_minutes if r.salary else '-' }}</td>
-        <td>{{ '%0.1f'|format(r.salary.weighted_minutes_no_transport) if r.salary else '-' }}</td>
-        <td>{{ '%0.1f'|format(r.salary.weighted_minutes_with_transport) if r.salary else '-' }}</td>
-        <td>{{ '%0.1f'|format(r.salary.total_transfer_km) if r.salary else '-' }}</td>
-        <td>{{ '%0.1f'|format(r.salary.total_transfer_minutes) if r.salary else '-' }}</td>
-        <td style="text-align:right;">{{ r.salary.salary_no_transport if r.salary else '-' }}</td>
-        <td style="text-align:right;">{{ r.salary.salary_with_transport if r.salary else '-' }}</td>
-        <td style="text-align:right; font-weight:800; {% if r.salary and r.salary.transport_allowance > 0 %}color:#1e8449;{% endif %}">
-          {{ r.salary.transport_allowance if r.salary else '-' }}
+        <td style="text-align:right;">
+          <a href="/transport-salary/detail/{{ r.caregiver.id }}?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" style="text-decoration:underline; color:#2c7a7b; font-weight:800;">
+            {{ r.salary.salary_no_transport if r.salary else '-' }}
+          </a>
         </td>
-        <td style="text-align:right;">{{ r.salary.long_term_bonus if r.salary else '-' }}</td>
+        <td style="text-align:right;">
+          <a href="/transport-salary/detail/{{ r.caregiver.id }}?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" style="text-decoration:underline; {% if r.salary and r.salary.transport_allowance > 0 %}color:#1e8449; font-weight:800;{% else %}color:#2c7a7b;{% endif %}">
+            {{ r.salary.transport_allowance if r.salary else '-' }}
+          </a>
+        </td>
+        <td style="text-align:right;">{{ r.salary.aa_bonus if r.salary and r.salary.aa_bonus else '-' }}</td>
+        {% for di in deductions_items %}
+        <td style="text-align:right; color:#c0392b;">{% if r.deductions[di.id] is not none %}{{ r.deductions[di.id] | int }}{% else %}-{% endif %}</td>
+        {% endfor %}
         <td style="text-align:right; font-weight:900;">
-          {% if r.salary %}{{ r.salary.total_salary }}{% else %}-{% endif %}
+          {% if r.salary_earnings_total > 0 %}{{ r.salary_earnings_total | int }}{% else %}-{% endif %}
         </td>
-        <td><a href="/transport-salary/detail/{{ r.caregiver.id }}?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" class="btn btn-secondary" style="font-size:0.82rem; padding:0.25rem 0.5rem;">明細</a></td>
+        <td style="text-align:right; font-weight:900; {% if r.net_pay > 0 %}color:#1e8449;{% endif %}">
+          {% if r.net_pay > 0 %}{{ r.net_pay | int }}{% else %}-{% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -133,6 +167,82 @@
 {% else %}
 <div class="card" style="text-align:center; color:#888; padding:2rem;">
   {{ month_display }} 尚無班表資料，或尚未執行試算。
+</div>
+{% endif %}
+
+{% elif tab == "long_term_bonus" %}
+<div class="card" style="margin-bottom:1rem;">
+  <div class="section-title" style="margin-top:0;">久任獎金發放</div>
+  <form method="post" action="/transport-salary/release-long-term-bonus" style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap;">
+    <label style="margin:0; white-space:nowrap;">發放區間：</label>
+    <input type="month" name="date_from" required style="width:auto; min-width:160px;">
+    <span>～</span>
+    <input type="month" name="date_to" required style="width:auto; min-width:160px;">
+    <button type="submit" class="btn" onclick="return confirm('確定發放此區間內所有在職居服員的久任獎金？')">執行發放</button>
+    <span style="color:#888; font-size:0.85rem;">離職日早於今日者，系統會自動排除</span>
+  </form>
+</div>
+
+{% if bonus_rows %}
+<div class="card" style="overflow-x:auto;">
+  <style>
+    .bn-name { white-space:nowrap; }
+    .bn-num { text-align:right; font-weight:800; white-space:nowrap; width:1%; }
+    .bn-month-cell { text-align:right; min-width:80px; vertical-align:middle; }
+    .bn-month-cell .val { font-weight:800; }
+    .bn-month-cell .empty { color:#ccc; }
+  </style>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:1%; white-space:nowrap;">員工姓名</th>
+        <th style="width:1%; white-space:nowrap;">在職狀態</th>
+        <th style="width:1%; white-space:nowrap; text-align:right;">累計總額</th>
+        <th style="width:1%; white-space:nowrap; text-align:right;">待發金額</th>
+        {% for label in month_labels %}
+        <th style="text-align:right; min-width:80px; white-space:nowrap;">{{ label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in bonus_rows %}
+      {% set is_active = not row.caregiver.termination_date or row.caregiver.termination_date > today %}
+      <tr>
+        <td class="bn-name"><strong>{{ row.caregiver.display_name }}</strong></td>
+        <td style="white-space:nowrap;">
+          {% if is_active %}
+          <span class="status-badge status-active">在職</span>
+          {% else %}
+          <span class="status-badge status-closed">已離職</span>
+          {% endif %}
+        </td>
+        <td class="bn-num">{{ row.total | int }} 元</td>
+        <td class="bn-num" style="color:#1e8449;">
+          {% if row.pending_total > 0 %}{{ row.pending_total | int }} 元{% else %}—{% endif %}
+        </td>
+        {% for ym in month_columns %}
+        <td class="bn-month-cell">
+          {% if ym in row.pending_cells %}
+          <span class="val">{{ row.pending_cells[ym] | int }}</span>
+          {% else %}
+          <span class="empty">—</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center; color:#888; padding:2rem;">
+  尚無久任獎金資料，請先執行薪資試算。
+</div>
+{% endif %}
+
+{% elif tab in ("travel_allowance", "year_end_bonus", "incentive_bonus", "performance_bonus") %}
+<div class="card" style="text-align:center; color:#888; padding:2rem;">
+  此功能尚在開發中，敬請期待。
 </div>
 {% endif %}
 

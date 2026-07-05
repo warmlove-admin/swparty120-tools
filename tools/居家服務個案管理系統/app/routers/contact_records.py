@@ -24,6 +24,9 @@ from app.models.line_message import LineMessage, LineMessageSource
 from app.models.line_source_link import LineSourceCategory, LineSourceKind, LineSourceLink
 from app.models.record_status_log import RecordStatusLog
 from app.models.user import User, UserRole
+from app.models.monthly_salary import MonthlySalary
+from app.models.salary_item import SalaryItem
+from app.models.salary_payment import SalaryPayment
 from app.routers.cases import visible_cases_query
 from app.services.contact_review import (
     required_final_reviewer_label,
@@ -36,7 +39,7 @@ from app.services.line_analysis import (
     create_contact_record_from_analysis,
     store_pasted_line_messages,
 )
-from app.services.line_profile import fetch_line_group_member_display_name, fetch_line_source_display_name
+from app.services.line_profile import fetch_line_group_member_display_name, fetch_line_source_display_name, line_reply_message
 from app.services.signature_stamps import contact_review_rows
 from app.services.record_workflow import (
     approval_status_after_role,
@@ -565,6 +568,78 @@ def run_line_daily_analysis_now(
     )
 
 
+# ── LINE 自動回覆 ──────────────────────────────────────────────────────────
+
+SALARY_KEYWORDS = {"薪資", "薪水", "薪資單", "薪資條", "pay", "salary", "薪", "查薪"}
+
+def _auto_reply_salary_if_needed(db: Session, source_link: LineSourceLink, text: str, reply_token: str):
+    if not any(kw in text for kw in SALARY_KEYWORDS):
+        return
+    cg = db.query(User).filter(User.id == source_link.caregiver_user_id).first()
+    if not cg:
+        return
+    ms = (
+        db.query(MonthlySalary)
+        .filter(MonthlySalary.caregiver_id == cg.id)
+        .order_by(MonthlySalary.year.desc(), MonthlySalary.month.desc())
+        .first()
+    )
+    if not ms:
+        line_reply_message(reply_token, [{
+            "type": "text",
+            "text": f"{cg.display_name} 您好，目前查無您的薪資資料。請聯繫管理單位。",
+        }])
+        return
+    items = db.query(SalaryItem).order_by(SalaryItem.category, SalaryItem.display_order).all()
+    payments = {
+        p.salary_item_id: p
+        for p in db.query(SalaryPayment).filter(
+            SalaryPayment.caregiver_id == cg.id,
+            SalaryPayment.year == ms.year,
+            SalaryPayment.month == ms.month,
+        ).all()
+    }
+    earnings_lines = [f"  本薪（含交通）: {ms.salary_with_transport or 0} 元"]
+    if ms.transport_allowance:
+        earnings_lines.append(f"  交通津貼: {ms.transport_allowance} 元")
+    if ms.long_term_bonus:
+        earnings_lines.append(f"  久任獎金: {ms.long_term_bonus} 元")
+    if ms.aa_bonus:
+        earnings_lines.append(f"  AA碼獎金: {ms.aa_bonus} 元")
+    for ei in items:
+        if ei.category == "earnings" and ei.id in payments:
+            earnings_lines.append(f"  {ei.name}: {payments[ei.id].amount} 元")
+    deduction_lines = []
+    for di in items:
+        if di.category == "deductions" and di.id in payments:
+            deduction_lines.append(f"  {di.name}: -{payments[di.id].amount} 元")
+    earnings_total = ms.salary_with_transport or 0
+    if ms.transport_allowance:
+        earnings_total += ms.transport_allowance
+    if ms.long_term_bonus:
+        earnings_total += ms.long_term_bonus
+    if ms.aa_bonus:
+        earnings_total += ms.aa_bonus
+    for ei in items:
+        if ei.category == "earnings" and ei.id in payments:
+            earnings_total += (payments[ei.id].amount or 0)
+    deductions_total = sum((payments[di.id].amount or 0) for di in items if di.category == "deductions" and di.id in payments)
+    net_pay = earnings_total - deductions_total
+    lines = [
+        f"===== {cg.display_name} 薪資通知 =====",
+        f"月份: {ms.year}年{ms.month}月",
+        f"--- 應領 ---",
+        *earnings_lines,
+        f"--- 應扣 ---",
+        *(deduction_lines or ["  無"]),
+        f"━━━━━━━━━━━━━",
+        f"  實領: {net_pay} 元",
+        f"━━━━━━━━━━━━━",
+        f"更多細節: 請至系統查看薪資單",
+    ]
+    line_reply_message(reply_token, [{"type": "text", "text": "\n".join(lines)}])
+
+
 @router.post("/line/webhook")
 async def line_webhook(request: Request, db: Session = Depends(get_db)):
     """接收 LINE webhook 訊息。
@@ -631,6 +706,9 @@ async def line_webhook(request: Request, db: Session = Depends(get_db)):
         ))
         if _line_source_can_create_contact_draft(source_link):
             sources_to_analyze[source_link.source_id] = source_link
+        reply_token = event.get("replyToken")
+        if reply_token and message_type == "text" and source_link and source_link.caregiver_user_id:
+            _auto_reply_salary_if_needed(db, source_link, message.get("text", ""), reply_token)
     db.flush()
     for source_link in sources_to_analyze.values():
         case = db.query(Case).filter(Case.id == source_link.case_id).first()

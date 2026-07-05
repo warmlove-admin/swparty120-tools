@@ -2,6 +2,7 @@ import calendar
 import io
 import math
 import uuid
+from collections import defaultdict
 from datetime import date, datetime
 
 import pandas as pd
@@ -17,6 +18,8 @@ from app.models.caregiver_transfer import CaregiverTransfer
 from app.models.case import Case
 from app.models.import_salary_record import ImportSalaryRecord
 from app.models.monthly_salary import MonthlySalary
+from app.models.salary_item import SalaryItem
+from app.models.salary_payment import SalaryPayment
 from app.models.user import User, UserRole
 from app.services.attendance_engine import (
     BRACKET_CAPS_MINUTES,
@@ -72,17 +75,33 @@ def _month_display(d: date) -> str:
 
 def _month_options(db: Session) -> list[date]:
     from sqlalchemy import func
+    months = set()
+    
+    # 排班表月份
     rows = (
         db.query(
             func.extract("year", CaregiverServiceRecord.service_date).label("y"),
             func.extract("month", CaregiverServiceRecord.service_date).label("m"),
         )
         .distinct()
-        .order_by(func.extract("year", CaregiverServiceRecord.service_date).desc(),
-                  func.extract("month", CaregiverServiceRecord.service_date).desc())
         .all()
     )
-    return [date(int(r.y), int(r.m), 1) for r in rows]
+    for r in rows:
+        months.add((int(r.y), int(r.m)))
+    
+    # 匯入時薪資料月份
+    rows2 = (
+        db.query(
+            func.extract("year", ImportSalaryRecord.service_date).label("y"),
+            func.extract("month", ImportSalaryRecord.service_date).label("m"),
+        )
+        .distinct()
+        .all()
+    )
+    for r in rows2:
+        months.add((int(r.y), int(r.m)))
+    
+    return [date(y, m, 1) for y, m in sorted(months, reverse=True)]
 
 
 def _has_import_data(year: int, month: int, db: Session) -> bool:
@@ -190,19 +209,53 @@ def _get_daily_visit_details(caregiver_id: str, svc_date: date, db: Session) -> 
     return {"visits": visits, "transfers": transfers}
 
 
+# ── 薪資項目對照表（SalaryItem → MonthlySalary 欄位） ─────────────────────
+
+MS_MAP = {
+    "本薪（含交通）": "salary_with_transport",
+    "交通津貼": "transport_allowance",
+    "久任獎金": "long_term_bonus",
+    "AA碼獎金": "aa_bonus",
+}
+
+
 # ── 主頁 ──────────────────────────────────────────────────────────────────
 
 @router.get("", response_class=HTMLResponse)
 def transport_salary_index(
     request: Request,
     month: str | None = None,
+    tab: str = "salary",
     error: str | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director, UserRole.accountant)),
 ):
     current_month = _parse_month(month)
+
+    # ── 久任獎金分頁 ──────────────────────────────────────────────────────
+    if tab == "long_term_bonus":
+        return _handle_long_term_bonus(request, current_month, db, user)
+
+    # ── 其他分頁 stub ──────────────────────────────────────────────────────
+    if tab in ("travel_allowance", "year_end_bonus", "incentive_bonus", "performance_bonus"):
+        return templates.TemplateResponse(
+            request, "transport_salary.html", {
+                "user": user, "tab": tab,
+                "month_options": _month_options(db),
+                "current_month": current_month,
+                "month_display": _month_display(current_month),
+                "results": [],
+                "transfer_stats": {"total": 0, "ok": 0, "failed": 0, "pending": 0},
+                "error": error, "has_import_data": False,
+                "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
+                "lt_item_id": None, "today": date.today(),
+            }
+        )
+
+    # ── 薪資預設分頁 ──────────────────────────────────────────────────────
     caregivers = _get_caregivers_with_data(current_month.year, current_month.month, db)
     transfer_stats = _get_transfer_stats(current_month.year, current_month.month, db)
+    has_import = _has_import_data(current_month.year, current_month.month, db)
 
     salary_records = (
         db.query(MonthlySalary)
@@ -214,27 +267,265 @@ def transport_salary_index(
     )
     salary_map = {s.caregiver_id: s for s in salary_records}
 
+    items = db.query(SalaryItem).order_by(SalaryItem.category, SalaryItem.display_order).all()
+    earnings_items = [it for it in items if it.category == "earnings"]
+    deductions_items = [it for it in items if it.category == "deductions"]
+    extra_earnings_items = [it for it in earnings_items if it.name not in MS_MAP]
+
+    lt_item = db.query(SalaryItem).filter(SalaryItem.name == "久任獎金").first()
+    lt_item_id = lt_item.id if lt_item else None
+
+    all_payments = (
+        db.query(SalaryPayment)
+        .filter(
+            SalaryPayment.year == current_month.year,
+            SalaryPayment.month == current_month.month,
+        )
+        .all()
+    )
+    pay_by_cg: dict[str, dict[int, SalaryPayment]] = {}
+    for p in all_payments:
+        pay_by_cg.setdefault(p.caregiver_id, {})[p.salary_item_id] = p
+
     results = []
     for cg in caregivers:
-        s = salary_map.get(cg.id)
+        ms = salary_map.get(cg.id)
+        payments = pay_by_cg.get(cg.id, {})
+
+        earnings = {}
+        for ei in earnings_items:
+            val = None
+            if ms and ei.name in MS_MAP:
+                val = getattr(ms, MS_MAP[ei.name], None)
+            if ei.id in payments:
+                val = payments[ei.id].amount
+            earnings[ei.id] = val
+
+        deductions = {}
+        for di in deductions_items:
+            val = None
+            if di.id in payments:
+                val = payments[di.id].amount
+            deductions[di.id] = val
+
+        earnings_total = sum(v or 0 for v in earnings.values())
+        # 薪資分頁不包含久任獎金
+        salary_earnings_total = earnings_total
+        if lt_item_id and lt_item_id in earnings and earnings[lt_item_id]:
+            salary_earnings_total -= (earnings[lt_item_id] or 0)
+
+        deductions_total = sum(v or 0 for v in deductions.values())
+
         results.append({
             "caregiver": cg,
-            "salary": s,
+            "salary": ms,
+            "earnings": earnings,
+            "deductions": deductions,
+            "earnings_total": earnings_total,
+            "salary_earnings_total": salary_earnings_total,
+            "deductions_total": deductions_total,
+            "net_pay": salary_earnings_total - deductions_total,
         })
 
-    has_import = _has_import_data(current_month.year, current_month.month, db)
+    return templates.TemplateResponse(
+            request, "transport_salary.html", {
+                "user": user,
+                "tab": tab,
+                "month_options": _month_options(db),
+                "current_month": current_month,
+                "month_display": _month_display(current_month),
+                "results": results,
+                "transfer_stats": transfer_stats,
+                "error": error,
+                "has_import_data": has_import,
+                "earnings_items": earnings_items,
+                "extra_earnings_items": extra_earnings_items,
+                "deductions_items": deductions_items,
+                "lt_item_id": lt_item_id,
+                "today": date.today(),
+            }
+        )
+
+
+# ── 久任獎金分頁 ──────────────────────────────────────────────────────────
+
+def _handle_long_term_bonus(request, current_month, db, user):
+    lt_item = db.query(SalaryItem).filter(SalaryItem.name == "久任獎金").first()
+    lt_item_id = lt_item.id if lt_item else None
+
+    salary_rows = (
+        db.query(MonthlySalary)
+        .filter(MonthlySalary.long_term_bonus > 0)
+        .order_by(MonthlySalary.caregiver_id, MonthlySalary.year, MonthlySalary.month)
+        .all()
+    )
+
+    by_cg = defaultdict(list)
+    all_months = set()
+    for r in salary_rows:
+        by_cg[r.caregiver_id].append(r)
+        all_months.add((r.year, r.month))
+
+    cg_ids = list(by_cg.keys())
+    caregivers = db.query(User).filter(User.id.in_(cg_ids)).all() if cg_ids else []
+    cg_map = {u.id: u for u in caregivers}
+
+    # 已發放（payment_date 有值）
+    released_set = set()
+    if lt_item:
+        sps = (
+            db.query(SalaryPayment)
+            .filter(
+                SalaryPayment.salary_item_id == lt_item.id,
+                SalaryPayment.payment_date.isnot(None),
+            )
+            .all()
+        )
+        for sp in sps:
+            released_set.add((sp.caregiver_id, sp.year, sp.month))
+
+    month_columns = sorted(all_months)
+    month_labels = [f"{y}-{m:02d}" for y, m in month_columns]
+
+    bonus_rows = []
+    for cg_id, records in by_cg.items():
+        cg = cg_map.get(cg_id)
+        if not cg:
+            continue
+
+        record_map = {(r.year, r.month): r.long_term_bonus for r in records}
+        total = sum(v or 0 for v in record_map.values())
+        pending_total = 0
+        pending_cells = {}
+        for ym, val in record_map.items():
+            if ym in released_set:
+                continue
+            pending_total += (val or 0)
+            pending_cells[ym] = val
+
+        bonus_rows.append({
+            "caregiver": cg,
+            "total": total,
+            "pending_total": pending_total,
+            "pending_cells": pending_cells,
+        })
+
+    month_options = sorted(
+        set(
+            (r.year, r.month)
+            for rec in salary_rows
+            for r in [rec]
+        ),
+        reverse=True,
+    )
 
     return templates.TemplateResponse(
         request, "transport_salary.html", {
-            "user": user,
+            "user": user, "tab": "long_term_bonus",
             "month_options": _month_options(db),
             "current_month": current_month,
             "month_display": _month_display(current_month),
-            "results": results,
-            "transfer_stats": transfer_stats,
-            "error": error,
-            "has_import_data": has_import,
+            "bonus_rows": bonus_rows,
+            "month_columns": month_columns,
+            "month_labels": month_labels,
+            "lt_item_id": lt_item_id,
+            "transfer_stats": {"total": 0, "ok": 0, "failed": 0, "pending": 0},
+            "error": None, "has_import_data": False,
+            "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
+            "results": [], "today": date.today(),
         }
+    )
+
+
+# ── 執行久任獎金發放 ─────────────────────────────────────────────────────
+
+@router.post("/release-long-term-bonus")
+def release_long_term_bonus(
+    request: Request,
+    date_from: str = Form(...),
+    date_to: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.director, UserRole.accountant)),
+):
+    """發放區間內所有在職居服員的久任獎金"""
+    try:
+        from_date = datetime.strptime(date_from, "%Y-%m").date().replace(day=1)
+        to_date = datetime.strptime(date_to, "%Y-%m").date().replace(day=1)
+    except ValueError:
+        return RedirectResponse(
+            url=f"/transport-salary?tab=long_term_bonus&error=日期格式錯誤",
+            status_code=302,
+        )
+
+    lt_item = db.query(SalaryItem).filter(SalaryItem.name == "久任獎金").first()
+    if not lt_item:
+        return RedirectResponse(
+            url="/transport-salary?tab=long_term_bonus&error=找不到久任獎金項目",
+            status_code=302,
+        )
+
+    satisfied = []
+    skipped_resigned = []
+
+    for y in range(from_date.year, to_date.year + 1):
+        for m in range(1, 13):
+            if (y == from_date.year and m < from_date.month) or (y == to_date.year and m > to_date.month):
+                continue
+            rows = (
+                db.query(MonthlySalary)
+                .filter(
+                    MonthlySalary.year == y,
+                    MonthlySalary.month == m,
+                    MonthlySalary.long_term_bonus > 0,
+                )
+                .all()
+            )
+            for r in rows:
+                cg = db.query(User).filter(User.id == r.caregiver_id).first()
+                if not cg:
+                    continue
+                # 檢查是否已發放
+                existing = (
+                    db.query(SalaryPayment)
+                    .filter(
+                        SalaryPayment.caregiver_id == r.caregiver_id,
+                        SalaryPayment.year == y,
+                        SalaryPayment.month == m,
+                        SalaryPayment.salary_item_id == lt_item.id,
+                        SalaryPayment.payment_date.isnot(None),
+                    )
+                    .first()
+                )
+                if existing:
+                    continue
+                # 離職日在發放日前 → 不發給
+                if cg.termination_date and cg.termination_date <= date.today():
+                    skipped_resigned.append(f"{cg.display_name} ({y}-{m:02d})")
+                    continue
+
+                sp = SalaryPayment(
+                    caregiver_id=r.caregiver_id,
+                    year=y,
+                    month=m,
+                    salary_item_id=lt_item.id,
+                    amount=int(r.long_term_bonus or 0),
+                    payment_date=date.today(),
+                    notes=f"自動發放（區間 {date_from} ~ {date_to}）",
+                )
+                db.add(sp)
+                satisfied.append(f"{cg.display_name} ({y}-{m:02d}): {int(r.long_term_bonus)} 元")
+
+    db.commit()
+
+    parts = []
+    if satisfied:
+        parts.append(f"已發放 {len(satisfied)} 筆")
+    if skipped_resigned:
+        parts.append(f"已離職不發放 {len(skipped_resigned)} 筆")
+    msg = "，".join(parts) if parts else "無符合條件的久任獎金"
+    return RedirectResponse(
+        url=f"/transport-salary?tab=long_term_bonus&success={msg}",
+        status_code=302,
     )
 
 
@@ -566,6 +857,89 @@ async def upload_salary_xlsx(
     return RedirectResponse(
         url=f"/transport-salary?month={month}&success={'，'.join(parts)}",
         status_code=302
+    )
+
+
+# ── 薪資單 ────────────────────────────────────────────────────────────────
+
+@router.get("/salary-slip/{caregiver_id}", response_class=HTMLResponse)
+def salary_slip(
+    request: Request,
+    caregiver_id: str,
+    month: str | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.director, UserRole.accountant, UserRole.manager, UserRole.caregiver)),
+):
+    current_month = _parse_month(month)
+    caregiver = db.query(User).filter(User.id == caregiver_id).first()
+    if not caregiver:
+        return RedirectResponse(url="/transport-salary", status_code=302)
+
+    # 居服員只能看自己的薪資單
+    if user.role == UserRole.caregiver and user.id != caregiver_id:
+        return RedirectResponse(url="/transport-salary", status_code=302)
+
+    ms = db.query(MonthlySalary).filter(
+        MonthlySalary.caregiver_id == caregiver_id,
+        MonthlySalary.year == current_month.year,
+        MonthlySalary.month == current_month.month,
+    ).first()
+
+    items = db.query(SalaryItem).order_by(SalaryItem.category, SalaryItem.display_order).all()
+    earnings_items = [it for it in items if it.category == "earnings"]
+    deductions_items = [it for it in items if it.category == "deductions"]
+
+    payments = {
+        p.salary_item_id: p
+        for p in db.query(SalaryPayment).filter(
+            SalaryPayment.caregiver_id == caregiver_id,
+            SalaryPayment.year == current_month.year,
+            SalaryPayment.month == current_month.month,
+        ).all()
+    }
+
+    MS_MAP = {
+        "本薪（含交通）": "salary_with_transport",
+        "交通津貼": "transport_allowance",
+        "久任獎金": "long_term_bonus",
+        "AA碼獎金": "aa_bonus",
+    }
+
+    slip_earnings = []
+    for ei in earnings_items:
+        val = None
+        if ms and ei.name in MS_MAP:
+            val = getattr(ms, MS_MAP[ei.name], None)
+        if ei.id in payments:
+            val = payments[ei.id].amount
+        if val:
+            slip_earnings.append({"name": ei.name, "amount": val})
+
+    slip_deductions = []
+    for di in deductions_items:
+        val = None
+        if di.id in payments:
+            val = payments[di.id].amount
+        if val:
+            slip_deductions.append({"name": di.name, "amount": val})
+
+    earnings_total = sum(v["amount"] or 0 for v in slip_earnings)
+    deductions_total = sum(v["amount"] or 0 for v in slip_deductions)
+    net_pay = earnings_total - deductions_total
+
+    return templates.TemplateResponse(
+        request, "salary_slip.html", {
+            "user": user,
+            "caregiver": caregiver,
+            "current_month": current_month,
+            "month_display": _month_display(current_month),
+            "ms": ms,
+            "slip_earnings": slip_earnings,
+            "slip_deductions": slip_deductions,
+            "earnings_total": earnings_total,
+            "deductions_total": deductions_total,
+            "net_pay": net_pay,
+        }
     )
 
 

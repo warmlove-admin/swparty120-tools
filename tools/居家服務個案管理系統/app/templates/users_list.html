@@ -38,7 +38,7 @@
         <div class="form-grid">
           <div><label>職稱</label><input name="job_title"></div>
           <div><label>到職日期</label><input type="date" name="hire_date"></div>
-          <div><label>離職日期</label><input type="date" name="termination_date"></div>
+          <div><label>離職生效日（最後服務日後一天）</label><input type="date" name="termination_date"></div>
           <div><label>直屬主管</label><select name="supervisor_id"><option value="">未指定</option>{% for supervisor in supervisors %}<option value="{{ supervisor.id }}">{{ supervisor.display_name }}</option>{% endfor %}</select></div>
           <div class="full"><label>常用語言</label>{% for lang in ["國語", "台語", "客語", "其他"] %}<label style="display:inline-flex; align-items:center; margin-right:1rem; font-weight:normal;"><input type="checkbox" name="languages" value="{{ lang }}" style="width:auto; margin-right:0.35rem;">{{ lang }}</label>{% endfor %}</div>
         </div>
@@ -124,7 +124,7 @@
           <div><label>職稱</label><input name="job_title" value="{{ account.job_title or '' }}"></div>
           <div><label>在職狀態</label><select name="employment_status"><option value="">未填</option><option value="在職" {% if account.employment_status == "在職" %}selected{% endif %}>在職</option><option value="停用" {% if account.employment_status == "停用" %}selected{% endif %}>停用</option><option value="離職" {% if account.employment_status == "離職" %}selected{% endif %}>離職</option></select></div>
           <div><label>到職日期</label><input type="date" name="hire_date" value="{{ account.hire_date or '' }}"></div>
-          <div><label>離職日期</label><input type="date" name="termination_date" value="{{ account.termination_date or '' }}"></div>
+          <div><label>離職生效日（最後服務日後一天）</label><input type="date" name="termination_date" value="{{ account.termination_date or '' }}"></div>
           <div><label>直屬主管</label><select name="supervisor_id"><option value="">未指定</option>{% for supervisor in supervisors %}<option value="{{ supervisor.id }}" {% if account.supervisor_id == supervisor.id %}selected{% endif %}>{{ supervisor.display_name }}</option>{% endfor %}</select></div>
           <div class="full"><label>常用語言</label>{% for lang in ["國語", "台語", "客語", "其他"] %}<label style="display:inline-flex; align-items:center; margin-right:0.75rem; font-weight:normal;"><input type="checkbox" name="languages" value="{{ lang }}" {% if lang in account_languages %}checked{% endif %} style="width:auto; margin-right:0.25rem;">{{ lang }}</label>{% endfor %}</div>
         </div>

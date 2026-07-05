@@ -53,8 +53,16 @@
           <td>{{ calc.entitled_hours }} 小時<br><small style="color:#667;">（{{ calc.leave_days }}天 × 8小時 × {{ calc.ratio_percent }}）</small></td>
         </tr>
         <tr>
+          <td style="font-weight:800;">已核准特休</td>
+          <td>{{ calc.used_days }} 天</td>
+        </tr>
+        <tr>
+          <td style="font-weight:800;">尚未使用特休</td>
+          <td>{{ calc.remaining_days }} 天</td>
+        </tr>
+        <tr>
           <td style="font-weight:800;">未休特休時數</td>
-          <td>{{ calc.unused_hours }} 小時（居服員全數未休）</td>
+          <td>{{ calc.unused_hours }} 小時</td>
         </tr>
         <tr style="background:#eaf5ea;">
           <td style="font-weight:800;font-size:1.05rem;">特休未休金</td>
@@ -108,8 +116,8 @@
         <p><strong>⑤ 未休金計算</strong><br>
           比例 = 實際工時 ÷ 2088H<br>
           應享時數 = 天數 × 8 × 比例<br>
-          未休金 = 應享時數 × 時薪<br>
-          <small>（居服員全數未休）</small>
+          未休金 = 未休時數 × 時薪<br>
+          <small>（已核准特休天數自動扣除）</small>
         </p>
         <hr style="border:none;border-top:1px solid #dde5e5;margin:0.3rem 0;">
         <p style="margin:0.3rem 0;font-size:0.78rem;color:#667;">
@@ -143,7 +151,16 @@
   {% if not files %}
   <span style="color:#667;">尚無計算結果</span>
   {% endif %}
+  {% if user.role.value in ["主任"] %}
+  <form method="post" action="/leave-calc/run" style="margin:0;display:inline;" onsubmit="return confirm('確定要執行特休未休金計算嗎？\n這會自動登入 Apollo 下載在職名單，\n過程可能需要數分鐘。')">
+    <button type="submit" class="btn">執行計算</button>
+  </form>
+  {% endif %}
   {% if data %}
+  <label style="margin:0 0 0 0.5rem;white-space:nowrap;">篩選人員：</label>
+  <select id="monthly-filter" onchange="filterTable('monthly-filter', 'monthly-table', 0)" style="width:auto;min-width:160px;">
+    <option value="">全部</option>
+  </select>
   <span style="color:#2c7a7b;font-weight:800;margin-left:auto;">
     共 {{ data|length }} 人
     {% set ns = namespace(total=0) %}
@@ -153,16 +170,9 @@
     ｜未休金總計：{{ ns.total | int }} 元
   </span>
   {% endif %}
-  {% if user.role.value in ["主任"] %}
-  <form method="post" action="/leave-calc/run" style="margin:0;" onsubmit="return confirm('確定要執行特休未休金計算嗎？\n這會自動登入 Apollo 下載在職名單，\n過程可能需要數分鐘。')">
-    <button type="submit" class="btn">執行計算</button>
-  </form>
-  {% endif %}
 </div>
-
-{% if data %}
 <div class="card" style="overflow-x:auto;padding:0;">
-  <table>
+  <table id="monthly-table">
     <thead>
       <tr>
         {% for col in cols %}
@@ -205,12 +215,62 @@
 </div>
 {% endif %}
 
+{% if user.role.value in ["主任"] and resigned_calc %}
+<hr style="margin:2rem 0;border:0;border-top:2px solid #b9770e;">
+<h3 class="section-title">離職人員特休結算（系統自動計算）</h3>
+<p style="color:#667;font-size:0.95rem;">結算迄日 = 離職生效日的前一天（最後工作日）</p>
+
+<div class="card" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+  <label style="margin:0;white-space:nowrap;font-weight:800;">篩選人員：</label>
+  <select id="resigned-filter" onchange="toggleResignedSection(this.value)" style="width:auto;min-width:160px;">
+    <option value="">— 請選擇 —</option>
+    <option value="__all__">全部</option>
+  </select>
+</div>
+
+<div id="resigned-section" style="display:none;">
+  <div class="card" style="overflow-x:auto;padding:0;">
+    <table id="resigned-table">
+      <thead>
+        <tr>
+          <th>姓名</th>
+          <th>到職日</th>
+          <th>離職日</th>
+          <th>結算迄日</th>
+          <th>周年數</th>
+          <th>天數</th>
+          <th>工時</th>
+          <th>比例</th>
+          <th>時薪</th>
+          <th>未休金</th>
+          <th>備註</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in resigned_calc %}
+        <tr>
+          <td style="font-weight:800;">{{ r.caregiver_name }}</td>
+          <td>{{ r.hire_date }}</td>
+          <td>{{ r.termination_date }}</td>
+          <td>{{ r.ref_date }}</td>
+          <td>{{ r.years }}</td>
+          <td>{{ r.leave_days }}</td>
+          <td>{{ r.total_hours_12m }}</td>
+          <td>{{ r.ratio_percent }}</td>
+          <td>{{ r.wage }}</td>
+          <td style="text-align:right;font-weight:800;color:#c0392b;">{{ r.payout | int }}</td>
+          <td><span style="color:#b9770e;font-weight:800;">離職結清</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 {% if user.role.value in ["主任"] %}
 <hr style="margin:2rem 0;border:0;border-top:3px solid #2c7a7b;">
 <h3 class="section-title">離職人員清冊</h3>
-<p style="color:#667;font-size:0.95rem;">
-  此清冊將合併 Apollo 自動下載的離職名單，於執行計算時一併產生離職結算。
-</p>
 
 <div class="card" style="overflow-x:auto;padding:0;">
   <table>
@@ -288,4 +348,58 @@
   </form>
 </div>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var monthlyFilter = document.getElementById('monthly-filter');
+  if (monthlyFilter) {
+    var names = new Set();
+    document.querySelectorAll('#monthly-table tbody tr').forEach(function (tr) {
+      var name = tr.cells[0].textContent.trim();
+      if (name) names.add(name);
+    });
+    Array.from(names).sort().forEach(function (n) {
+      var opt = document.createElement('option');
+      opt.value = n;
+      opt.textContent = n;
+      monthlyFilter.appendChild(opt);
+    });
+  }
+
+  var resignedFilter = document.getElementById('resigned-filter');
+  if (resignedFilter) {
+    var names = new Set();
+    document.querySelectorAll('#resigned-table tbody tr').forEach(function (tr) {
+      var name = tr.cells[0].textContent.trim();
+      if (name) names.add(name);
+    });
+    Array.from(names).sort().forEach(function (n) {
+      var opt = document.createElement('option');
+      opt.value = n;
+      opt.textContent = n;
+      resignedFilter.appendChild(opt);
+    });
+  }
+});
+
+function filterTable(selectId, tableId, colIndex) {
+  var val = document.getElementById(selectId).value;
+  document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function (tr) {
+    tr.style.display = !val || tr.cells[colIndex].textContent.trim() === val ? '' : 'none';
+  });
+}
+
+function toggleResignedSection(val) {
+  var section = document.getElementById('resigned-section');
+  if (!val) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  var showAll = val === '__all__';
+  document.querySelectorAll('#resigned-table tbody tr').forEach(function (tr) {
+    tr.style.display = showAll || tr.cells[0].textContent.trim() === val ? '' : 'none';
+  });
+}
+</script>
 {% endblock %}

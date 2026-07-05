@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from app.auth import require_roles
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.routers.annual_leave import caregiver_annual_leave_data
+from app.routers.annual_leave import caregiver_annual_leave_data, caregiver_resigned_leave_data
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -114,6 +114,7 @@ def leave_calc_view(
     # 試算區塊（僅主任可見）
     calc_result = None
     caregivers = []
+    resigned_calc = []
     if user.role == UserRole.director:
         from datetime import date as _date
         today = _date.today()
@@ -130,6 +131,22 @@ def leave_calc_view(
         if calc_caregiver_id:
             calc_result = caregiver_annual_leave_data(calc_caregiver_id, db)
 
+        # 離職人員結算
+        terminated = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.caregiver,
+                User.termination_date.isnot(None),
+                User.termination_date <= today,
+            )
+            .order_by(User.display_name)
+            .all()
+        )
+        for cg in terminated:
+            r = caregiver_resigned_leave_data(cg.id, db)
+            if "error" not in r:
+                resigned_calc.append(r)
+
     return templates.TemplateResponse(
         request, "leave_calc_list.html", {
             "files": files, "current_month": yyyymm,
@@ -139,6 +156,7 @@ def leave_calc_view(
             "caregivers": caregivers,
             "calc_caregiver_id": calc_caregiver_id,
             "calc": calc_result,
+            "resigned_calc": resigned_calc,
         },
     )
 

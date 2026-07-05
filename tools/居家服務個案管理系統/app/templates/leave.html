@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <h2>請假管理</h2>
+
+  {% if request.query_params.get("success") %}
+    <div class="alert alert-success">{{ request.query_params.success }}</div>
+  {% endif %}
+  {% if request.query_params.get("error") %}
+    <div class="alert alert-danger">{{ request.query_params.error }}</div>
+  {% endif %}
+
+  {% if user.role.value in ["居服員", "主任"] %}
+  <div class="card">
+    <div class="card-header">
+      <h3>新增請假申請</h3>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/leave/create">
+        {% if user.role.value == "主任" %}
+        <div class="form-group">
+          <label>申請人</label>
+          <select name="caregiver_id" class="form-control" required>
+            <option value="">請選擇</option>
+            {% for cg in caregivers %}
+            <option value="{{ cg.id }}">{{ cg.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% else %}
+        <input type="hidden" name="caregiver_id" value="{{ user.id }}">
+        {% endif %}
+        <div class="form-group">
+          <label>假別</label>
+          <select name="leave_type_id" class="form-control" required>
+            <option value="">請選擇</option>
+            {% for lt in leave_types %}
+            <option value="{{ lt.id }}">{{ lt.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>開始日期</label>
+            <input type="date" name="start_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>結束日期</label>
+            <input type="date" name="end_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>天數</label>
+            <input type="number" name="days" step="0.5" min="0.5" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>事由</label>
+          <textarea name="reason" class="form-control" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">送出申請</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if user.role.value == "主任" %}
+  <div class="card">
+    <div class="card-header">
+      <h3>假別管理</h3>
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr><th>假別</th><th>代碼</th><th>排序</th><th>狀態</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+          {% for lt in leave_types %}
+          <tr>
+            <td>{{ lt.name }}</td>
+            <td>{{ lt.code }}</td>
+            <td>{{ lt.sort_order }}</td>
+            <td>{{ "啟用" if lt.is_active else "停用" }}</td>
+            <td>
+              <form method="POST" action="/leave/leave-types/{{ lt.id }}/delete" style="display:inline">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('確定刪除「{{ lt.name }}」？')">刪除</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <details>
+        <summary>新增假別</summary>
+        <form method="POST" action="/leave/leave-types/create" style="margin-top:8px">
+          <input type="text" name="name" placeholder="假別名稱" required>
+          <input type="text" name="code" placeholder="唯一代碼 (英文)" required>
+          <input type="number" name="sort_order" placeholder="排序" value="99" style="width:60px">
+          <button type="submit" class="btn btn-sm btn-primary">新增</button>
+        </form>
+      </details>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header">
+      <h3>請假記錄</h3>
+    </div>
+    <div class="card-body">
+      <div class="filter-bar">
+        <a href="/leave" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline{% endif %}">全部</a>
+        <a href="/leave?status_filter=待審核" class="btn btn-sm {% if status_filter == '待審核' %}btn-primary{% else %}btn-outline{% endif %}">待審核</a>
+        <a href="/leave?status_filter=已核准" class="btn btn-sm {% if status_filter == '已核准' %}btn-primary{% else %}btn-outline{% endif %}">已核准</a>
+        <a href="/leave?status_filter=已駁回" class="btn btn-sm {% if status_filter == '已駁回' %}btn-primary{% else %}btn-outline{% endif %}">已駁回</a>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>申請人</th>
+            <th>假別</th>
+            <th>期間</th>
+            <th>天數</th>
+            <th>事由</th>
+            <th>狀態</th>
+            <th>申請時間</th>
+            {% if user.role.value == "主任" %}<th>操作</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in requests %}
+          <tr>
+            <td>{{ req.caregiver.display_name }}</td>
+            <td>{{ req.leave_type.name }}</td>
+            <td>{{ req.start_date }} ~ {{ req.end_date }}</td>
+            <td>{{ req.days }}天</td>
+            <td>{{ req.reason or "" }}</td>
+            <td>
+              {% if req.status.value == "待審核" %}
+                <span class="badge badge-warning">待審核</span>
+              {% elif req.status.value == "已核准" %}
+                <span class="badge badge-success">已核准</span>
+              {% else %}
+                <span class="badge badge-danger">已駁回{% if req.rejection_reason %}：{{ req.rejection_reason }}{% endif %}</span>
+              {% endif %}
+            </td>
+            <td>{{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            {% if user.role.value == "主任" and req.status.value == "待審核" %}
+            <td>
+              <form method="POST" action="/leave/{{ req.id }}/approve" style="display:inline">
+                <button type="submit" class="btn btn-sm btn-success">核准</button>
+              </form>
+              <form method="POST" action="/leave/{{ req.id }}/reject" style="display:inline" onsubmit="return prompt('駁回原因：') ? (this.querySelector('input[name=rejection_reason]').value = prompt('駁回原因：')) : false">
+                <input type="hidden" name="rejection_reason" value="">
+                <button type="submit" class="btn btn-sm btn-danger">駁回</button>
+              </form>
+            </td>
+            {% elif user.role.value == "主任" %}
+            <td></td>
+            {% endif %}
+          </tr>
+          {% else %}
+          <tr><td colspan="8">尚無請假記錄</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+.card { margin-bottom: 16px; border: 1px solid #ddd; border-radius: 6px; }
+.card-header { background: #f5f5f5; padding: 8px 12px; border-bottom: 1px solid #ddd; }
+.card-header h3 { margin: 0; font-size: 16px; }
+.card-body { padding: 12px; }
+.form-group { margin-bottom: 8px; }
+.form-group label { display: block; font-weight: 700; margin-bottom: 4px; }
+.form-control { width: 100%; padding: 6px 8px; box-sizing: border-box; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.filter-bar { margin-bottom: 12px; }
+.filter-bar .btn { margin-right: 4px; }
+.btn-primary { background: #007bff; color: #fff; border: 1px solid #007bff; padding: 6px 12px; cursor: pointer; text-decoration: none; }
+.btn-success { background: #28a745; color: #fff; border: 1px solid #28a745; padding: 4px 8px; cursor: pointer; }
+.btn-danger { background: #dc3545; color: #fff; border: 1px solid #dc3545; padding: 4px 8px; cursor: pointer; }
+.btn-outline { background: #fff; color: #333; border: 1px solid #ccc; padding: 6px 12px; cursor: pointer; text-decoration: none; }
+.btn-sm { font-size: 13px; }
+.badge { padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+.badge-warning { background: #ffc107; color: #333; }
+.badge-success { background: #28a745; color: #fff; }
+.badge-danger { background: #dc3545; color: #fff; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+.table th { background: #f5f5f5; font-weight: 700; }
+.alert { padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; }
+.alert-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+.alert-danger { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+details { margin-top: 8px; }
+summary { cursor: pointer; font-weight: 700; }
+</style>
+{% endblock %}

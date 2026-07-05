@@ -25,7 +25,10 @@ from app.routers import leave_calc as leave_calc_router
 from app.routers import annual_leave as annual_leave_router
 from app.routers import attendance as attendance_router
 from app.routers import transport_salary as transport_salary_router
+from app.routers import leave as leave_router
+from app.routers import salary as salary_router
 from app.services.goal_template_seed import seed_goal_templates_if_empty
+from app.services.salary_seed import seed_salary_items_if_empty
 from app.models.user import UserRole
 
 app = FastAPI(title="居家服務個案管理系統", docs_url=None, redoc_url=None)
@@ -76,6 +79,8 @@ include_project_router(leave_calc_router.router)
 include_project_router(annual_leave_router.router)
 include_project_router(attendance_router.router)
 include_project_router(transport_salary_router.router)
+include_project_router(leave_router.router)
+include_project_router(salary_router.router)
 
 
 @app.on_event("startup")
@@ -85,6 +90,7 @@ def on_startup():
     db = SessionLocal()
     try:
         seed_goal_templates_if_empty(db)
+        seed_salary_items_if_empty(db)
     finally:
         db.close()
 
