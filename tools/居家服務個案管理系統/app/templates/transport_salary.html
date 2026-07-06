@@ -50,7 +50,6 @@
         <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
         <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場</button>
       </form>
-      {% if has_import_data %}
       <form method="post" action="/transport-salary/calculate-import-transfers" style="margin:0;">
         <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
         <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">轉場（實際）</button>
@@ -59,7 +58,6 @@
         <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
         <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資</button>
       </form>
-      {% endif %}
       {% endif %}
     {% endif %}
     <a href="/transport-salary/export?month={{ current_month.year }}-{{ '%02d' % current_month.month }}" class="btn btn-secondary">匯出 Excel</a>

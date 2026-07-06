@@ -1,9 +1,11 @@
 import calendar
 import io
 import math
+import os
 import uuid
 from collections import defaultdict
 from datetime import date, datetime
+from urllib.parse import quote
 
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
@@ -1093,7 +1095,6 @@ def export_transport_salary(
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="每月總計", index=False)
-    from urllib.parse import quote
     ascii_name = f"salary_{current_month.year}-{current_month.month:02d}.xlsx"
     filename_header = f"attachment; filename={ascii_name}; filename*=UTF-8''{quote(f'交通津貼薪資_{current_month.year}-{current_month.month:02d}.xlsx')}"
     return Response(
@@ -1113,56 +1114,91 @@ def import_aa_codes(
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
 ):
-    current_month = _parse_month(month)
-    if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
+    try:
+        current_month = _parse_month(month)
+        if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
+            return RedirectResponse(
+                url=f"/transport-salary?tab=aa_bonus&month={month}&error=請上傳 Excel 檔案",
+                status_code=302,
+            )
+        temp_dir = "data"
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"aa_import_{uuid.uuid4().hex}_{file.filename}")
+        try:
+            raw = file.file.read()
+            if not raw:
+                raw = file.read()
+            with open(temp_path, "wb") as f:
+                f.write(raw)
+        except Exception as e:
+            err_detail = f"{type(e).__name__}: {e}"
+            try: os.remove(temp_path)
+            except OSError: pass
+            return RedirectResponse(
+                url=f"/transport-salary?tab=aa_bonus&month={month}&error=讀取檔案失敗：{quote(err_detail)}",
+                status_code=302,
+            )
+
+        try:
+            result = import_aa_file(db, temp_path, source_label=file.filename)
+        except Exception as e:
+            err_detail = f"{type(e).__name__}: {e}"
+            try: os.remove(temp_path)
+            except OSError: pass
+            return RedirectResponse(
+                url=f"/transport-salary?tab=aa_bonus&month={month}&error=匯入解析失敗：{quote(err_detail)}",
+                status_code=302,
+            )
+        stats = result["stats"]
+        allocations = result["allocations"]
+
+        # 檢查是否有 AA06 未設定條件的個案
+        pending_aa06_cases = set()
+        for row in result["rows"]:
+            if row["aa_code"] == "AA06":
+                case = db.query(Case).filter(Case.id_number == row["case_idno"]).first()
+                if case:
+                    cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == case.id).first()
+                    if not cond:
+                        pending_aa06_cases.add(case.id)
+
+        if allocations:
+            try:
+                save_result = save_allocations(db, allocations, current_month.year, current_month.month)
+            except Exception as e:
+                err_detail = f"{type(e).__name__}: {e}"
+                return RedirectResponse(
+                    url=f"/transport-salary?tab=aa_bonus&month={month}&error=儲存分配失敗：{quote(err_detail)}",
+                    status_code=302,
+                )
+        else:
+            save_result = {"total_cg": 0, "total_records": 0}
+
+        # 清理暫存檔
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
+
+        msg_parts = [
+            f"匯入完成：共 {stats['total']} 筆，跳過 {stats['skipped']} 筆（AA01/02/08/09），"
+            f"分配 {stats['allocated']} 筆予 {save_result['total_cg']} 位居服員",
+        ]
+        if stats["errors"]:
+            msg_parts.append(f"（{len(stats['errors'])} 個錯誤）")
+        if pending_aa06_cases:
+            msg_parts.append(f"，{len(pending_aa06_cases)} 個 AA06 個案待設定條件")
+
         return RedirectResponse(
-            url=f"/transport-salary?tab=aa_bonus&month={month}&error=請上傳 Excel 檔案",
+            url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",
             status_code=302,
         )
-    temp_dir = "data"
-    os.makedirs(temp_dir, exist_ok=True)
-    temp_path = os.path.join(temp_dir, f"aa_import_{uuid.uuid4().hex}_{file.filename}")
-    with open(temp_path, "wb") as f:
-        f.write(file.file.read())
-
-    result = import_aa_file(db, temp_path, source_label=file.filename)
-    stats = result["stats"]
-    allocations = result["allocations"]
-
-    # 檢查是否有 AA06 未設定條件的個案
-    pending_aa06_cases = set()
-    for row in result["rows"]:
-        if row["aa_code"] == "AA06":
-            case = db.query(Case).filter(Case.id_number == row["case_idno"]).first()
-            if case:
-                cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == case.id).first()
-                if not cond:
-                    pending_aa06_cases.add(case.id)
-
-    if allocations:
-        save_result = save_allocations(db, allocations, current_month.year, current_month.month)
-    else:
-        save_result = {"total_cg": 0, "total_records": 0}
-
-    # 清理暫存檔
-    try:
-        os.remove(temp_path)
-    except OSError:
-        pass
-
-    msg_parts = [
-        f"匯入完成：共 {stats['total']} 筆，跳過 {stats['skipped']} 筆（AA01/02/08/09），"
-        f"分配 {stats['allocated']} 筆予 {save_result['total_cg']} 位居服員",
-    ]
-    if stats["errors"]:
-        msg_parts.append(f"（{len(stats['errors'])} 個錯誤）")
-    if pending_aa06_cases:
-        msg_parts.append(f"，{len(pending_aa06_cases)} 個 AA06 個案待設定條件")
-
-    return RedirectResponse(
-        url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",
-        status_code=302,
-    )
+    except Exception as e:
+        err_detail = f"{type(e).__name__}: {e}"
+        return RedirectResponse(
+            url=f"/transport-salary?tab=aa_bonus&month={month}&error=匯入失敗：{quote(err_detail)}",
+            status_code=302,
+        )
 
 
 @router.get("/aa06-conditions/{case_id}")
