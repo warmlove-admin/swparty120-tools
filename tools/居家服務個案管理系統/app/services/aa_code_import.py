@@ -195,6 +195,7 @@ def import_aa_file(
     db: Session,
     filepath: str,
     source_label: str = "",
+    source_type: str = "",
     target_year: int | None = None,
     target_month: int | None = None,
 ) -> dict:
@@ -263,7 +264,7 @@ def import_aa_file(
                                 "caregiver_share": 0,
                                 "year": year,
                                 "month": month,
-                                "source_file": source_label,
+                                "source_file": f"[{source_type}] {source_label}" if source_type else source_label,
                             })
                     continue
                 personnel = _match_aa06_condition(db, case.id, svc_date, personnel)
@@ -290,20 +291,23 @@ def import_aa_file(
                     "caregiver_share": amount,
                     "year": year,
                     "month": month,
-                    "source_file": source_label,
+                    "source_file": f"[{source_type}] {source_label}" if source_type else source_label,
                 })
                 stats["allocated"] += 1
 
     return {"rows": rows, "allocations": allocations, "stats": stats}
 
 
-def save_allocations(db: Session, allocations: list[dict], year: int, month: int) -> dict:
+def save_allocations(db: Session, allocations: list[dict], year: int, month: int, source_type: str = "") -> dict:
     """儲存 AA 碼分配結果到資料庫，並更新 MonthlySalary.aa_bonus"""
-    # 先刪除該月份的舊分配記錄
-    db.query(AaCodeRecord).filter(
+    # 只刪除同一檔案類型的舊記錄（兩種檔案類型可共存）
+    q = db.query(AaCodeRecord).filter(
         AaCodeRecord.year == year,
         AaCodeRecord.month == month,
-    ).delete(synchronize_session=False)
+    )
+    if source_type:
+        q = q.filter(AaCodeRecord.source_file.startswith(f"[{source_type}]"))
+    q.delete(synchronize_session=False)
 
     # 重置該月份所有 aa_bonus（避免重複累加）
     db.query(MonthlySalary).filter(

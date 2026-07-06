@@ -338,6 +338,16 @@ def transport_salary_index(
         aa_results.sort(key=lambda x: x["caregiver"].display_name if x["caregiver"] else "")
         # 找出當月有 AA06 但尚未設定條件的個案
         pending_aa06_cases = _get_pending_aa06_cases(db, current_month.year, current_month.month)
+        # 當月已上傳的檔案類型
+        existing_sources = db.query(AaCodeRecord.source_file).filter(
+            AaCodeRecord.year == current_month.year,
+            AaCodeRecord.month == current_month.month,
+        ).distinct().all()
+        uploaded_types = set()
+        for (sf,) in existing_sources:
+            if sf and sf.startswith("["):
+                stype = sf[1:sf.index("]")]
+                uploaded_types.add(stype)
         return templates.TemplateResponse(
             request, "transport_salary.html", {
                 "user": user, "tab": tab,
@@ -353,6 +363,7 @@ def transport_salary_index(
                 "lt_item_id": None, "today": date.today(),
                 "aa_detail_json": {},
                 "pending_aa06_cases": pending_aa06_cases,
+                "uploaded_types": uploaded_types,
             }
         )
 
@@ -371,6 +382,7 @@ def transport_salary_index(
                 "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
                 "lt_item_id": None, "today": date.today(),
                 "aa_detail_json": {},
+                "uploaded_types": set(),
             }
         )
 
@@ -500,6 +512,7 @@ def transport_salary_index(
                 "today": date.today(),
                 "aa_detail_json": aa_detail_json,
                 "pending_aa06_cases": pending_aa06_cases,
+                "uploaded_types": set(),
             }
         )
 
@@ -1207,6 +1220,7 @@ def import_aa_codes(
     request: Request,
     month: str = Form(...),
     file: UploadFile = File(...),
+    file_type: str = Form("居家服務+喘息"),
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
 ):
@@ -1236,7 +1250,7 @@ def import_aa_codes(
             )
 
         try:
-            result = import_aa_file(db, temp_path, source_label=file.filename,
+            result = import_aa_file(db, temp_path, source_label=file.filename, source_type=file_type,
                                     target_year=current_month.year, target_month=current_month.month)
         except Exception as e:
             err_detail = f"{type(e).__name__}: {e}"
@@ -1254,7 +1268,7 @@ def import_aa_codes(
 
         if allocations:
             try:
-                save_result = save_allocations(db, allocations, current_month.year, current_month.month)
+                save_result = save_allocations(db, allocations, current_month.year, current_month.month, source_type=file_type)
             except Exception as e:
                 err_detail = f"{type(e).__name__}: {e}"
                 return RedirectResponse(

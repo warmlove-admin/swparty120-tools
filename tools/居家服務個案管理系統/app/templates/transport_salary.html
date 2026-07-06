@@ -258,12 +258,28 @@ function filterCaregiver() {
     <span style="font-weight:800;">AA 碼獎金分配（跳過 {{ excluded_codes | join('、') }}）</span>
     <span style="color:#888; font-size:0.85rem;">政府價格對半拆（公司50%、居服員50%）</span>
   </div>
-  <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data" style="display:flex; align-items:center; gap:0.8rem; margin-top:0.8rem; flex-wrap:wrap;">
+  <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data" style="margin-top:0.8rem;">
     <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-    <label style="margin:0; white-space:nowrap;">上傳 AA 碼清冊：</label>
-    <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
-    <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入 &amp; 分配</button>
-    <span style="color:#888; font-size:0.82rem;">請上傳「居家服務+喘息」或「居家短照」清冊 Excel</span>
+    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+      <label style="margin:0; white-space:nowrap;">上傳 AA 碼清冊：</label>
+      <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
+      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入 &amp; 分配</button>
+    </div>
+    <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
+      <label style="cursor:pointer; font-size:0.88rem;">
+        <input type="radio" name="file_type" value="居家服務+喘息" checked style="margin-right:0.3rem;">
+        居家服務+喘息
+        {% if "居家服務+喘息" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
+      </label>
+      <label style="cursor:pointer; font-size:0.88rem;">
+        <input type="radio" name="file_type" value="居家短照" style="margin-right:0.3rem;">
+        居家短照
+        {% if "居家短照" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
+      </label>
+    </div>
+    <div style="margin-top:0.4rem; font-size:0.82rem; color:#888;">
+      兩種檔案類型獨立管理，重新上傳只取代同一類型的舊資料。
+    </div>
   </form>
   <div style="margin-top:0.6rem; font-size:0.85rem;">
     <a href="/transport-salary/aa06-conditions" target="_blank" style="color:#2c7a7b;">📋 檢視／編輯全部 AA06 條件設定</a>
