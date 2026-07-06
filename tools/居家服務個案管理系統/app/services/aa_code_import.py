@@ -270,13 +270,15 @@ def import_aa_file(
     return {"rows": rows, "allocations": allocations, "stats": stats}
 
 
-def save_allocations(db: Session, allocations: list[dict], year: int, month: int) -> dict:
+def save_allocations(db: Session, allocations: list[dict]) -> dict:
     """儲存 AA 碼分配結果到資料庫，並更新 MonthlySalary.aa_bonus"""
-    # 先刪除該月的舊分配記錄
-    db.query(AaCodeRecord).filter(
-        AaCodeRecord.year == year,
-        AaCodeRecord.month == month,
-    ).delete(synchronize_session=False)
+    # 先刪除資料所屬月份的舊分配記錄
+    months_to_clean = set((a["year"], a["month"]) for a in allocations)
+    for y, m in months_to_clean:
+        db.query(AaCodeRecord).filter(
+            AaCodeRecord.year == y,
+            AaCodeRecord.month == m,
+        ).delete(synchronize_session=False)
     db.flush()
 
     for alloc in allocations:
