@@ -148,7 +148,11 @@ function filterCaregiver() {
             {{ r.salary.transport_allowance if r.salary else '-' }}
           </a>
         </td>
-        <td style="text-align:right;">{{ r.salary.aa_bonus if r.salary and r.salary.aa_bonus else '-' }}</td>
+        <td style="text-align:right;">
+          {% if r.salary and r.salary.aa_bonus %}
+          <a href="javascript:void(0)" onclick="showAaDetail('{{ r.caregiver.id }}')" style="color:#2c7a7b; font-weight:800; text-decoration:underline;">{{ r.salary.aa_bonus }}</a>
+          {% else %}-{% endif %}
+        </td>
         {% for di in deductions_items %}
         <td style="text-align:right; color:#c0392b;">{% if r.deductions[di.id] is not none %}{{ r.deductions[di.id] | int }}{% else %}-{% endif %}</td>
         {% endfor %}
@@ -257,9 +261,13 @@ function filterCaregiver() {
 {% if aa_results %}
 <div class="card" style="overflow-x:auto;">
   <style>
-    .aa-summary { white-space:nowrap; }
-    .aa-summary td, .aa-summary th { padding:0.4rem 0.75rem; }
+    .aa-summary { white-space:nowrap; border-collapse:collapse; }
+    .aa-summary td, .aa-summary th { padding:0.4rem 0.75rem; border:1px solid #ddd; }
+    .aa-summary .case-row td { background:#f8f9fa; font-size:0.9rem; }
+    .aa-summary .code-detail { font-size:0.82rem; color:#555; padding-left:2rem; }
     .aa-by-code { font-size:0.85rem; color:#666; }
+    .expand-toggle { cursor:pointer; color:#2c7a7b; font-weight:800; user-select:none; }
+    .expand-toggle:hover { color:#1a5a5b; }
   </style>
   <table class="aa-summary">
     <thead>
@@ -271,19 +279,46 @@ function filterCaregiver() {
     </thead>
     <tbody>
       {% for item in aa_results %}
-      <tr>
+      <tr class="cg-header" data-cg-id="{{ item.caregiver.id if item.caregiver else '' }}">
         <td><strong>{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong></td>
         <td style="text-align:right; font-weight:900; color:#1e8449;">{{ item.total | int }} 元</td>
-        <td class="aa-by-code">
-          {% for code, info in item.by_code.items() %}
-            <span style="display:inline-block; margin-right:0.6rem;">{{ code }}: {{ info.count }} 筆 / {{ info.total | int }} 元</span>
-          {% endfor %}
+        <td>
+          <span class="expand-toggle" onclick="toggleAaCases(this)">▶ 展開個案明細</span>
         </td>
       </tr>
+      {% for case_item in item.by_case %}
+      <tr class="case-row" style="display:none;">
+        <td colspan="3">
+          <strong>個案：{{ case_item.case.name if case_item.case else "（已刪除）" }}</strong>
+          <div style="margin:0.3rem 0 0 1rem;">
+            {% for code, info in case_item.by_code.items() %}
+            <span style="display:inline-block; margin-right:1.2rem;">
+              {{ code }}：{{ info.count }} 次／{{ info.total | int }} 元
+            </span>
+            {% endfor %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
       {% endfor %}
     </tbody>
   </table>
 </div>
+<script>
+function toggleAaCases(el) {
+  var rows = el.closest('tbody').querySelectorAll('.case-row');
+  var cgRow = el.closest('tr');
+  var cgId = cgRow.dataset.cgId;
+  var show = el.textContent.trim().startsWith('▶');
+  // Toggle only rows for this caregiver (they follow sequentially)
+  var next = cgRow.nextElementSibling;
+  while (next && next.classList.contains('case-row')) {
+    next.style.display = show ? 'table-row' : 'none';
+    next = next.nextElementSibling;
+  }
+  el.textContent = show ? '▼ 收起明細' : '▶ 展開個案明細';
+}
+</script>
 {% else %}
 <div class="card" style="text-align:center; color:#888; padding:2rem;">
   {{ month_display }} 尚無 AA 碼獎金資料，請上傳清冊。
@@ -296,4 +331,41 @@ function filterCaregiver() {
 </div>
 {% endif %}
 
+<!-- AA 碼明細 Modal -->
+<div id="aaDetailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;" onclick="if(event.target===this)closeAaDetail()">
+  <div style="background:#fff; border-radius:8px; padding:1.5rem; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h3 style="margin:0;">AA 碼獎金明細</h3>
+      <span onclick="closeAaDetail()" style="cursor:pointer; font-size:1.5rem; color:#999;">&times;</span>
+    </div>
+    <div id="aaDetailBody"></div>
+  </div>
+</div>
+<script>
+var AA_DETAIL = {{ aa_detail_json | tojson | safe }};
+function showAaDetail(cgId) {
+  var entries = AA_DETAIL[cgId];
+  if (!entries || entries.length === 0) return;
+  var html = '<table style="width:100%; border-collapse:collapse;">';
+  html += '<thead><tr style="border-bottom:2px solid #ddd;"><th style="text-align:left; padding:0.3rem 0.5rem;">個案姓名</th><th style="text-align:right; padding:0.3rem 0.5rem;">碼別</th><th style="text-align:right; padding:0.3rem 0.5rem;">次數</th><th style="text-align:right; padding:0.3rem 0.5rem;">金額</th></tr></thead><tbody>';
+  for (var e = 0; e < entries.length; e++) {
+    var ent = entries[e];
+    for (var c = 0; c < ent.codes.length; c++) {
+      var code = ent.codes[c];
+      html += '<tr style="border-bottom:1px solid #eee;">';
+      if (c === 0) html += '<td rowspan="' + ent.codes.length + '" style="padding:0.3rem 0.5rem; font-weight:600;">' + ent.case_name + '</td>';
+      html += '<td style="text-align:right; padding:0.3rem 0.5rem;">' + code.code + '</td>';
+      html += '<td style="text-align:right; padding:0.3rem 0.5rem;">' + code.count + '</td>';
+      html += '<td style="text-align:right; padding:0.3rem 0.5rem; font-weight:800;">' + code.total + '</td>';
+      html += '</tr>';
+    }
+  }
+  html += '</tbody></table>';
+  document.getElementById('aaDetailBody').innerHTML = html;
+  document.getElementById('aaDetailModal').style.display = 'flex';
+}
+function closeAaDetail() {
+  document.getElementById('aaDetailModal').style.display = 'none';
+}
+</script>
 {% endblock %}

@@ -276,16 +276,34 @@ def transport_salary_index(
             if not cg:
                 cg = db.query(User).filter(User.id == cg_id).first()
             total = sum(r.caregiver_share for r in records)
-            # 依 AA 碼分組
-            by_code = defaultdict(lambda: {"count": 0, "total": 0})
+            # 依個案分組（內含 AA 碼細項）
+            by_case = []
+            case_groups = defaultdict(list)
             for r in records:
-                by_code[r.aa_code]["count"] += 1
-                by_code[r.aa_code]["total"] += r.caregiver_share
+                case_groups[r.case_id].append(r)
+            for case_id, recs in case_groups.items():
+                case = recs[0].case
+                by_code = defaultdict(lambda: {"count": 0, "total": 0})
+                for rec in recs:
+                    by_code[rec.aa_code]["count"] += 1
+                    by_code[rec.aa_code]["total"] += rec.caregiver_share
+                by_case.append({
+                    "case": case,
+                    "by_code": dict(by_code),
+                })
+            # 依個案名稱排序
+            by_case.sort(key=lambda x: x["case"].name if x["case"] else "")
+            # 依 AA 碼分組（跨個案彙總）
+            by_code_global = defaultdict(lambda: {"count": 0, "total": 0})
+            for r in records:
+                by_code_global[r.aa_code]["count"] += 1
+                by_code_global[r.aa_code]["total"] += r.caregiver_share
             aa_results.append({
                 "caregiver": cg,
                 "total": total,
                 "records": records,
-                "by_code": dict(by_code),
+                "by_code": dict(by_code_global),
+                "by_case": by_case,
             })
         aa_results.sort(key=lambda x: x["caregiver"].display_name if x["caregiver"] else "")
         # 取得有 AA06 待設定條件的個案
@@ -305,6 +323,7 @@ def transport_salary_index(
                 "has_import_data": False,
                 "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
                 "lt_item_id": None, "today": date.today(),
+                "aa_detail_json": {},
             }
         )
 
@@ -322,6 +341,7 @@ def transport_salary_index(
                 "has_import_data": False,
                 "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
                 "lt_item_id": None, "today": date.today(),
+                "aa_detail_json": {},
             }
         )
 
@@ -359,6 +379,36 @@ def transport_salary_index(
     pay_by_cg: dict[str, dict[int, SalaryPayment]] = {}
     for p in all_payments:
         pay_by_cg.setdefault(p.caregiver_id, {})[p.salary_item_id] = p
+
+    # ── AA 碼個案明細（給薪資分頁點選展開） ──
+    aa_records_for_salary = db.query(AaCodeRecord).filter(
+        AaCodeRecord.year == current_month.year,
+        AaCodeRecord.month == current_month.month,
+    ).all()
+    aa_case_detail: dict[str, list[dict]] = {}
+    for rec in aa_records_for_salary:
+        aa_case_detail.setdefault(rec.caregiver_id, []).append(rec)
+    # 整理成同個案合併的格式
+    aa_detail_json = {}
+    for cg_id, recs in aa_case_detail.items():
+        case_groups: dict[str, list] = {}
+        for r in recs:
+            case_groups.setdefault(r.case_id, []).append(r)
+        entries = []
+        for case_id, group in case_groups.items():
+            case = group[0].case
+            by_code = defaultdict(lambda: {"count": 0, "total": 0})
+            for r in group:
+                by_code[r.aa_code]["count"] += 1
+                by_code[r.aa_code]["total"] += r.caregiver_share
+            total = sum(r.caregiver_share for r in group)
+            entries.append({
+                "case_name": case.name if case else "（已刪除）",
+                "total": total,
+                "codes": [{"code": k, "count": v["count"], "total": v["total"]} for k, v in by_code.items()],
+            })
+        entries.sort(key=lambda x: x["case_name"])
+        aa_detail_json[cg_id] = entries
 
     results = []
     for cg in caregivers:
@@ -416,6 +466,7 @@ def transport_salary_index(
                 "deductions_items": deductions_items,
                 "lt_item_id": lt_item_id,
                 "today": date.today(),
+                "aa_detail_json": aa_detail_json,
             }
         )
 
