@@ -141,8 +141,20 @@ def _get_caregivers_with_data(year: int, month: int, db: Session) -> list[User]:
             ImportSalaryRecord.service_date <= month_end,
         ).distinct().all()
     )
+    cg_from_aa = set(
+        cid for (cid,) in db.query(AaCodeRecord.caregiver_id).filter(
+            AaCodeRecord.year == year,
+            AaCodeRecord.month == month,
+        ).distinct().all()
+    )
+    cg_from_ms = set(
+        cid for (cid,) in db.query(MonthlySalary.caregiver_id).filter(
+            MonthlySalary.year == year,
+            MonthlySalary.month == month,
+        ).distinct().all()
+    )
 
-    ids = list(cg_from_csv | cg_from_import)
+    ids = list(cg_from_csv | cg_from_import | cg_from_aa | cg_from_ms)
     if not ids:
         return []
     return (
@@ -1140,7 +1152,8 @@ def import_aa_codes(
             )
 
         try:
-            result = import_aa_file(db, temp_path, source_label=file.filename)
+            result = import_aa_file(db, temp_path, source_label=file.filename,
+                                    target_year=current_month.year, target_month=current_month.month)
         except Exception as e:
             err_detail = f"{type(e).__name__}: {e}"
             try: os.remove(temp_path)
@@ -1164,7 +1177,7 @@ def import_aa_codes(
 
         if allocations:
             try:
-                save_result = save_allocations(db, allocations)
+                save_result = save_allocations(db, allocations, current_month.year, current_month.month)
             except Exception as e:
                 err_detail = f"{type(e).__name__}: {e}"
                 return RedirectResponse(
@@ -1180,11 +1193,6 @@ def import_aa_codes(
         except OSError:
             pass
 
-        # 導向資料所屬的月份（從 allocation 的第一筆）
-        data_month_str = month
-        if allocations:
-            ym = (allocations[0]["year"], allocations[0]["month"])
-            data_month_str = f"{ym[0]}-{ym[1]:02d}"
         msg_parts = [
             f"匯入完成：共 {stats['total']} 筆，跳過 {stats['skipped']} 筆（AA01/02/08/09），"
             f"分配 {stats['allocated']} 筆予 {save_result['total_cg']} 位居服員",
@@ -1195,7 +1203,7 @@ def import_aa_codes(
             msg_parts.append(f"，{len(pending_aa06_cases)} 個 AA06 個案待設定條件")
 
         return RedirectResponse(
-            url=f"/transport-salary?tab=aa_bonus&month={data_month_str}&success={quote('；'.join(msg_parts))}",
+            url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",
             status_code=302,
         )
     except Exception as e:

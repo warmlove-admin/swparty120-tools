@@ -195,8 +195,14 @@ def import_aa_file(
     db: Session,
     filepath: str,
     source_label: str = "",
+    target_year: int | None = None,
+    target_month: int | None = None,
 ) -> dict:
-    """匯入 AA 清冊並計算獎金分配"""
+    """匯入 AA 清冊並計算獎金分配
+
+    target_year/target_month：指定 year/month 歸屬月份（即發放/處理月份）。
+    若未指定則沿用服務日期（svc_date）的月份。
+    """
     rows = parse_aa_excel(filepath)
     stats = {"total": len(rows), "skipped": 0, "allocated": 0, "errors": []}
     allocations = []  # list of dict for AaCodeRecord
@@ -222,8 +228,8 @@ def import_aa_file(
             if not personnel:
                 continue
 
-            year = svc_date.year
-            month = svc_date.month
+            year = target_year if target_year is not None else svc_date.year
+            month = target_month if target_month is not None else svc_date.month
 
             # AA05：排除 BA16-only 的居服員
             if aa_code == "AA05":
@@ -270,15 +276,13 @@ def import_aa_file(
     return {"rows": rows, "allocations": allocations, "stats": stats}
 
 
-def save_allocations(db: Session, allocations: list[dict]) -> dict:
+def save_allocations(db: Session, allocations: list[dict], year: int, month: int) -> dict:
     """儲存 AA 碼分配結果到資料庫，並更新 MonthlySalary.aa_bonus"""
-    # 先刪除資料所屬月份的舊分配記錄
-    months_to_clean = set((a["year"], a["month"]) for a in allocations)
-    for y, m in months_to_clean:
-        db.query(AaCodeRecord).filter(
-            AaCodeRecord.year == y,
-            AaCodeRecord.month == m,
-        ).delete(synchronize_session=False)
+    # 先刪除該月份的舊分配記錄
+    db.query(AaCodeRecord).filter(
+        AaCodeRecord.year == year,
+        AaCodeRecord.month == month,
+    ).delete(synchronize_session=False)
     db.flush()
 
     for alloc in allocations:
