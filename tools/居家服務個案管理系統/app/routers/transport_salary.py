@@ -123,6 +123,34 @@ def _has_import_data(year: int, month: int, db: Session) -> bool:
     ).first() is not None
 
 
+def _get_pending_aa06_cases(db: Session, year: int, month: int) -> list[dict]:
+    """回傳當月有 AA06 但尚未設定條件的個案清單"""
+    aa06_in_month = db.query(AaCodeRecord).filter(
+        AaCodeRecord.year == year,
+        AaCodeRecord.month == month,
+        AaCodeRecord.aa_code == "AA06",
+        AaCodeRecord.caregiver_share == 0,
+    ).all()
+    seen = {}
+    for rec in aa06_in_month:
+        if rec.case_id in seen:
+            continue
+        cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == rec.case_id).first()
+        if not cond:
+            cg_names = set()
+            for r2 in aa06_in_month:
+                if r2.case_id == rec.case_id and r2.caregiver:
+                    cg_names.add(r2.caregiver.display_name)
+            seen[rec.case_id] = {
+                "case_name": rec.case.name if rec.case else "（已刪除）",
+                "case_id": rec.case_id,
+                "caregivers": sorted(cg_names),
+            }
+    result = list(seen.values())
+    result.sort(key=lambda x: x["case_name"])
+    return result
+
+
 def _get_caregivers_with_data(year: int, month: int, db: Session) -> list[User]:
     import calendar
     _, days_in_month = calendar.monthrange(year, month)
@@ -264,6 +292,8 @@ def transport_salary_index(
             AaCodeRecord.year == current_month.year,
             AaCodeRecord.month == current_month.month,
         ).all()
+        # 過濾掉 caregiver_share=0（AA06 未設定條件的暫存記錄）
+        aa_records = [r for r in aa_records if r.caregiver_share > 0]
         # 依居服員彙總
         aa_by_cg = defaultdict(list)
         for r in aa_records:
@@ -306,10 +336,8 @@ def transport_salary_index(
                 "by_case": by_case,
             })
         aa_results.sort(key=lambda x: x["caregiver"].display_name if x["caregiver"] else "")
-        # 取得有 AA06 待設定條件的個案
-        pending_aa06 = db.query(Aa06CaseCondition).filter(
-            Aa06CaseCondition.case_id.is_(None)
-        ).count()  # 不應該有
+        # 找出當月有 AA06 但尚未設定條件的個案
+        pending_aa06_cases = _get_pending_aa06_cases(db, current_month.year, current_month.month)
         return templates.TemplateResponse(
             request, "transport_salary.html", {
                 "user": user, "tab": tab,
@@ -324,6 +352,7 @@ def transport_salary_index(
                 "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
                 "lt_item_id": None, "today": date.today(),
                 "aa_detail_json": {},
+                "pending_aa06_cases": pending_aa06_cases,
             }
         )
 
@@ -450,6 +479,9 @@ def transport_salary_index(
             "net_pay": salary_earnings_total - deductions_total,
         })
 
+    # ── AA06 待設定條件（給薪資分頁也顯示提醒） ──
+    pending_aa06_cases = _get_pending_aa06_cases(db, current_month.year, current_month.month)
+
     return templates.TemplateResponse(
             request, "transport_salary.html", {
                 "user": user,
@@ -467,6 +499,7 @@ def transport_salary_index(
                 "lt_item_id": lt_item_id,
                 "today": date.today(),
                 "aa_detail_json": aa_detail_json,
+                "pending_aa06_cases": pending_aa06_cases,
             }
         )
 
@@ -1216,15 +1249,8 @@ def import_aa_codes(
         stats = result["stats"]
         allocations = result["allocations"]
 
-        # 檢查是否有 AA06 未設定條件的個案
-        pending_aa06_cases = set()
-        for row in result["rows"]:
-            if row["aa_code"] == "AA06":
-                case = db.query(Case).filter(Case.id_number == row["case_idno"]).first()
-                if case:
-                    cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == case.id).first()
-                    if not cond:
-                        pending_aa06_cases.add(case.id)
+        pending_aa06 = stats.get("pending_aa06", {})
+        pending_count = len(pending_aa06)
 
         if allocations:
             try:
@@ -1250,8 +1276,8 @@ def import_aa_codes(
         ]
         if stats["errors"]:
             msg_parts.append(f"（{len(stats['errors'])} 個錯誤）")
-        if pending_aa06_cases:
-            msg_parts.append(f"，{len(pending_aa06_cases)} 個 AA06 個案待設定條件")
+        if pending_count:
+            msg_parts.append(f"，{pending_count} 個 AA06 個案待設定條件（暫未分配）")
 
         return RedirectResponse(
             url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",

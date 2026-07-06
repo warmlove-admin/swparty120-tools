@@ -245,6 +245,27 @@ def import_aa_file(
 
             # AA06：條件過濾
             if aa_code == "AA06":
+                conditions = _get_aa06_conditions(db, case.id)
+                if not conditions:
+                    # 尚未設定條件 → 暫不給獎金，但回報待設定
+                    pending_key = (case.id, case.name if case.name else "")
+                    stats.setdefault("pending_aa06", {}).setdefault(pending_key, set()).update(personnel)
+                    # 仍寫入 AaCodeRecord（caregiver_share=0），讓頁面能找到這些個案
+                    for name in personnel:
+                        cg = _get_caregiver_by_name(db, name)
+                        if cg:
+                            allocations.append({
+                                "caregiver_id": cg.id,
+                                "case_id": case.id,
+                                "aa_code": aa_code,
+                                "service_date": svc_date,
+                                "unit_price": price_a,
+                                "caregiver_share": 0,
+                                "year": year,
+                                "month": month,
+                                "source_file": source_label,
+                            })
+                    continue
                 personnel = _match_aa06_condition(db, case.id, svc_date, personnel)
 
             # 均分

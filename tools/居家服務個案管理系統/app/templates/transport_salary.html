@@ -75,6 +75,15 @@
 {% endif %}
 
 {% if tab == "salary" %}
+
+{% if pending_aa06_cases %}
+<div class="card" style="background:#fff3cd; border:1px solid #ffc107; padding:0.6rem 1rem; margin-bottom:0.8rem; font-size:0.88rem;">
+  <strong style="color:#856404;">⚠ {{ pending_aa06_cases | length }} 個 AA06 個案尚未設定條件</strong>
+  （AA 碼獎金可能不完整）
+  <a href="/transport-salary?tab=aa_bonus&month={{ current_month.year }}-{{ '%02d' % current_month.month }}" style="color:#856404; text-decoration:underline; margin-left:0.5rem;">前往設定</a>
+</div>
+{% endif %}
+
 <div class="card" style="margin-bottom:1rem;">
   <div style="display:flex; gap:2rem; font-size:0.95rem; align-items:center;">
     <span>轉場距離狀態：</span>
@@ -257,6 +266,25 @@ function filterCaregiver() {
     <span style="color:#888; font-size:0.82rem;">請上傳「居家服務+喘息」或「居家短照」清冊 Excel</span>
   </form>
 </div>
+
+{% if pending_aa06_cases %}
+<div class="card" style="background:#fff3cd; border:1px solid #ffc107; padding:0.8rem 1rem; margin-bottom:1rem;">
+  <strong style="color:#856404;">⚠ 以下 AA06 個案尚未設定服務條件，暫未分配獎金：</strong>
+  <ul style="margin:0.5rem 0 0 0; padding-left:1.2rem;">
+    {% for p in pending_aa06_cases %}
+    <li>
+      <a href="/aa06-conditions/{{ p.case_id }}" target="_blank" style="color:#856404; text-decoration:underline;">
+        {{ p.case_name }}
+      </a>
+      （居服員：{{ p.caregivers | join('、') }}）
+    </li>
+    {% endfor %}
+  </ul>
+  <div style="margin-top:0.5rem; font-size:0.85rem; color:#856404;">
+    點擊個案名稱前往設定 AA06 條件，設定完成後請重新上傳清冊。
+  </div>
+</div>
+{% endif %}
 
 {% if aa_results %}
 <div class="card" style="overflow-x:auto;">
