@@ -291,7 +291,7 @@ function filterCaregiver() {
   <style>
     .aa-summary { white-space:nowrap; border-collapse:collapse; }
     .aa-summary td, .aa-summary th { padding:0.4rem 0.75rem; border:1px solid #ddd; }
-    .aa-summary .case-row td { background:#f8f9fa; font-size:0.9rem; }
+    .aa-summary .case-row td { padding:0 !important; }
     .aa-summary .code-detail { font-size:0.82rem; color:#555; padding-left:2rem; }
     .aa-by-code { font-size:0.85rem; color:#666; }
     .expand-toggle { cursor:pointer; color:#2c7a7b; font-weight:800; user-select:none; }
@@ -316,15 +316,29 @@ function filterCaregiver() {
       </tr>
       {% for case_item in item.by_case %}
       <tr class="case-row" style="display:none;">
-        <td colspan="3">
-          <strong>個案：{{ case_item.case.name if case_item.case else "（已刪除）" }}</strong>
-          <div style="margin:0.3rem 0 0 1rem;">
-            {% for code, info in case_item.by_code.items() %}
-            <span style="display:inline-block; margin-right:1.2rem;">
-              {{ code }}：{{ info.count }} 次／{{ info.total | int }} 元
-            </span>
-            {% endfor %}
-          </div>
+        <td colspan="3" style="padding:0;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+            <thead>
+              <tr style="background:#eef; border-bottom:1px solid #ccc;">
+                <th style="text-align:left; padding:0.3rem 0.5rem 0.3rem 1rem;">個案姓名</th>
+                <th style="text-align:right; padding:0.3rem 0.5rem;">碼別</th>
+                <th style="text-align:right; padding:0.3rem 0.5rem;">次數</th>
+                <th style="text-align:right; padding:0.3rem 0.5rem;">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for code, info in case_item.by_code.items() %}
+              <tr style="border-bottom:1px solid #eee;">
+                {% if loop.first %}
+                <td rowspan="{{ case_item.by_code | length }}" style="padding:0.3rem 0.5rem 0.3rem 1rem; font-weight:600;">{{ case_item.case.name if case_item.case else "（已刪除）" }}</td>
+                {% endif %}
+                <td style="text-align:right; padding:0.3rem 0.5rem;">{{ code }}</td>
+                <td style="text-align:right; padding:0.3rem 0.5rem;">{{ info.count }}</td>
+                <td style="text-align:right; padding:0.3rem 0.5rem; font-weight:800;">{{ info.total | int }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </td>
       </tr>
       {% endfor %}

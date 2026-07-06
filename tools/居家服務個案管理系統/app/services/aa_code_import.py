@@ -304,13 +304,19 @@ def save_allocations(db: Session, allocations: list[dict], year: int, month: int
         AaCodeRecord.year == year,
         AaCodeRecord.month == month,
     ).delete(synchronize_session=False)
+
+    # 重置該月份所有 aa_bonus（避免重複累加）
+    db.query(MonthlySalary).filter(
+        MonthlySalary.year == year,
+        MonthlySalary.month == month,
+    ).update({"aa_bonus": 0}, synchronize_session=False)
     db.flush()
 
     for alloc in allocations:
         db.add(AaCodeRecord(**alloc))
     db.flush()
 
-    # 更新 MonthlySalary.aa_bonus（加總）
+    # 更新 MonthlySalary.aa_bonus（以重置後的 0 為基準累加）
     cg_totals = defaultdict(int)
     for alloc in allocations:
         cg_totals[(alloc["caregiver_id"], alloc["year"], alloc["month"])] += alloc["caregiver_share"]
@@ -322,7 +328,7 @@ def save_allocations(db: Session, allocations: list[dict], year: int, month: int
             MonthlySalary.month == m,
         ).first()
         if ms:
-            ms.aa_bonus = (ms.aa_bonus or 0) + total
+            ms.aa_bonus += total
         else:
             ms = MonthlySalary(
                 caregiver_id=cg_id,
