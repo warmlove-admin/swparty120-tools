@@ -1291,6 +1291,46 @@ def import_aa_codes(
         )
 
 
+@router.get("/aa06-conditions")
+def aa06_conditions_list(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
+):
+    """列出所有已設定條件的 AA06 個案"""
+    all_conds = db.query(Aa06CaseCondition).all()
+    condition_options = {
+        1: "管路/傷口/燒燙傷，或移位困難且體重>70KG，提供 BA01 或 BA07",
+        2: "ADL 移位或上下樓梯完全依賴，需 2 人以上提供 BA12",
+        3: "ADL 移位可自行坐起但離床需協助，且體重>70KG，提供 BA12",
+        4: "12 歲以下（含）提供 BA01、BA02 或 BA07",
+    }
+    cases_with_conditions = []
+    for c in all_conds:
+        case = db.query(Case).filter(Case.id == c.case_id).first()
+        conds = [int(x) for x in c.conditions.split(",") if x.strip()]
+        cases_with_conditions.append({
+            "case_name": case.name if case else "（已刪除）",
+            "case_id": c.case_id,
+            "conditions": [{"num": n, "desc": condition_options.get(n, "")} for n in conds],
+        })
+    cases_with_conditions.sort(key=lambda x: x["case_name"])
+    return templates.TemplateResponse(
+        request, "aa06_conditions.html", {
+            "user": user,
+            "case": None,
+            "current_conditions": [],
+            "cases_with_conditions": cases_with_conditions,
+            "condition_options": [
+                {"num": 1, "desc": condition_options[1]},
+                {"num": 2, "desc": condition_options[2]},
+                {"num": 3, "desc": condition_options[3]},
+                {"num": 4, "desc": condition_options[4]},
+            ],
+        }
+    )
+
+
 @router.get("/aa06-conditions/{case_id}")
 def aa06_conditions_page(
     request: Request,

@@ -265,6 +265,9 @@ function filterCaregiver() {
     <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入 &amp; 分配</button>
     <span style="color:#888; font-size:0.82rem;">請上傳「居家服務+喘息」或「居家短照」清冊 Excel</span>
   </form>
+  <div style="margin-top:0.6rem; font-size:0.85rem;">
+    <a href="/transport-salary/aa06-conditions" target="_blank" style="color:#2c7a7b;">📋 檢視／編輯全部 AA06 條件設定</a>
+  </div>
 </div>
 
 {% if pending_aa06_cases %}
@@ -273,7 +276,7 @@ function filterCaregiver() {
   <ul style="margin:0.5rem 0 0 0; padding-left:1.2rem;">
     {% for p in pending_aa06_cases %}
     <li>
-      <a href="/aa06-conditions/{{ p.case_id }}" target="_blank" style="color:#856404; text-decoration:underline;">
+      <a href="/transport-salary/aa06-conditions/{{ p.case_id }}" target="_blank" style="color:#856404; text-decoration:underline;">
         {{ p.case_name }}
       </a>
       （居服員：{{ p.caregivers | join('、') }}）

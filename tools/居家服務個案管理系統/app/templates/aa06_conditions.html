@@ -1,9 +1,45 @@
 {% extends "base.html" %}
-{% block title %}AA06 條件設定 - {{ case.name }}{% endblock %}
+{% block title %}AA06 條件設定{% endblock %}
 {% block content %}
 
-<h2>AA06 條件設定：{{ case.name }}</h2>
+{% if cases_with_conditions is defined and cases_with_conditions %}
+<h2>AA06 條件設定總覽</h2>
+<p style="color:#666;">所有已設定條件的個案清單：</p>
+<div class="card" style="overflow-x:auto;">
+  <table style="width:100%; border-collapse:collapse; white-space:nowrap;">
+    <thead>
+      <tr style="border-bottom:2px solid #ddd;">
+        <th style="text-align:left; padding:0.5rem;">個案姓名</th>
+        <th style="text-align:left; padding:0.5rem;">已設定條件</th>
+        <th style="text-align:center; padding:0.5rem;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cases_with_conditions %}
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:0.5rem; font-weight:600;">{{ item.case_name }}</td>
+        <td style="padding:0.5rem;">
+          {% for c in item.conditions %}
+          <span style="display:inline-block; background:#e8f4f8; padding:0.15rem 0.5rem; border-radius:3px; margin:0.15rem 0.3rem 0.15rem 0; font-size:0.85rem;">
+            <strong>條件 {{ c.num }}</strong>：{{ c.desc }}
+          </span>
+          {% endfor %}
+        </td>
+        <td style="text-align:center; padding:0.5rem;">
+          <a href="/transport-salary/aa06-conditions/{{ item.case_id }}" class="btn" style="font-size:0.82rem; padding:0.25rem 0.6rem;">編輯</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div style="margin-top:1rem;">
+  <a href="/transport-salary?tab=aa_bonus" class="btn btn-secondary">返回 AA 碼獎金</a>
+</div>
 
+{% elif case %}
+
+<h2>AA06 條件設定：{{ case.name }}</h2>
 <form method="post" action="/transport-salary/aa06-conditions/{{ case.id }}?month={{ request.query_params.month }}">
   <div class="card" style="margin-bottom:1rem;">
     <p style="margin-top:0; color:#666;">請選擇此個案符合的 AA06 條件（可複選）：</p>
@@ -18,8 +54,11 @@
   </div>
   <div style="display:flex; gap:0.5rem;">
     <button type="submit" class="btn">儲存條件</button>
-    <a href="/transport-salary?tab=aa_bonus" class="btn btn-secondary">取消</a>
+    <a href="/transport-salary/aa06-conditions" class="btn btn-secondary">返回總覽</a>
+    <a href="/transport-salary?tab=aa_bonus" class="btn btn-secondary">返回 AA 碼獎金</a>
   </div>
 </form>
+
+{% endif %}
 
 {% endblock %}
