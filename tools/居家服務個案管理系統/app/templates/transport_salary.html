@@ -10,6 +10,7 @@
     <select name="tab" style="width:auto; min-width:110px;" onchange="this.form.submit()">
       <option value="salary" {% if tab == 'salary' %}selected{% endif %}>薪資</option>
       <option value="long_term_bonus" {% if tab == 'long_term_bonus' %}selected{% endif %}>久任獎金</option>
+      <option value="aa_bonus" {% if tab == 'aa_bonus' %}selected{% endif %}>AA碼獎金</option>
       <option value="travel_allowance" {% if tab == 'travel_allowance' %}selected{% endif %}>差旅油資</option>
       <option value="year_end_bonus" {% if tab == 'year_end_bonus' %}selected{% endif %}>年終獎金</option>
       <option value="incentive_bonus" {% if tab == 'incentive_bonus' %}selected{% endif %}>激勵獎金</option>
@@ -237,6 +238,57 @@ function filterCaregiver() {
 {% else %}
 <div class="card" style="text-align:center; color:#888; padding:2rem;">
   尚無久任獎金資料，請先執行薪資試算。
+</div>
+{% endif %}
+
+{% elif tab == "aa_bonus" %}
+<div class="card" style="margin-bottom:1rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+    <span style="font-weight:800;">AA 碼獎金分配（跳過 {{ excluded_codes | join('、') }}）</span>
+    <span style="color:#888; font-size:0.85rem;">政府價格對半拆（公司50%、居服員50%）</span>
+  </div>
+  <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data" style="display:flex; align-items:center; gap:0.8rem; margin-top:0.8rem; flex-wrap:wrap;">
+    <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+    <label style="margin:0; white-space:nowrap;">上傳 AA 碼清冊：</label>
+    <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
+    <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入 &amp; 分配</button>
+    <span style="color:#888; font-size:0.82rem;">請上傳「居家服務+喘息」或「居家短照」清冊 Excel</span>
+  </form>
+</div>
+
+{% if aa_results %}
+<div class="card" style="overflow-x:auto;">
+  <style>
+    .aa-summary { white-space:nowrap; }
+    .aa-summary td, .aa-summary th { padding:0.4rem 0.75rem; }
+    .aa-by-code { font-size:0.85rem; color:#666; }
+  </style>
+  <table class="aa-summary">
+    <thead>
+      <tr>
+        <th>員工姓名</th>
+        <th style="text-align:right;">AA 碼獎金總額</th>
+        <th>明細</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in aa_results %}
+      <tr>
+        <td><strong>{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong></td>
+        <td style="text-align:right; font-weight:900; color:#1e8449;">{{ item.total | int }} 元</td>
+        <td class="aa-by-code">
+          {% for code, info in item.by_code.items() %}
+            <span style="display:inline-block; margin-right:0.6rem;">{{ code }}: {{ info.count }} 筆 / {{ info.total | int }} 元</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center; color:#888; padding:2rem;">
+  {{ month_display }} 尚無 AA 碼獎金資料，請上傳清冊。
 </div>
 {% endif %}
 

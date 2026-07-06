@@ -572,7 +572,7 @@ def run_line_daily_analysis_now(
 
 SALARY_KEYWORDS = {"薪資", "薪水", "薪資單", "薪資條", "pay", "salary", "薪", "查薪"}
 
-def _auto_reply_salary_if_needed(db: Session, source_link: LineSourceLink, text: str, reply_token: str):
+def _auto_reply_salary_if_needed(db: Session, source_link: LineSourceLink, text: str, reply_token: str, base_url: str = ""):
     if not any(kw in text for kw in SALARY_KEYWORDS):
         return
     cg = db.query(User).filter(User.id == source_link.caregiver_user_id).first()
@@ -625,6 +625,7 @@ def _auto_reply_salary_if_needed(db: Session, source_link: LineSourceLink, text:
             earnings_total += (payments[ei.id].amount or 0)
     deductions_total = sum((payments[di.id].amount or 0) for di in items if di.category == "deductions" and di.id in payments)
     net_pay = earnings_total - deductions_total
+    slip_url = f"{base_url}/transport-salary/salary-slip/{cg.id}?month={ms.year}-{ms.month:02d}"
     lines = [
         f"===== {cg.display_name} 薪資通知 =====",
         f"月份: {ms.year}年{ms.month}月",
@@ -635,7 +636,7 @@ def _auto_reply_salary_if_needed(db: Session, source_link: LineSourceLink, text:
         f"━━━━━━━━━━━━━",
         f"  實領: {net_pay} 元",
         f"━━━━━━━━━━━━━",
-        f"更多細節: 請至系統查看薪資單",
+        f"詳細薪資單：{slip_url}",
     ]
     line_reply_message(reply_token, [{"type": "text", "text": "\n".join(lines)}])
 
@@ -708,7 +709,8 @@ async def line_webhook(request: Request, db: Session = Depends(get_db)):
             sources_to_analyze[source_link.source_id] = source_link
         reply_token = event.get("replyToken")
         if reply_token and message_type == "text" and source_link and source_link.caregiver_user_id:
-            _auto_reply_salary_if_needed(db, source_link, message.get("text", ""), reply_token)
+            public_url = str(request.base_url).rstrip("/")
+            _auto_reply_salary_if_needed(db, source_link, message.get("text", ""), reply_token, public_url)
     db.flush()
     for source_link in sources_to_analyze.values():
         case = db.query(Case).filter(Case.id == source_link.case_id).first()

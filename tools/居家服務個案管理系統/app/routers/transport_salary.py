@@ -20,11 +20,19 @@ from app.models.import_salary_record import ImportSalaryRecord
 from app.models.monthly_salary import MonthlySalary
 from app.models.salary_item import SalaryItem
 from app.models.salary_payment import SalaryPayment
+from app.models.aa_code import AaCodeRecord, Aa06CaseCondition
 from app.models.user import User, UserRole
 from app.services.attendance_engine import (
     BRACKET_CAPS_MINUTES,
     DATE_TYPE_LABELS,
     classify_date_from_records,
+)
+from app.services.aa_code_import import (
+    import_aa_file,
+    save_allocations,
+    parse_aa_excel,
+    EXCLUDED_AA_CODES,
+    AA06_CONDITION_BA,
 )
 from app.services.salary_engine import (
     calculate_all_import_transfers,
@@ -236,6 +244,56 @@ def transport_salary_index(
     if tab == "long_term_bonus":
         return _handle_long_term_bonus(request, current_month, db, user)
 
+    # ── AA 碼獎金分頁 ────────────────────────────────────────────────────
+    if tab == "aa_bonus":
+        aa_records = db.query(AaCodeRecord).filter(
+            AaCodeRecord.year == current_month.year,
+            AaCodeRecord.month == current_month.month,
+        ).all()
+        # 依居服員彙總
+        aa_by_cg = defaultdict(list)
+        for r in aa_records:
+            aa_by_cg[r.caregiver_id].append(r)
+        caregivers = _get_caregivers_with_data(current_month.year, current_month.month, db)
+        cg_map = {cg.id: cg for cg in caregivers}
+        aa_results = []
+        for cg_id, records in aa_by_cg.items():
+            cg = cg_map.get(cg_id)
+            if not cg:
+                cg = db.query(User).filter(User.id == cg_id).first()
+            total = sum(r.caregiver_share for r in records)
+            # 依 AA 碼分組
+            by_code = defaultdict(lambda: {"count": 0, "total": 0})
+            for r in records:
+                by_code[r.aa_code]["count"] += 1
+                by_code[r.aa_code]["total"] += r.caregiver_share
+            aa_results.append({
+                "caregiver": cg,
+                "total": total,
+                "records": records,
+                "by_code": dict(by_code),
+            })
+        aa_results.sort(key=lambda x: x["caregiver"].display_name if x["caregiver"] else "")
+        # 取得有 AA06 待設定條件的個案
+        pending_aa06 = db.query(Aa06CaseCondition).filter(
+            Aa06CaseCondition.case_id.is_(None)
+        ).count()  # 不應該有
+        return templates.TemplateResponse(
+            request, "transport_salary.html", {
+                "user": user, "tab": tab,
+                "month_options": _month_options(db),
+                "current_month": current_month,
+                "month_display": _month_display(current_month),
+                "aa_results": aa_results,
+                "excluded_codes": sorted(EXCLUDED_AA_CODES),
+                "transfer_stats": {"total": 0, "ok": 0, "failed": 0, "pending": 0},
+                "error": error, "success": request.query_params.get("success", ""),
+                "has_import_data": False,
+                "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
+                "lt_item_id": None, "today": date.today(),
+            }
+        )
+
     # ── 其他分頁 stub ──────────────────────────────────────────────────────
     if tab in ("travel_allowance", "year_end_bonus", "incentive_bonus", "performance_bonus"):
         return templates.TemplateResponse(
@@ -246,7 +304,8 @@ def transport_salary_index(
                 "month_display": _month_display(current_month),
                 "results": [],
                 "transfer_stats": {"total": 0, "ok": 0, "failed": 0, "pending": 0},
-                "error": error, "has_import_data": False,
+                "error": error, "success": "",
+                "has_import_data": False,
                 "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
                 "lt_item_id": None, "today": date.today(),
             }
@@ -1041,4 +1100,118 @@ def export_transport_salary(
         content=output.getvalue(),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": filename_header},
+    )
+
+
+# ── AA 碼清冊匯入 ──────────────────────────────────────────────────────────
+
+@router.post("/import-aa-codes")
+def import_aa_codes(
+    request: Request,
+    month: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
+):
+    current_month = _parse_month(month)
+    if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
+        return RedirectResponse(
+            url=f"/transport-salary?tab=aa_bonus&month={month}&error=請上傳 Excel 檔案",
+            status_code=302,
+        )
+    temp_dir = "data"
+    os.makedirs(temp_dir, exist_ok=True)
+    temp_path = os.path.join(temp_dir, f"aa_import_{uuid.uuid4().hex}_{file.filename}")
+    with open(temp_path, "wb") as f:
+        f.write(file.file.read())
+
+    result = import_aa_file(db, temp_path, source_label=file.filename)
+    stats = result["stats"]
+    allocations = result["allocations"]
+
+    # 檢查是否有 AA06 未設定條件的個案
+    pending_aa06_cases = set()
+    for row in result["rows"]:
+        if row["aa_code"] == "AA06":
+            case = db.query(Case).filter(Case.id_number == row["case_idno"]).first()
+            if case:
+                cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == case.id).first()
+                if not cond:
+                    pending_aa06_cases.add(case.id)
+
+    if allocations:
+        save_result = save_allocations(db, allocations, current_month.year, current_month.month)
+    else:
+        save_result = {"total_cg": 0, "total_records": 0}
+
+    # 清理暫存檔
+    try:
+        os.remove(temp_path)
+    except OSError:
+        pass
+
+    msg_parts = [
+        f"匯入完成：共 {stats['total']} 筆，跳過 {stats['skipped']} 筆（AA01/02/08/09），"
+        f"分配 {stats['allocated']} 筆予 {save_result['total_cg']} 位居服員",
+    ]
+    if stats["errors"]:
+        msg_parts.append(f"（{len(stats['errors'])} 個錯誤）")
+    if pending_aa06_cases:
+        msg_parts.append(f"，{len(pending_aa06_cases)} 個 AA06 個案待設定條件")
+
+    return RedirectResponse(
+        url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",
+        status_code=302,
+    )
+
+
+@router.get("/aa06-conditions/{case_id}")
+def aa06_conditions_page(
+    request: Request,
+    case_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
+):
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        return RedirectResponse(url="/transport-salary?tab=aa_bonus", status_code=302)
+    cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == case_id).first()
+    current_conditions = []
+    if cond:
+        current_conditions = [int(x) for x in cond.conditions.split(",") if x.strip()]
+    return templates.TemplateResponse(
+        request, "aa06_conditions.html", {
+            "user": user, "case": case,
+            "current_conditions": current_conditions,
+            "condition_options": [
+                {"num": 1, "desc": "管路/傷口/燒燙傷，或移位困難且體重>70KG，提供 BA01 或 BA07"},
+                {"num": 2, "desc": "ADL 移位或上下樓梯完全依賴，需 2 人以上提供 BA12"},
+                {"num": 3, "desc": "ADL 移位可自行坐起但離床需協助，且體重>70KG，提供 BA12"},
+                {"num": 4, "desc": "12 歲以下（含）提供 BA01、BA02 或 BA07"},
+            ],
+        }
+    )
+
+
+@router.post("/aa06-conditions/{case_id}")
+def aa06_conditions_save(
+    request: Request,
+    case_id: str,
+    conditions: list[str] = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
+):
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        return RedirectResponse(url="/transport-salary?tab=aa_bonus", status_code=302)
+    cond_str = ",".join(conditions)
+    cond = db.query(Aa06CaseCondition).filter(Aa06CaseCondition.case_id == case_id).first()
+    if cond:
+        cond.conditions = cond_str
+    else:
+        db.add(Aa06CaseCondition(case_id=case_id, conditions=cond_str))
+    db.commit()
+    return RedirectResponse(
+        url=f"/transport-salary?tab=aa_bonus&month={request.query_params.get('month', '')}&success=AA06 條件已儲存",
+        status_code=302,
     )
