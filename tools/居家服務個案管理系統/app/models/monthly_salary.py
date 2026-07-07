@@ -31,6 +31,7 @@ class MonthlySalary(Base):
 
     long_term_bonus = Column(Integer, default=0)
     aa_bonus = Column(Integer, default=0)
+    travel_allowance = Column(Integer, default=0)
 
     calculated_at = Column(DateTime, default=datetime.utcnow)
     calculated_by = Column(String, ForeignKey("users.id"))

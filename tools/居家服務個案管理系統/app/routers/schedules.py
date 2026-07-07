@@ -259,7 +259,9 @@ async def _save(case: Case, request: Request, db: Session, schedule=None):
         "service_code": item["code"], "service_name": item["name"],
         "minutes": int(item["minutes_per_unit"]), "weekdays": weekdays,
         "start_time": start_time, "effective_from": effective_from,
-        "effective_until": effective_until, "note": form.get("note") or None,
+        "effective_until": effective_until,
+        "funding_source": item.get("funding_source", "補助"),
+        "note": form.get("note") or None,
     }
     if schedule is None:
         schedule = ServiceSchedule(case_id=case.id, **values)

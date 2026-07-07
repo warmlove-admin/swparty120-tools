@@ -43,20 +43,16 @@
   </form>
   {% endif %}
 
-  <div style="display:flex; gap:0.5rem; margin-left:auto;">
+  <div style="display:flex; gap:0.5rem; margin-left:auto; flex-wrap:wrap;">
     {% if tab == "salary" %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}
       <form method="post" action="/transport-salary/calculate-transfers" style="margin:0;">
         <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">計算轉場</button>
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">① 計算轉場</button>
       </form>
-      <form method="post" action="/transport-salary/calculate-import-transfers" style="margin:0;">
+      <form method="post" action="/transport-salary/calculate-salaries" style="margin:0;">
         <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">轉場（實際）</button>
-      </form>
-      <form method="post" action="/transport-salary/calculate-salaries-from-import" style="margin:0;">
-        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">試算薪資</button>
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='試算中…'},100)">② 試算薪資</button>
       </form>
       {% endif %}
     {% endif %}
@@ -96,12 +92,12 @@
     {% endif %}
     <span style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">
       {% if has_import_data %}
-      <span style="background:#d4efdf; color:#1e8449; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem; font-weight:700;">實際服務已匯入</span>
+      <span style="background:#d4efdf; color:#1e8449; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem; font-weight:700;">班表已就緒</span>
       {% else %}
-      <span style="background:#fef9e7; color:#9a7d0a; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem;">使用預排班表</span>
+      <span style="background:#fef9e7; color:#9a7d0a; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem;">尚無班表</span>
       {% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}
-      <a href="#" onclick="document.getElementById('uploadForm').style.display='block'; return false;" style="font-size:0.85rem; margin-left:0.5rem;">上傳實際服務時數</a>
+      <a href="#" onclick="document.getElementById('uploadForm').style.display='block'; return false;" style="font-size:0.85rem; margin-left:0.5rem;">上傳實際服務時數（更新系統班表）</a>
       {% endif %}
     </span>
   </div>
@@ -110,8 +106,8 @@
     <form method="post" action="/transport-salary/upload" enctype="multipart/form-data" style="display:flex; align-items:center; gap:0.5rem; margin:0;">
       <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
       <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
-      <button type="submit" class="btn" style="font-size:0.85rem;">上傳</button>
-      <span style="color:#888; font-size:0.82rem;">格式：時薪明細表_無轉場地址.xlsx</span>
+      <button type="submit" class="btn" style="font-size:0.85rem;">上傳並更新班表</button>
+      <span style="color:#888; font-size:0.82rem;">上傳時薪明細表 → 取代該月系統班表 → 再點「① 計算轉場」「② 試算薪資」</span>
     </form>
   </div>
   {% endif %}
@@ -306,78 +302,53 @@ function filterCaregiver() {
 {% endif %}
 
 {% if aa_results %}
-<div class="card" style="overflow-x:auto;">
+<div class="card">
   <style>
-    .aa-summary { white-space:nowrap; border-collapse:collapse; }
-    .aa-summary td, .aa-summary th { padding:0.4rem 0.75rem; border:1px solid #ddd; }
-    .aa-summary .case-row td { padding:0 !important; }
-    .aa-summary .code-detail { font-size:0.82rem; color:#555; padding-left:2rem; }
-    .aa-by-code { font-size:0.85rem; color:#666; }
-    .expand-toggle { cursor:pointer; color:#2c7a7b; font-weight:800; user-select:none; }
-    .expand-toggle:hover { color:#1a5a5b; }
+    .aa-cg-header { cursor:pointer; user-select:none; }
+    .aa-cg-header:hover { background:#f5f7fa; }
+    .aa-case-card { border:1px solid #e8e8e8; border-radius:6px; margin:0 0 0.4rem 1.5rem; overflow:hidden; }
+    .aa-case-card .case-label { background:#fafbfc; padding:0.3rem 0.75rem; font-size:0.88rem; font-weight:600; border-bottom:1px solid #e8e8e8; }
+    .aa-case-card table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+    .aa-case-card td, .aa-case-card th { padding:0.2rem 0.75rem; }
   </style>
-  <table class="aa-summary">
-    <thead>
-      <tr>
-        <th>員工姓名</th>
-        <th style="text-align:right;">AA 碼獎金總額</th>
-        <th>明細</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in aa_results %}
-      <tr class="cg-header" data-cg-id="{{ item.caregiver.id if item.caregiver else '' }}">
-        <td><strong>{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong></td>
-        <td style="text-align:right; font-weight:900; color:#1e8449;">{{ item.total | int }} 元</td>
-        <td>
-          <span class="expand-toggle" onclick="toggleAaCases(this)">▶ 展開個案明細</span>
-        </td>
-      </tr>
+  {% for item in aa_results %}
+  <div style="margin-bottom:0.5rem;">
+    <div class="aa-cg-header" onclick="toggleAaGroup(this)" style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px;">
+      <span><span class="arrow-icon" style="color:#2c7a7b;">▶</span> <strong>{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong></span>
+      <span style="font-weight:900; color:#1e8449;">{{ item.total | int }} 元</span>
+    </div>
+    <div class="aa-cases-body" style="display:none; margin-top:0.3rem;">
       {% for case_item in item.by_case %}
-      <tr class="case-row" style="display:none;">
-        <td colspan="3" style="padding:0;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
-            <thead>
-              <tr style="background:#eef; border-bottom:1px solid #ccc;">
-                <th style="text-align:left; padding:0.3rem 0.5rem 0.3rem 1rem;">個案姓名</th>
-                <th style="text-align:right; padding:0.3rem 0.5rem;">碼別</th>
-                <th style="text-align:right; padding:0.3rem 0.5rem;">次數</th>
-                <th style="text-align:right; padding:0.3rem 0.5rem;">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for code, info in case_item.by_code.items() %}
-              <tr style="border-bottom:1px solid #eee;">
-                {% if loop.first %}
-                <td rowspan="{{ case_item.by_code | length }}" style="padding:0.3rem 0.5rem 0.3rem 1rem; font-weight:600;">{{ case_item.case.name if case_item.case else "（已刪除）" }}</td>
-                {% endif %}
-                <td style="text-align:right; padding:0.3rem 0.5rem;">{{ code }}</td>
-                <td style="text-align:right; padding:0.3rem 0.5rem;">{{ info.count }}</td>
-                <td style="text-align:right; padding:0.3rem 0.5rem; font-weight:800;">{{ info.total | int }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </td>
-      </tr>
+      <div class="aa-case-card">
+        <div class="case-label">{{ case_item.case.name if case_item.case else "（已刪除）" }}</div>
+        <table>
+          <tbody>
+            {% for code, info in case_item.by_code.items() %}
+            <tr style="border-top:1px solid #f0f0f0;">
+              <td style="font-weight:600; width:1%; white-space:nowrap;">{{ code }}</td>
+              <td style="color:#888;">×{{ info.count }}</td>
+              <td style="text-align:right; font-weight:800; color:#1e8449;">{{ info.total | int }} 元</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
       {% endfor %}
-      {% endfor %}
-    </tbody>
-  </table>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 <script>
-function toggleAaCases(el) {
-  var rows = el.closest('tbody').querySelectorAll('.case-row');
-  var cgRow = el.closest('tr');
-  var cgId = cgRow.dataset.cgId;
-  var show = el.textContent.trim().startsWith('▶');
-  // Toggle only rows for this caregiver (they follow sequentially)
-  var next = cgRow.nextElementSibling;
-  while (next && next.classList.contains('case-row')) {
-    next.style.display = show ? 'table-row' : 'none';
-    next = next.nextElementSibling;
+function toggleAaGroup(el) {
+  var body = el.nextElementSibling;
+  var arrow = el.querySelector('.arrow-icon');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '▼';
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▶';
   }
-  el.textContent = show ? '▼ 收起明細' : '▶ 展開個案明細';
 }
 </script>
 {% else %}
@@ -386,18 +357,60 @@ function toggleAaCases(el) {
 </div>
 {% endif %}
 
-{% elif tab in ("travel_allowance", "year_end_bonus", "incentive_bonus", "performance_bonus") %}
+{% elif tab == "travel_allowance" %}
+<div class="card" style="margin-bottom:1rem;">
+  <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+    <span style="font-weight:800;">里程級距：<span style="font-weight:400;">≤100km ×1.5 元、101~200km ×2 元、&gt;200km ×3 元</span></span>
+    <span style="font-size:0.82rem; color:#888;">已內建於②試算薪資一併計算</span>
+    <span style="margin-left:auto;">
+      <form method="post" action="/transport-salary/calculate-travel-allowance" style="margin:0; display:inline;">
+        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+        <button type="submit" class="btn btn-secondary" style="font-size:0.85rem;" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)">重新計算油資</button>
+      </form>
+    </span>
+  </div>
+</div>
+{% if results %}
+<div class="card" style="overflow-x:auto;">
+  <table id="salary-table">
+    <thead>
+      <tr>
+        <th>員工姓名</th>
+        <th>時薪</th>
+        <th style="text-align:right;">累積里程</th>
+        <th style="text-align:right;">差旅油資</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr>
+        <td><strong>{{ r.caregiver.display_name }}</strong></td>
+        <td>{{ r.caregiver.hourly_wage or 230 }}</td>
+        <td style="text-align:right;">{{ '%.1f' | format(r.salary.total_transfer_km) }} km</td>
+        <td style="text-align:right; color:#1e8449; font-weight:800;">{% if r.salary.travel_allowance and r.salary.travel_allowance > 0 %}{{ r.salary.travel_allowance }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card" style="text-align:center; color:#888; padding:2rem;">
+  請先至薪資頁面執行「① 計算轉場」→「② 試算薪資」。
+</div>
+{% endif %}
+
+{% elif tab in ("year_end_bonus", "incentive_bonus", "performance_bonus") %}
 <div class="card" style="text-align:center; color:#888; padding:2rem;">
   此功能尚在開發中，敬請期待。
 </div>
 {% endif %}
 
-<!-- AA 碼明細 Modal -->
+<!-- AA 碼明細 Modal：簡潔排版 -->
 <div id="aaDetailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;" onclick="if(event.target===this)closeAaDetail()">
-  <div style="background:#fff; border-radius:8px; padding:1.5rem; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-      <h3 style="margin:0;">AA 碼獎金明細</h3>
-      <span onclick="closeAaDetail()" style="cursor:pointer; font-size:1.5rem; color:#999;">&times;</span>
+  <div style="background:#fff; border-radius:8px; padding:1.5rem; max-width:640px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:2px solid #2c7a7b; padding-bottom:0.5rem;">
+      <h3 style="margin:0; color:#2c7a7b;">AA 碼獎金明細</h3>
+      <span onclick="closeAaDetail()" style="cursor:pointer; font-size:1.5rem; color:#999; line-height:1;">&times;</span>
     </div>
     <div id="aaDetailBody"></div>
   </div>
@@ -407,21 +420,23 @@ var AA_DETAIL = {{ aa_detail_json | tojson | safe }};
 function showAaDetail(cgId) {
   var entries = AA_DETAIL[cgId];
   if (!entries || entries.length === 0) return;
-  var html = '<table style="width:100%; border-collapse:collapse;">';
-  html += '<thead><tr style="border-bottom:2px solid #ddd;"><th style="text-align:left; padding:0.3rem 0.5rem;">個案姓名</th><th style="text-align:right; padding:0.3rem 0.5rem;">碼別</th><th style="text-align:right; padding:0.3rem 0.5rem;">次數</th><th style="text-align:right; padding:0.3rem 0.5rem;">金額</th></tr></thead><tbody>';
+  var html = '';
   for (var e = 0; e < entries.length; e++) {
     var ent = entries[e];
+    html += '<div style="margin-bottom:0.6rem; border:1px solid #e0e0e0; border-radius:6px; overflow:hidden;">';
+    html += '<div style="background:#f5f7fa; padding:0.4rem 0.75rem; font-weight:700; font-size:0.95rem; border-bottom:1px solid #e0e0e0;">' + ent.case_name + '</div>';
+    html += '<table style="width:100%; border-collapse:collapse; font-size:0.88rem;">';
+    html += '<thead><tr style="background:#fafafa;"><th style="text-align:left; padding:0.3rem 0.75rem; width:1%;">碼別</th><th style="text-align:right; padding:0.3rem 0.75rem;">次數</th><th style="text-align:right; padding:0.3rem 0.75rem;">金額</th></tr></thead><tbody>';
     for (var c = 0; c < ent.codes.length; c++) {
       var code = ent.codes[c];
-      html += '<tr style="border-bottom:1px solid #eee;">';
-      if (c === 0) html += '<td rowspan="' + ent.codes.length + '" style="padding:0.3rem 0.5rem; font-weight:600;">' + ent.case_name + '</td>';
-      html += '<td style="text-align:right; padding:0.3rem 0.5rem;">' + code.code + '</td>';
-      html += '<td style="text-align:right; padding:0.3rem 0.5rem;">' + code.count + '</td>';
-      html += '<td style="text-align:right; padding:0.3rem 0.5rem; font-weight:800;">' + code.total + '</td>';
+      html += '<tr style="border-top:1px solid #f0f0f0;">';
+      html += '<td style="padding:0.3rem 0.75rem; font-weight:600;">' + code.code + '</td>';
+      html += '<td style="text-align:right; padding:0.3rem 0.75rem;">×' + code.count + '</td>';
+      html += '<td style="text-align:right; padding:0.3rem 0.75rem; font-weight:800; color:#1e8449;">' + code.total + ' 元</td>';
       html += '</tr>';
     }
+    html += '</tbody></table></div>';
   }
-  html += '</tbody></table>';
   document.getElementById('aaDetailBody').innerHTML = html;
   document.getElementById('aaDetailModal').style.display = 'flex';
 }

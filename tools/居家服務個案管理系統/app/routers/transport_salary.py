@@ -11,6 +11,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, require_roles
@@ -18,7 +19,6 @@ from app.database import get_db
 from app.models.caregiver_service_record import CaregiverServiceRecord
 from app.models.caregiver_transfer import CaregiverTransfer
 from app.models.case import Case
-from app.models.import_salary_record import ImportSalaryRecord
 from app.models.monthly_salary import MonthlySalary
 from app.models.salary_item import SalaryItem
 from app.models.salary_payment import SalaryPayment
@@ -37,9 +37,8 @@ from app.services.aa_code_import import (
     AA06_CONDITION_BA,
 )
 from app.services.salary_engine import (
-    calculate_all_import_transfers,
+    calc_travel_allowance,
     calculate_all_monthly_salaries,
-    calculate_all_monthly_salaries_from_import,
     calculate_all_transfers,
     get_daily_bracket_breakdown,
 )
@@ -99,27 +98,15 @@ def _month_options(db: Session) -> list[date]:
     for r in rows:
         months.add((int(r.y), int(r.m)))
     
-    # 匯入時薪資料月份
-    rows2 = (
-        db.query(
-            func.extract("year", ImportSalaryRecord.service_date).label("y"),
-            func.extract("month", ImportSalaryRecord.service_date).label("m"),
-        )
-        .distinct()
-        .all()
-    )
-    for r in rows2:
-        months.add((int(r.y), int(r.m)))
-    
     return [date(y, m, 1) for y, m in sorted(months, reverse=True)]
 
 
 def _has_import_data(year: int, month: int, db: Session) -> bool:
     import calendar
     _, days_in_month = calendar.monthrange(year, month)
-    return db.query(ImportSalaryRecord).filter(
-        ImportSalaryRecord.service_date >= date(year, month, 1),
-        ImportSalaryRecord.service_date <= date(year, month, days_in_month),
+    return db.query(CaregiverServiceRecord).filter(
+        CaregiverServiceRecord.service_date >= date(year, month, 1),
+        CaregiverServiceRecord.service_date <= date(year, month, days_in_month),
     ).first() is not None
 
 
@@ -157,16 +144,10 @@ def _get_caregivers_with_data(year: int, month: int, db: Session) -> list[User]:
     month_start = date(year, month, 1)
     month_end = date(year, month, days_in_month)
 
-    cg_from_csv = set(
+    cg_from_records = set(
         cid for (cid,) in db.query(CaregiverServiceRecord.caregiver_id).filter(
             CaregiverServiceRecord.service_date >= month_start,
             CaregiverServiceRecord.service_date <= month_end,
-        ).distinct().all()
-    )
-    cg_from_import = set(
-        cid for (cid,) in db.query(ImportSalaryRecord.caregiver_id).filter(
-            ImportSalaryRecord.service_date >= month_start,
-            ImportSalaryRecord.service_date <= month_end,
         ).distinct().all()
     )
     cg_from_aa = set(
@@ -182,7 +163,7 @@ def _get_caregivers_with_data(year: int, month: int, db: Session) -> list[User]:
         ).distinct().all()
     )
 
-    ids = list(cg_from_csv | cg_from_import | cg_from_aa | cg_from_ms)
+    ids = list(cg_from_records | cg_from_aa | cg_from_ms)
     if not ids:
         return []
     return (
@@ -367,8 +348,43 @@ def transport_salary_index(
             }
         )
 
+    # ── 差旅油資分頁 ──────────────────────────────────────────────────────
+    if tab == "travel_allowance":
+        caregivers = _get_caregivers_with_data(current_month.year, current_month.month, db)
+        salary_records = (
+            db.query(MonthlySalary)
+            .filter(
+                MonthlySalary.year == current_month.year,
+                MonthlySalary.month == current_month.month,
+            )
+            .all()
+        )
+        salary_map = {s.caregiver_id: s for s in salary_records}
+        results = []
+        for cg in caregivers:
+            s = salary_map.get(cg.id)
+            if s:
+                results.append({"caregiver": cg, "salary": s})
+        results.sort(key=lambda x: x["caregiver"].display_name or "")
+        return templates.TemplateResponse(
+            request, "transport_salary.html", {
+                "user": user, "tab": tab,
+                "month_options": _month_options(db),
+                "current_month": current_month,
+                "month_display": _month_display(current_month),
+                "results": results,
+                "transfer_stats": {"total": 0, "ok": 0, "failed": 0, "pending": 0},
+                "error": error, "success": "",
+                "has_import_data": False,
+                "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
+                "lt_item_id": None, "today": date.today(),
+                "aa_detail_json": {},
+                "uploaded_types": set(),
+            }
+        )
+
     # ── 其他分頁 stub ──────────────────────────────────────────────────────
-    if tab in ("travel_allowance", "year_end_bonus", "incentive_bonus", "performance_bonus"):
+    if tab in ("year_end_bonus", "incentive_bonus", "performance_bonus"):
         return templates.TemplateResponse(
             request, "transport_salary.html", {
                 "user": user, "tab": tab,
@@ -748,56 +764,7 @@ def run_calculate_salaries(
         )
 
 
-# ── 執行薪資試算（使用匯入資料） ──────────────────────────────────────────
-
-@router.post("/calculate-salaries-from-import")
-def run_calculate_salaries_from_import(
-    month: str = Form(...),
-    db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
-):
-    current_month = _parse_month(month)
-    try:
-        results = calculate_all_monthly_salaries_from_import(
-            current_month.year, current_month.month, db, calculated_by=user.id
-        )
-        return RedirectResponse(
-            url=f"/transport-salary?month={month}&success=薪資試算（實際服務）完成：共 {len(results)} 位居服員",
-            status_code=302
-        )
-    except Exception as e:
-        return RedirectResponse(
-            url=f"/transport-salary?month={month}&error=試算失敗：{str(e)[:200]}", status_code=302
-        )
-
-
-# ── 轉場計算（使用匯入資料） ──────────────────────────────────────────────
-
-@router.post("/calculate-import-transfers")
-def run_calculate_import_transfers(
-    month: str = Form(...),
-    db: Session = Depends(get_db),
-    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
-):
-    current_month = _parse_month(month)
-    year, mon = current_month.year, current_month.month
-    try:
-        stats = calculate_all_import_transfers(year, mon, db)
-        msg = (
-            f"實際服務轉場計算完成：{stats['caregivers']} 位居服員，"
-            f"成功 {stats['ok']} 筆、快取 {stats['cached']} 筆、"
-            f"跳過 {stats['skipped']} 筆、失敗 {stats['failed']} 筆"
-        )
-        return RedirectResponse(
-            url=f"/transport-salary?month={month}&success={msg}", status_code=302
-        )
-    except Exception as e:
-        return RedirectResponse(
-            url=f"/transport-salary?month={month}&error=計算失敗：{str(e)[:200]}", status_code=302
-        )
-
-
-# ── 上傳時薪明細表 ─────────────────────────────────────────────────────────
+# ── 上傳時薪明細表（更新系統班表） ─────────────────────────────────────────
 
 @router.post("/upload")
 async def upload_salary_xlsx(
@@ -854,62 +821,28 @@ async def upload_salary_xlsx(
         for c in db.query(Case).all()
     }
 
+    # 先刪除該月既有 CaregiverServiceRecord（重新匯入取代）
+    month_start = current_month
+    if current_month.month == 12:
+        month_end = date(current_month.year, 12, 31)
+    else:
+        month_end = date(current_month.year, current_month.month + 1, 1) - timedelta(days=1)
+    db.query(CaregiverServiceRecord).filter(
+        CaregiverServiceRecord.service_date >= month_start,
+        CaregiverServiceRecord.service_date <= month_end,
+    ).delete(synchronize_session=False)
+
+    from datetime import time as dtime
+    _visit_counter: dict = {}
     imported = 0
     skipped_no_cg = 0
     skipped_no_case = 0
     skipped_no_date = 0
 
-    # 先刪除該月既有匯入資料
-    if current_month.month == 12:
-        db.query(ImportSalaryRecord).filter(
-            ImportSalaryRecord.service_date >= current_month,
-            ImportSalaryRecord.service_date <= date(current_month.year, 12, 31),
-            ImportSalaryRecord.import_batch_id != batch_id,
-        ).delete()
-    else:
-        next_month = date(current_month.year, current_month.month + 1, 1)
-        db.query(ImportSalaryRecord).filter(
-            ImportSalaryRecord.service_date >= current_month,
-            ImportSalaryRecord.service_date < next_month,
-            ImportSalaryRecord.import_batch_id != batch_id,
-        ).delete()
-
-    numeric_cols = {}
-    for col_idx, (dt, bracket) in BRACKET_COL_INDEX.items():
-        if col_idx < len(df.columns):
-            db_col = BRACKET_DB_COL.get((dt, bracket))
-            if db_col:
-                col_name = str(df.columns[col_idx])
-                numeric_cols[col_name] = db_col
-                df[col_name] = pd.to_numeric(df[col_name], errors="coerce").fillna(0)
-
-    # Check for 服務地址 column
-    addr_col = None
-    for c in df.columns:
-        if "服務地址" in str(c) or "服務住址" in str(c) or "地址" in str(c):
-            addr_col = str(c)
-            break
-
-    hourly_wage_col = None
-    for c in df.columns:
-        if str(c).strip() == "時薪":
-            hourly_wage_col = str(c)
-            break
-
-    transfer_min_col = None
-    for c in df.columns:
-        s = str(c).strip()
-        if s == "轉場分鐘" or "轉場分鐘" in s:
-            transfer_min_col = str(c)
-            break
-
-    _visit_counter = {}
-
     for _, row in df.iterrows():
         cg_name = str(row["員工姓名"]).strip()
         case_name = str(row[case_col]).strip()
 
-        # Parse date
         svc_date = row["服務日期"]
         if pd.isna(svc_date):
             skipped_no_date += 1
@@ -925,7 +858,6 @@ async def upload_salary_xlsx(
             skipped_no_date += 1
             continue
 
-        # Skip if not matching current month
         if svc_date.year != current_month.year or svc_date.month != current_month.month:
             continue
 
@@ -943,23 +875,14 @@ async def upload_salary_xlsx(
         _visit_counter[key] = _visit_counter.get(key, 0) + 1
         visit_order = _visit_counter[key]
 
-        transfer_mins = 0.0
-        if transfer_min_col:
-            try:
-                transfer_mins = float(row.get(transfer_min_col, 0) or 0)
-            except (ValueError, TypeError):
-                pass
-
-        # Compute bracket values
-        bracket_vals = {}
+        # 從 bracket 欄位加總服務分鐘
         total_min = 0
-        for col_name, db_col in numeric_cols.items():
-            val = int(row.get(col_name, 0) or 0)
-            bracket_vals[db_col] = val
-            total_min += val
-
-        # Fill minutes
-        fill_min = 0
+        for col_idx, (dt, bracket) in BRACKET_COL_INDEX.items():
+            if col_idx < len(df.columns):
+                col_name = str(df.columns[col_idx])
+                val = int(pd.to_numeric(row.get(col_name, 0) or 0, errors="coerce") or 0)
+                total_min += val
+        # 補滿分鐘
         fill_col = None
         for c in df.columns:
             if "補滿服務分鐘" in str(c) or "補滿" in str(c):
@@ -967,43 +890,37 @@ async def upload_salary_xlsx(
                 break
         if fill_col:
             fill_min = int(row.get(fill_col, 0) or 0)
-            if fill_min > 0:
-                total_min += fill_min
+            total_min += fill_min
 
-        hourly_wage = None
-        if hourly_wage_col:
-            try:
-                hourly_wage = int(float(row.get(hourly_wage_col, 0) or 0))
-            except (ValueError, TypeError):
-                pass
+        if total_min <= 0:
+            continue
 
-        address = ""
-        if addr_col:
-            address = str(row.get(addr_col, "") or "")
+        # 用 visit_order 計算起迄時間
+        base_hour = 8 + (visit_order - 1) * 3  # 第1筆 08:00, 第2筆 11:00, 第3筆 14:00...
+        start_time = dtime(min(base_hour, 23), 0)
+        end_minutes = start_time.hour * 60 + total_min
+        end_hour = end_minutes // 60
+        end_min = end_minutes % 60
+        end_time = dtime(min(end_hour, 23), min(end_min, 59))
 
-        rec = ImportSalaryRecord(
-            caregiver_id=caregiver_id,
-            caregiver_name_raw=cg_name,
+        db.add(CaregiverServiceRecord(
             case_id=case_id,
-            case_name_raw=case_name,
+            caregiver_id=caregiver_id,
             service_date=svc_date,
-            service_address=address,
-            hourly_wage=hourly_wage or None,
-            fill_minutes=fill_min,
-            total_minutes=total_min,
-            visit_order=visit_order,
-            transfer_minutes=transfer_mins,
-            source_filename=filename,
-            import_batch_id=batch_id,
-            upload_user_id=user.id,
-            **bracket_vals,
-        )
-        db.add(rec)
+            start_time=start_time,
+            end_time=end_time,
+            minutes=total_min,
+            case_name_raw=case_name,
+            caregiver_name_raw=cg_name,
+            service_codes="",
+            formalization_status="external_import",
+            source_file=filename,
+        ))
         imported += 1
 
     db.commit()
 
-    parts = [f"匯入完成：{imported} 筆"]
+    parts = [f"已將 {imported} 筆實際服務更新至系統班表"]
     if skipped_no_cg:
         parts.append(f"跳過（無對應居服員）{skipped_no_cg}")
     if skipped_no_case:
@@ -1011,18 +928,7 @@ async def upload_salary_xlsx(
     if skipped_no_date:
         parts.append(f"跳過（無日期）{skipped_no_date}")
     if imported > 0:
-        # Show a few unmatched case names if any
-        unmatched_cases = set()
-        for _, row in df.iterrows():
-            svc_date = row["服務日期"]
-            if pd.isna(svc_date):
-                continue
-            cname = str(row[case_col]).strip()
-            if cname not in all_cases:
-                unmatched_cases.add(cname)
-        if unmatched_cases:
-            sample = "; ".join(list(unmatched_cases)[:5])
-            parts.append(f"無對應個案：{sample}")
+        parts.append("請重新執行「① 計算轉場」→「② 試算薪資」→「試算差旅油資」")
 
     return RedirectResponse(
         url=f"/transport-salary?month={month}&success={'，'.join(parts)}",
@@ -1137,11 +1043,17 @@ def transport_salary_detail(
             daily_details.append(detail)
 
     daily_visits: list[dict] = []
+    detail_by_date = {dd["date"]: dd for dd in daily_details}
     for day in range(1, days_in_month + 1):
         d = date(current_month.year, current_month.month, day)
         dd = _get_daily_visit_details(caregiver_id, d, db)
         if dd:
-            daily_visits.append({"date": d, "visits": dd["visits"], "transfers": dd["transfers"]})
+            daily_visits.append({
+                "date": d,
+                "visits": dd["visits"],
+                "transfers": dd["transfers"],
+                "detail": detail_by_date.get(d),
+            })
 
     salary = db.query(MonthlySalary).filter(
         MonthlySalary.caregiver_id == caregiver_id,
@@ -1393,5 +1305,53 @@ def aa06_conditions_save(
     db.commit()
     return RedirectResponse(
         url=f"/transport-salary?tab=aa_bonus&month={request.query_params.get('month', '')}&success=AA06 條件已儲存",
+        status_code=302,
+    )
+
+
+# ── 差旅油資計算 ──────────────────────────────────────────────────────────
+
+@router.post("/calculate-travel-allowance")
+def calculate_travel_allowance(
+    month: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
+):
+    import calendar
+    current_month = _parse_month(month)
+    _, days_in_month = calendar.monthrange(current_month.year, current_month.month)
+    month_start = date(current_month.year, current_month.month, 1)
+    month_end = date(current_month.year, current_month.month, days_in_month)
+
+    # 從 CaregiverTransfer 加總每位居服員當月里程
+    rows = (
+        db.query(
+            CaregiverTransfer.caregiver_id,
+            sa_func.sum(CaregiverTransfer.transfer_km).label("total_km"),
+        )
+        .filter(
+            CaregiverTransfer.service_date >= month_start,
+            CaregiverTransfer.service_date <= month_end,
+        )
+        .group_by(CaregiverTransfer.caregiver_id)
+        .all()
+    )
+    count = 0
+    for cg_id, total_km in rows:
+        if not total_km:
+            continue
+        total_km = float(total_km)
+        ms = db.query(MonthlySalary).filter(
+            MonthlySalary.caregiver_id == cg_id,
+            MonthlySalary.year == current_month.year,
+            MonthlySalary.month == current_month.month,
+        ).first()
+        if ms:
+            ms.total_transfer_km = round(total_km, 2)
+            ms.travel_allowance = calc_travel_allowance(total_km)
+            count += 1
+    db.commit()
+    return RedirectResponse(
+        url=f"/transport-salary?tab=travel_allowance&month={month}&success=差旅油資計算完成，共 {count} 人",
         status_code=302,
     )

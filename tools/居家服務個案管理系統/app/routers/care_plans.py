@@ -33,7 +33,7 @@ def _get_care_plan_or_404(db: Session, case_id: str, care_plan_id: str) -> CareP
 
 
 def _build_coded_services(form) -> list:
-    """從勾選的checkbox + 數量輸入，組成coded_services清單"""
+    """從勾選的checkbox + 數量 + 經費來源輸入，組成coded_services清單"""
     coded_services = []
     for code, name, minutes in ALL_CODES:
         if form.get(f"code_{code}"):
@@ -44,6 +44,7 @@ def _build_coded_services(form) -> list:
                 "quantity": qty,
                 "minutes_per_unit": minutes,
                 "total_minutes": qty * minutes,
+                "funding_source": form.get(f"funding_{code}", "補助"),
             })
     return coded_services
 

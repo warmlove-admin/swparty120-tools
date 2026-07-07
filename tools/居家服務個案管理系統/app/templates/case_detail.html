@@ -130,7 +130,7 @@
           </div>
           {% for plan in pair.plans %}
           <div class="plan-block">
-            {% for item in plan.coded_services %}<strong>{{ item.code }}</strong> {{ item.name }} ×{{ item.quantity }}<br>{% endfor %}
+            {% for item in plan.coded_services %}<strong>{{ item.code }}</strong> {{ item.name }} ×{{ item.quantity }}{% if item.funding_source == "自費" %}<span class="status-badge" style="background:#e3f2fd;color:#1565c0;font-size:0.75rem;margin-left:0.3rem;">自費</span>{% endif %}<br>{% endfor %}
             {% if plan.goals|selectattr('id', 'in', group.continued_goal_ids)|list %}<span class="linked-note">延續前次照顧計畫</span><br>{% endif %}
             <small>居服員：{{ plan.assigned_caregiver.display_name if plan.assigned_caregiver else "未指派" }}　｜　對應目標：{{ plan.goals|map(attribute="domain")|join("、") or "-" }}</small>
             {% if user.role.value in ["居督", "主管"] %}
@@ -163,17 +163,18 @@
     後續正式簽核流程應先完成班表轉正式或取代，避免評估計畫與實際排班脫節。
   </div>
   {% endif %}
-  <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">正式週期班表</div><div>{% if case.service_schedules or imported_schedule_records %}<a href="/schedules?view=case&case_id={{ case.id }}" class="btn btn-secondary">月曆檢視</a>{% endif %}{% if user.role.value in ["居督", "主管"] and case.status.value == "服務中" %}<a href="/cases/{{ case.id }}/schedules/new" class="btn">+ 建立週期班表</a>{% endif %}</div></div>{% if case.service_schedules %}<table><thead><tr><th>服務項目</th><th>居服員</th><th>週期／時間</th><th>生效期間</th><th>備註</th><th></th></tr></thead><tbody>{% for schedule in case.service_schedules|sort(attribute="start_time") %}<tr><td>{{ schedule.service_code }} {{ schedule.service_name }}（{{ schedule.minutes }} 分鐘）</td><td>{{ schedule.caregiver.display_name }}</td><td>{% for weekday in schedule.weekdays %}{{ ["週一", "週二", "週三", "週四", "週五", "週六", "週日"][weekday] }}{% if not loop.last %}、{% endif %}{% endfor %}<br>{{ schedule.start_time.strftime('%H:%M') }}</td><td>{{ schedule.effective_from }}{% if schedule.effective_until %} 至 {{ schedule.effective_until }}{% endif %}</td><td>{{ schedule.note or "-" }}</td><td>{% if user.role.value in ["居督", "主管"] %}<a href="/cases/{{ case.id }}/schedules/{{ schedule.id }}/edit" class="btn btn-secondary">編輯</a><form method="post" action="/cases/{{ case.id }}/schedules/{{ schedule.id }}/delete" style="display:inline;" onsubmit="return confirm('確定刪除此班表？');"><button class="btn btn-secondary" type="submit">刪除</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立正式週期班表。</p>{% endif %}</div>
+  <div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title" style="margin:0;">正式週期班表</div><div>{% if case.service_schedules or imported_schedule_records %}<a href="/schedules?view=case&case_id={{ case.id }}" class="btn btn-secondary">月曆檢視</a>{% endif %}{% if user.role.value in ["居督", "主管"] and case.status.value == "服務中" %}<a href="/cases/{{ case.id }}/schedules/new" class="btn">+ 建立週期班表</a>{% endif %}</div></div>{% if case.service_schedules %}<table><thead><tr><th>服務項目</th><th>居服員</th><th>週期／時間</th><th>生效期間</th><th>經費</th><th>備註</th><th></th></tr></thead><tbody>{% for schedule in case.service_schedules|sort(attribute="start_time") %}<tr><td>{{ schedule.service_code }} {{ schedule.service_name }}（{{ schedule.minutes }} 分鐘）</td><td>{{ schedule.caregiver.display_name }}</td><td>{% for weekday in schedule.weekdays %}{{ ["週一", "週二", "週三", "週四", "週五", "週六", "週日"][weekday] }}{% if not loop.last %}、{% endif %}{% endfor %}<br>{{ schedule.start_time.strftime('%H:%M') }}</td><td>{{ schedule.effective_from }}{% if schedule.effective_until %} 至 {{ schedule.effective_until }}{% endif %}</td><td>{% if schedule.funding_source == "自費" %}<span class="status-badge" style="background:#e3f2fd;color:#1565c0;">自費</span>{% else %}補助{% endif %}</td><td>{{ schedule.note or "-" }}</td><td>{% if user.role.value in ["居督", "主管"] %}<a href="/cases/{{ case.id }}/schedules/{{ schedule.id }}/edit" class="btn btn-secondary">編輯</a><form method="post" action="/cases/{{ case.id }}/schedules/{{ schedule.id }}/delete" style="display:inline;" onsubmit="return confirm('確定刪除此班表？');"><button class="btn btn-secondary" type="submit">刪除</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p style="color:#999;">尚未建立正式週期班表。</p>{% endif %}</div>
   <div class="card">
     <div class="section-title" style="margin-top:0;">外部匯入班表</div>
     {% if imported_schedule_records %}
-    <table><thead><tr><th>日期</th><th>時間</th><th>居服員</th><th>服務代碼</th><th>狀態</th><th>來源</th></tr></thead><tbody>
+    <table><thead><tr><th>日期</th><th>時間</th><th>居服員</th><th>服務代碼</th><th>經費</th><th>狀態</th><th>來源</th></tr></thead><tbody>
       {% for record in imported_schedule_records[:60] %}
       <tr>
         <td>{{ record.service_date }}</td>
         <td>{{ record.start_time.strftime('%H:%M') }}–{{ record.end_time.strftime('%H:%M') }}</td>
         <td>{{ record.caregiver.display_name if record.caregiver else record.caregiver_name_raw }}</td>
         <td>{{ record.service_codes or "-" }}</td>
+        <td>{% if record.funding_source == "自費" %}<span class="status-badge" style="background:#e3f2fd;color:#1565c0;">自費</span>{% else %}補助{% endif %}</td>
         <td><span class="status-badge {{ 'status-paused' if record.formalization_status == 'pending_formalization' else 'status-closed' }}">{{ schedule_status_labels.get(record.formalization_status, "外部匯入") }}</span></td>
         <td>{{ record.source_file or "-" }}</td>
       </tr>

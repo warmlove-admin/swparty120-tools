@@ -27,6 +27,7 @@ class CaregiverServiceRecord(Base):
     caregiver_name_raw = Column(String, nullable=False)
     service_codes = Column(String)
     formalization_status = Column(String, nullable=False, default="external_import")
+    funding_source = Column(String, nullable=False, default="補助")  # 補助 / 自費
     source_file = Column(String)
     note = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)

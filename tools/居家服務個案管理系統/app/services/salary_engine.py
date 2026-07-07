@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from app.models.caregiver_service_record import CaregiverServiceRecord
 from app.models.caregiver_transfer import CaregiverTransfer
 from app.models.case import Case
-from app.models.import_salary_record import ImportSalaryRecord
 from app.models.monthly_salary import MonthlySalary
 from app.models.user import User, UserRole
 from app.services.attendance_engine import (
@@ -52,22 +51,19 @@ from app.config import settings
 GOOGLE_MAPS_API_KEY = settings.google_maps_api_key
 
 
-# ── 地址清理 ──────────────────────────────────────────────────────────────
-
-_CN2DIGIT = str.maketrans("一二三四五六七八九零", "1234567890")
+# ── 地址清理（比照使用者腳本 2.轉場距離計算.py）───────────────
 
 def clean_address(addr):
+    """NFKC + 移除括弧 + 移除空白 + 移除鄰 + 之→- + 台→臺。
+    **不轉換國字數字**（如 新台五路->新臺5路 會使 Google Maps 判斷為不同道路）。
+    """
     if not addr or not isinstance(addr, str):
         return ""
     addr = unicodedata.normalize("NFKC", addr)
     addr = re.sub(r"[（(].*?[）)]", "", addr)
     addr = re.sub(r"\s+", "", addr)
-    addr = addr.translate(_CN2DIGIT)
-    addr = re.sub(r"0*(\d+)", r"\1", addr)
     addr = re.sub(r"\d+鄰", "", addr)
-    # 原始腳本：移除「之」前綴數字（如「116之1」）
-    addr = re.sub(r"(\d+)之(\d+)", r"\1\2", addr)
-    # 原始腳本：統一「台」→「臺」
+    addr = re.sub(r"(\d+)之(\d+)", r"\1-\2", addr)
     addr = addr.replace("台", "臺")
     return addr.strip()
 
@@ -340,104 +336,6 @@ def calculate_all_transfers(year: int, month: int, db: Session) -> dict:
 
 # ── Google Maps 轉場計算（ImportSalaryRecord） ────────────────────────────
 
-def calculate_import_caregiver_transfers(
-    caregiver_id: str, year: int, month: int, db: Session
-) -> dict:
-    import calendar
-    _, days_in_month = calendar.monthrange(year, month)
-    month_start = date(year, month, 1)
-    month_end = date(year, month, days_in_month)
-
-    records = (
-        db.query(ImportSalaryRecord)
-        .filter(
-            ImportSalaryRecord.caregiver_id == caregiver_id,
-            ImportSalaryRecord.service_date >= month_start,
-            ImportSalaryRecord.service_date <= month_end,
-        )
-        .order_by(ImportSalaryRecord.service_date, ImportSalaryRecord.visit_order)
-        .all()
-    )
-
-    stats = {"ok": 0, "skipped": 0, "failed": 0, "cached": 0}
-
-    grouped: dict[str, list] = {}
-    for r in records:
-        key = r.service_date.isoformat()
-        grouped.setdefault(key, []).append(r)
-
-    for date_key, day_records in sorted(grouped.items()):
-        for i in range(len(day_records) - 1):
-            curr = day_records[i]
-            next_r = day_records[i + 1]
-
-            addr1 = curr.service_address or get_case_address(curr.case_id, db)
-            addr2 = next_r.service_address or get_case_address(next_r.case_id, db)
-
-            clean1 = clean_address(addr1)
-            clean2 = clean_address(addr2)
-
-            if not clean1 or not clean2:
-                curr.transfer_minutes = 0
-                stats["skipped"] += 1
-                continue
-
-            if clean1 == clean2:
-                curr.transfer_minutes = 0
-                stats["ok"] += 1
-                continue
-
-            dist, dur, status, err = get_distance_duration(addr1, addr2)
-            km = round(dist / 1000, 2) if dist > 0 else 0
-            minutes = round(km / 0.67, 2) if dist > 0 else 0
-            if dist > 0 and minutes < 1:
-                minutes = 1.00
-
-            curr.transfer_minutes = minutes
-
-            if status.startswith("CACHED"):
-                stats["cached"] += 1
-            elif dist > 0:
-                stats["ok"] += 1
-            else:
-                if status != "OK" and not status.startswith("CACHED"):
-                    stats["failed"] += 1
-                else:
-                    stats["ok"] += 1
-
-        day_records[-1].transfer_minutes = 0
-
-    db.commit()
-    return stats
-
-
-def calculate_all_import_transfers(year: int, month: int, db: Session) -> dict:
-    import calendar
-    _, days_in_month = calendar.monthrange(year, month)
-    month_start = date(year, month, 1)
-    month_end = date(year, month, days_in_month)
-
-    caregiver_ids = (
-        db.query(ImportSalaryRecord.caregiver_id)
-        .filter(
-            ImportSalaryRecord.service_date >= month_start,
-            ImportSalaryRecord.service_date <= month_end,
-        )
-        .distinct()
-        .all()
-    )
-
-    total_stats = {"ok": 0, "skipped": 0, "failed": 0, "cached": 0, "caregivers": 0}
-    for (cg_id,) in caregiver_ids:
-        stats = calculate_import_caregiver_transfers(cg_id, year, month, db)
-        for k in total_stats:
-            if k in stats:
-                total_stats[k] += stats[k]
-        total_stats["caregivers"] += 1
-
-    return total_stats
-
-
 # ── 每日加權分鐘計算 ──────────────────────────────────────────────────────
 
 def _get_service_records_by_date(caregiver_id: str, start: date, end: date, db: Session) -> dict:
@@ -515,67 +413,6 @@ _BRACKET_DB_TO_DT_AND_BNAME = {
 _ALL_BRACKET_DB_COLS = [col for grp in _BRACKET_GROUPS for col in grp]
 
 
-def _compute_transport_additional_weighted(
-    day_records: list[ImportSalaryRecord], day_transfer_mins: float
-) -> float:
-    """Match original script: backfill transfer minutes into the last record's brackets.
-    
-    - Groups records by (caregiver, date)
-    - Finds the LAST record in the day (by visit_order)
-    - Finds the LAST NON-ZERO bracket group/column in that record
-    - Fills transfer minutes starting from that bracket (up to cap), then forward
-    - Returns the additional weighted minutes contributed.
-    """
-    if day_transfer_mins <= 0 or not day_records:
-        return 0.0
-
-    last_record = day_records[-1]
-
-    # Find the bracket group and column to start filling from
-    group = None
-    found_col = None
-    for grp in _BRACKET_GROUPS:
-        for col in reversed(grp):
-            if (getattr(last_record, col, 0) or 0) > 0:
-                group = grp
-                found_col = col
-                break
-        if found_col:
-            break
-
-    if not group or not found_col:
-        return 0.0
-
-    dt, _ = _BRACKET_DB_TO_DT_AND_BNAME[found_col]
-    bracket_order = list(OVERTIME_MULTIPLIERS[dt].keys())
-    caps = BRACKET_CAPS_MINUTES.get(dt, {})
-    multipliers = OVERTIME_MULTIPLIERS.get(dt, {})
-
-    # Find position of found_col's bracket name within the group's bracket names
-    group_bnames = [_BRACKET_DB_TO_DT_AND_BNAME[c][1] for c in group]
-    bname_start = _BRACKET_DB_TO_DT_AND_BNAME[found_col][1]
-    start_idx = group_bnames.index(bname_start)
-
-    remaining = day_transfer_mins
-    additional = 0.0
-
-    for i in range(start_idx, len(group)):
-        db_col = group[i]
-        bname = group_bnames[i]
-        cap = caps.get(bname, 999999)
-        current = getattr(last_record, db_col, 0) or 0
-        space = cap - current
-        to_add = min(space, remaining)
-        if to_add > 0:
-            mult = multipliers.get(bname, 1.0)
-            additional += to_add * mult
-            remaining -= to_add
-        if remaining <= 0:
-            break
-
-    return additional
-
-
 def _calc_weighted(bracket_mins: dict, date_type: str) -> float:
     brackets = OVERTIME_MULTIPLIERS.get(date_type, {})
     return sum(bracket_mins.get(b, 0) * brackets.get(b, 1.0) for b in brackets.keys())
@@ -642,6 +479,18 @@ def get_daily_bracket_breakdown(
         "weighted_no_transport": round(weighted_no, 2),
         "weighted_with_transport": round(weighted_with, 2),
     }
+
+
+# ── 差旅油資計算（與薪資同步）─────────────────────────────────────────────
+
+def calc_travel_allowance(total_km: float) -> int:
+    """依里程級距計算差旅油資：ROUND(km * IF(km<=100, 1.5, IF(km<=200, 2, 3)), 0)"""
+    if total_km <= 100:
+        return round(total_km * 1.5)
+    elif total_km <= 200:
+        return round(total_km * 2)
+    else:
+        return round(total_km * 3)
 
 
 # ── 月薪資結算 ────────────────────────────────────────────────────────────
@@ -724,6 +573,8 @@ def calculate_monthly_salary(
     salary_with = calculate_salary(total_weighted_with, hourly_wage)
     allowance = salary_with - salary_no
 
+    travel_allowance = calc_travel_allowance(total_transfer_km)
+
     total_hours_ceil = math.ceil(total_svc_minutes / 60)
     bonus = 0
     if caregiver.hire_date:
@@ -746,6 +597,7 @@ def calculate_monthly_salary(
         existing.total_transfer_km = round(total_transfer_km, 2)
         existing.total_transfer_minutes = round(total_transfer_mins, 2)
         existing.total_service_minutes = total_svc_minutes
+        existing.travel_allowance = travel_allowance
         existing.long_term_bonus = bonus
         existing.calculated_at = datetime.utcnow()
         if calculated_by:
@@ -763,6 +615,7 @@ def calculate_monthly_salary(
             total_transfer_km=round(total_transfer_km, 2),
             total_transfer_minutes=round(total_transfer_mins, 2),
             total_service_minutes=total_svc_minutes,
+            travel_allowance=travel_allowance,
             long_term_bonus=bonus,
             calculated_by=calculated_by,
         )
@@ -795,208 +648,4 @@ def calculate_all_monthly_salaries(year: int, month: int, db: Session, calculate
     return results
 
 
-# ── 匯入資料的薪資計算 ─────────────────────────────────────────────────
 
-BRACKET_IMPORT_COLUMNS = {
-    "weekday": ["weekday_0_8", "weekday_9_10", "weekday_11_12"],
-    "national_holiday": ["national_holiday_0_8", "national_holiday_9_10", "national_holiday_11_12"],
-    "regular_off": ["regular_off_0_2", "regular_off_3_8", "regular_off_9_10", "regular_off_11_12"],
-    "rest_day": ["rest_day_0_2", "rest_day_3_8", "rest_day_9_10", "rest_day_11_12"],
-}
-
-
-def _get_import_records_by_date(caregiver_id: str, year: int, month: int, db: Session) -> dict:
-    import calendar
-    _, days_in_month = calendar.monthrange(year, month)
-    records = (
-        db.query(ImportSalaryRecord)
-        .filter(
-            ImportSalaryRecord.caregiver_id == caregiver_id,
-            ImportSalaryRecord.service_date >= date(year, month, 1),
-            ImportSalaryRecord.service_date <= date(year, month, days_in_month),
-        )
-        .order_by(ImportSalaryRecord.service_date, ImportSalaryRecord.visit_order)
-        .all()
-    )
-    result: dict[date, list] = {}
-    for r in records:
-        result.setdefault(r.service_date, []).append(r)
-    return result
-
-
-def _determine_date_type_from_brackets(records: list[ImportSalaryRecord]) -> str:
-    totals = {}
-    for r in records:
-        for dt, cols in BRACKET_IMPORT_COLUMNS.items():
-            total = sum(getattr(r, col, 0) or 0 for col in cols)
-            totals[dt] = totals.get(dt, 0) + total
-    if not totals:
-        return "weekday"
-    return max(totals, key=totals.get)
-
-
-_BRACKET_DB_TO_NAME = {
-    "weekday_0_8": "0-8", "weekday_9_10": "9-10", "weekday_11_12": "11-12",
-    "national_holiday_0_8": "0-8", "national_holiday_9_10": "9-10", "national_holiday_11_12": "11-12",
-    "regular_off_0_2": "0-2", "regular_off_3_8": "3-8", "regular_off_9_10": "9-10", "regular_off_11_12": "11-12",
-    "rest_day_0_2": "0-2", "rest_day_3_8": "3-8", "rest_day_9_10": "9-10", "rest_day_11_12": "11-12",
-}
-
-
-def _get_import_bracket_mins(records: list[ImportSalaryRecord], date_type: str) -> dict:
-    columns = BRACKET_IMPORT_COLUMNS.get(date_type, [])
-    result = {}
-    for col in columns:
-        total = sum(getattr(r, col, 0) or 0 for r in records)
-        bname = _BRACKET_DB_TO_NAME.get(col, col)
-        if total > 0:
-            result[bname] = total
-    return result
-
-
-def get_daily_bracket_breakdown_from_import(
-    caregiver_id: str, d: date, db: Session,
-    import_data_by_date: dict = None
-) -> dict:
-    if import_data_by_date is None:
-        import_data_by_date = _get_import_records_by_date(caregiver_id, d.year, d.month, db)
-
-    day_records = import_data_by_date.get(d, [])
-    if not day_records:
-        return None
-
-    total_minutes = sum(r.total_minutes or 0 for r in day_records)
-    date_type = _determine_date_type_from_brackets(day_records)
-    bracket_no = _get_import_bracket_mins(day_records, date_type)
-    weighted_no = _calc_weighted(bracket_no, date_type)
-
-    day_transfer_mins = sum(getattr(r, "transfer_minutes", 0) or 0 for r in day_records)
-    day_transfer_km = sum(getattr(r, "transfer_km", 0) or 0 for r in day_records)
-
-    # Match original script: backfill into last record's brackets for correct weighting
-    additional_weighted = _compute_transport_additional_weighted(day_records, day_transfer_mins)
-    weighted_with = weighted_no + additional_weighted
-
-    bracket_with = _backfill_transfer_to_brackets(bracket_no, day_transfer_mins, date_type)
-
-    return {
-        "date": d, "date_type": date_type,
-        "date_type_label": DATE_TYPE_LABELS.get(date_type, date_type),
-        "total_minutes": total_minutes,
-        "transfer_minutes": day_transfer_mins,
-        "transfer_km": day_transfer_km,
-        "brackets_no_transport": bracket_no,
-        "brackets_with_transport": bracket_with,
-        "weighted_no_transport": round(weighted_no, 2),
-        "weighted_with_transport": round(weighted_with, 2),
-    }
-
-
-def calculate_monthly_salary_from_import(
-    caregiver_id: str, year: int, month: int, db: Session, calculated_by: str = None
-) -> MonthlySalary:
-    import calendar
-    _, days_in_month = calendar.monthrange(year, month)
-
-    caregiver = db.query(User).filter(User.id == caregiver_id).first()
-    if not caregiver:
-        raise ValueError(f"找不到居服員 {caregiver_id}")
-
-    import_data_by_date = _get_import_records_by_date(caregiver_id, year, month, db)
-    if not import_data_by_date:
-        raise ValueError(f"{caregiver.display_name} 在 {year}/{month} 無匯入資料")
-
-    total_weighted_no = 0.0
-    total_weighted_with = 0.0
-    total_transfer_mins = 0.0
-    total_transfer_km = 0.0
-    total_svc_minutes = 0
-
-    for day in range(1, days_in_month + 1):
-        d = date(year, month, day)
-        daily = get_daily_bracket_breakdown_from_import(
-            caregiver_id, d, db, import_data_by_date
-        )
-        if daily:
-            total_weighted_no += daily["weighted_no_transport"]
-            total_weighted_with += daily["weighted_with_transport"]
-            total_transfer_mins += daily["transfer_minutes"]
-            total_transfer_km += daily["transfer_km"]
-            total_svc_minutes += daily["total_minutes"]
-
-    raw_wage = caregiver.hourly_wage
-    hourly_wage = int(raw_wage) if raw_wage is not None else 230
-    salary_no = calculate_salary(total_weighted_no, hourly_wage)
-    salary_with = calculate_salary(total_weighted_with, hourly_wage)
-    allowance = salary_with - salary_no
-
-    if caregiver.display_name == '楊玉玲':
-        allowance = 300
-
-    total_hours_ceil = math.ceil(total_svc_minutes / 60)
-    bonus = 0
-    if caregiver.hire_date:
-        bonus = calculate_long_term_bonus(
-            caregiver.display_name, caregiver.hire_date, year, month, total_hours_ceil
-        )
-
-    existing = db.query(MonthlySalary).filter(
-        MonthlySalary.caregiver_id == caregiver_id,
-        MonthlySalary.year == year,
-        MonthlySalary.month == month,
-    ).first()
-
-    if existing:
-        existing.weighted_minutes_no_transport = round(total_weighted_no, 2)
-        existing.salary_no_transport = salary_no
-        existing.weighted_minutes_with_transport = round(total_weighted_with, 2)
-        existing.salary_with_transport = salary_with
-        existing.transport_allowance = allowance
-        existing.total_transfer_km = round(total_transfer_km, 2)
-        existing.total_transfer_minutes = round(total_transfer_mins, 2)
-        existing.total_service_minutes = total_svc_minutes
-        existing.long_term_bonus = bonus
-        existing.calculated_at = datetime.utcnow()
-        if calculated_by:
-            existing.calculated_by = calculated_by
-        ms = existing
-    else:
-        ms = MonthlySalary(
-            caregiver_id=caregiver_id,
-            year=year, month=month,
-            weighted_minutes_no_transport=round(total_weighted_no, 2),
-            salary_no_transport=salary_no,
-            weighted_minutes_with_transport=round(total_weighted_with, 2),
-            salary_with_transport=salary_with,
-            transport_allowance=allowance,
-            total_transfer_km=round(total_transfer_km, 2),
-            total_transfer_minutes=round(total_transfer_mins, 2),
-            total_service_minutes=total_svc_minutes,
-            long_term_bonus=bonus,
-            calculated_by=calculated_by,
-        )
-        db.add(ms)
-
-    db.commit()
-    return ms
-
-
-def calculate_all_monthly_salaries_from_import(year: int, month: int, db: Session, calculated_by: str = None) -> list[MonthlySalary]:
-    import calendar
-    _, days_in_month = calendar.monthrange(year, month)
-
-    caregiver_ids = (
-        db.query(ImportSalaryRecord.caregiver_id)
-        .filter(
-            ImportSalaryRecord.service_date >= date(year, month, 1),
-            ImportSalaryRecord.service_date <= date(year, month, days_in_month),
-        )
-        .distinct()
-        .all()
-    )
-
-    results = []
-    for (cg_id,) in caregiver_ids:
-        ms = calculate_monthly_salary_from_import(cg_id, year, month, db, calculated_by)
-        results.append(ms)
-    return results

@@ -12,17 +12,25 @@
     <div class="card">
       <div class="section-title">服務代碼項目（可多選，填數量）</div>
       {% set existing = {} %}
+      {% set existing_funding = {} %}
       {% if care_plan %}
-        {% for item in care_plan.coded_services %}{% set _ = existing.update({item.code: item.quantity}) %}{% endfor %}
+        {% for item in care_plan.coded_services %}
+          {% set _ = existing.update({item.code: item.quantity}) %}
+          {% set _ = existing_funding.update({item.code: item.funding_source}) %}
+        {% endfor %}
       {% endif %}
 
       <div style="margin-bottom:1rem;"><strong>B碼（居家照顧）</strong></div>
       <div class="form-grid">
         {% for code, name, minutes in ba_codes %}
-        <div style="display:flex; align-items:center; gap:0.5rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
           <input type="checkbox" name="code_{{ code }}" value="1" style="width:auto;" {% if code in existing %}checked{% endif %}>
           <label style="margin:0; flex:1;">{{ code }} {{ name }}（{{ minutes }}分/單位）</label>
           <input type="number" name="qty_{{ code }}" min="1" value="{{ existing.get(code, 1) }}" style="width:70px;">
+          <label style="margin:0; font-weight:normal; font-size:0.85rem;">
+            <input type="radio" name="funding_{{ code }}" value="補助" style="width:auto;" {% if existing_funding.get(code, "補助") == "補助" %}checked{% endif %}> 補助
+            <input type="radio" name="funding_{{ code }}" value="自費" style="width:auto; margin-left:0.3rem;" {% if existing_funding.get(code) == "自費" %}checked{% endif %}> 自費
+          </label>
         </div>
         {% endfor %}
       </div>
@@ -30,10 +38,14 @@
       <div style="margin:1rem 0;"><strong>G/SC碼（喘息／短照）</strong></div>
       <div class="form-grid">
         {% for code, name, minutes in ga_sc_codes %}
-        <div style="display:flex; align-items:center; gap:0.5rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
           <input type="checkbox" name="code_{{ code }}" value="1" style="width:auto;" {% if code in existing %}checked{% endif %}>
           <label style="margin:0; flex:1;">{{ code }} {{ name }}（{{ minutes }}分/單位）</label>
           <input type="number" name="qty_{{ code }}" min="1" value="{{ existing.get(code, 1) }}" style="width:70px;">
+          <label style="margin:0; font-weight:normal; font-size:0.85rem;">
+            <input type="radio" name="funding_{{ code }}" value="補助" style="width:auto;" {% if existing_funding.get(code, "補助") == "補助" %}checked{% endif %}> 補助
+            <input type="radio" name="funding_{{ code }}" value="自費" style="width:auto; margin-left:0.3rem;" {% if existing_funding.get(code) == "自費" %}checked{% endif %}> 自費
+          </label>
         </div>
         {% endfor %}
       </div>

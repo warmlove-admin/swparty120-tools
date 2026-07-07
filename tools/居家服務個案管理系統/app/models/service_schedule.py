@@ -27,6 +27,7 @@ class ServiceSchedule(Base):
     start_time = Column(Time, nullable=False)
     effective_from = Column(Date, nullable=False, default=date.today)
     effective_until = Column(Date)
+    funding_source = Column(String, nullable=False, default="補助")  # 補助 / 自費
     note = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

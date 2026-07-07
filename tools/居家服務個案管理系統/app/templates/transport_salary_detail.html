@@ -9,121 +9,169 @@
 <h2>{{ caregiver.display_name }} — {{ month_display }} 每日明細</h2>
 
 {% if salary %}
-<div class="card" style="margin-bottom:1rem; display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:0.75rem;">
-  <div><small>不含交通薪資</small><br><strong>{{ salary.salary_no_transport }}</strong></div>
-  <div><small>含交通薪資</small><br><strong>{{ salary.salary_with_transport }}</strong></div>
-  <div><small>交通津貼</small><br><strong style="color:#1e8449;">{{ salary.transport_allowance }}</strong></div>
-  <div><small>總薪資</small><br><strong style="font-size:1.2rem;">{{ salary.total_salary }}</strong></div>
-  <div><small>時薪</small><br><strong>{{ caregiver.hourly_wage or 230 }}</strong></div>
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.5rem; margin-bottom:1rem;">
+  <div class="card" style="text-align:center; margin:0;">
+    <div style="font-size:0.78rem; color:#888;">不含交通薪資</div>
+    <div style="font-size:1.15rem; font-weight:800;">{{ salary.salary_no_transport }}</div>
+  </div>
+  <div class="card" style="text-align:center; margin:0;">
+    <div style="font-size:0.78rem; color:#888;">含交通薪資</div>
+    <div style="font-size:1.15rem; font-weight:800;">{{ salary.salary_with_transport }}</div>
+  </div>
+  <div class="card" style="text-align:center; margin:0; border-left:4px solid #1e8449;">
+    <div style="font-size:0.78rem; color:#888;">交通津貼</div>
+    <div style="font-size:1.15rem; font-weight:800; color:#1e8449;">{{ salary.transport_allowance }}</div>
+  </div>
+  <div class="card" style="text-align:center; margin:0; background:#f0f7f7;">
+    <div style="font-size:0.78rem; color:#888;">總薪資</div>
+    <div style="font-size:1.3rem; font-weight:900; color:#2c7a7b;">{{ salary.total_salary }}</div>
+  </div>
+  <div class="card" style="text-align:center; margin:0;">
+    <div style="font-size:0.78rem; color:#888;">時薪</div>
+    <div style="font-size:1.15rem; font-weight:800;">{{ caregiver.hourly_wage or 230 }}</div>
+  </div>
 </div>
 {% endif %}
 
 {% if daily_visits %}
-<div class="card" style="overflow-x:auto; margin-bottom:1.5rem;">
+<div class="card" style="margin-bottom:1rem;">
+  <style>
+    .day-header { cursor:pointer; user-select:none; }
+    .day-header:hover { background:#f5f7fa; }
+    .visit-row td { padding:0.25rem 0.5rem; }
+    .visit-row:nth-child(even) { background:#fafafa; }
+    .transfer-row td { padding:0.2rem 0.5rem 0.2rem 1.2rem; font-size:0.82rem; color:#2c7a7b; background:#f4fafa; }
+    .bracket-compact td, .bracket-compact th { padding:0.2rem 0.5rem; font-size:0.82rem; }
+  </style>
   {% for dv in daily_visits %}
-  <details style="margin-bottom:0.5rem; border:1px solid #ddd; border-radius:6px; overflow:hidden;">
-    <summary style="cursor:pointer; padding:0.5rem 0.75rem; background:#f7f9fa; font-weight:700;">
-      {{ dv.date.month }}/{{ dv.date.day }} — {{ dv.visits|length }} 位個案
-      <span style="font-weight:400; color:#888; margin-left:0.5rem;">
+  <div style="margin-bottom:0.4rem; border:1px solid #e0e0e0; border-radius:6px; overflow:hidden;">
+    <div class="day-header" onclick="toggleDay(this)" style="display:flex; align-items:center; padding:0.4rem 0.75rem; background:#f7f9fa; gap:0.6rem;">
+      <span style="color:#2c7a7b; font-size:0.85rem;">▶</span>
+      <span style="font-weight:700;">{{ dv.date.month }}/{{ dv.date.day }}</span>
+      <span class="status-badge" style="background:#e8f4f8; font-size:0.75rem; padding:0.1rem 0.4rem;">{{ dv.date_type_label }}</span>
+      <span style="font-size:0.85rem; color:#888;">
         {% for v in dv.visits %}{{ v.case_name }}{% if not loop.last %} → {% endif %}{% endfor %}
       </span>
-    </summary>
-    <div style="padding:0.5rem 0.75rem;">
-      <table style="width:100%; font-size:0.9rem;">
-        <thead>
-          <tr>
-            <th>個案</th>
-            <th>開始</th>
-            <th>結束</th>
-            <th>服務分鐘</th>
-          </tr>
-        </thead>
+      <span style="margin-left:auto; font-size:0.82rem; color:#888;">
+        {{ dv.detail.total_minutes if dv.detail else '' }}分
+        {% if dv.detail and dv.detail.transfer_km > 0 %}｜轉場 {{ '%.1f'|format(dv.detail.transfer_km) }}km{% endif %}
+        ｜加權{{ '%.0f'|format(dv.detail.weighted_with_transport if dv.detail else 0) }}
+      </span>
+    </div>
+    <div class="day-body" style="display:none;">
+      {% if dv.visits %}
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
         <tbody>
           {% for v in dv.visits %}
-          <tr>
-            <td>{{ v.case_name }}</td>
-            <td>{{ v.start_time }}</td>
-            <td>{{ v.end_time }}</td>
-            <td>{{ v.minutes }}</td>
+          <tr class="visit-row">
+            <td style="padding:0.25rem 0.5rem; width:30%;">{{ v.case_name }}</td>
+            <td style="padding:0.25rem 0.5rem; white-space:nowrap;">{{ v.start_time }}-{{ v.end_time }}</td>
+            <td style="padding:0.25rem 0.5rem; text-align:right;">{{ v.minutes }} 分</td>
           </tr>
           {% if not loop.last and dv.transfers[loop.index0] %}
           {% set t = dv.transfers[loop.index0] %}
-          <tr style="background:#f0f7f7;">
-            <td colspan="4" style="padding:0.25rem 0.75rem; font-size:0.85rem; color:#2c7a7b;">
-              ⤵ 轉場：{{ t.from_case }} → {{ t.to_case }}
-              ｜{{ t.km }} km｜{{ t.minutes }} 分
-              {% if t.status == "SAME_ADDR" %}<span style="color:#888;">（同地址）</span>{% endif %}
-            </td>
+          <tr class="transfer-row">
+            <td colspan="3">⤵ {{ t.from_case }} → {{ t.to_case}} ｜ {{ t.km }} km ｜ {{ t.minutes }} 分{% if t.status == "SAME_ADDR" %}（同地址）{% endif %}</td>
           </tr>
           {% endif %}
           {% endfor %}
         </tbody>
       </table>
+      {% endif %}
+      {% if dv.detail %}
+      <div style="padding:0.4rem 0.75rem; background:#f9fafb; border-top:1px solid #e0e0e0;">
+        <table class="bracket-compact" style="width:100%;">
+          <thead>
+            <tr>
+              <th>時段</th>
+              <th>服務分</th>
+              <th>轉場分</th>
+              <th>不含交</th>
+              <th>含交</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set br_no = dv.detail.brackets_no_transport %}
+            {% set br_with = dv.detail.brackets_with_transport %}
+            {% for bracket_name in (br_no.keys() if br_no else []) %}
+            <tr>
+              <td>{{ bracket_name }}</td>
+              <td style="text-align:right;">{{ br_no[bracket_name] | int }}</td>
+              <td style="text-align:right; color:#2c7a7b;">{{ (br_with[bracket_name] - br_no[bracket_name]) | int if bracket_name in br_with else 0 }}</td>
+              <td style="text-align:right;">{{ '%0.1f'|format(br_no[bracket_name]) }}</td>
+              <td style="text-align:right; font-weight:700;">{{ '%0.1f'|format(br_with[bracket_name]) if bracket_name in br_with else 0 }}</td>
+            </tr>
+            {% endfor %}
+            <tr style="border-top:2px solid #ddd; font-weight:800; background:#f0f4f4;">
+              <td>合計</td>
+              <td style="text-align:right;">{{ dv.detail.total_minutes }}</td>
+              <td style="text-align:right; color:#2c7a7b;">{{ '%0.1f'|format(dv.detail.transfer_minutes) }}</td>
+              <td style="text-align:right;">{{ '%0.1f'|format(dv.detail.weighted_no_transport) }}</td>
+              <td style="text-align:right;">{{ '%0.1f'|format(dv.detail.weighted_with_transport) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
     </div>
-  </details>
+  </div>
   {% endfor %}
 </div>
 {% endif %}
 
 {% if daily_details %}
 <div class="card" style="overflow-x:auto;">
-  <table>
+  <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
     <thead>
       <tr>
         <th>日期</th>
         <th>日別</th>
-        <th>服務分鐘</th>
-        <th>轉場分鐘</th>
-        <th>轉場公里</th>
-        <th>原始<br>分鐘(不含交)</th>
-        <th>原始<br>分鐘(含交)</th>
-        <th>加權<br>(不含交)</th>
-        <th>加權<br>(含交)</th>
+        <th style="text-align:right;">服務分</th>
+        <th style="text-align:right;">轉場km</th>
+        <th style="text-align:right;">不含交</th>
+        <th style="text-align:right;">含交</th>
       </tr>
     </thead>
     <tbody>
       {% set total_minutes = namespace(v=0) %}
-      {% set total_transfer_min = namespace(v=0) %}
       {% set total_weighted_no = namespace(v=0.0) %}
       {% set total_weighted_with = namespace(v=0.0) %}
       {% for d in daily_details %}
       {% set total_minutes.v = total_minutes.v + d.total_minutes %}
-      {% set total_transfer_min.v = total_transfer_min.v + d.transfer_minutes %}
       {% set total_weighted_no.v = total_weighted_no.v + d.weighted_no_transport %}
       {% set total_weighted_with.v = total_weighted_with.v + d.weighted_with_transport %}
       <tr>
         <td>{{ d.date.month }}/{{ d.date.day }}</td>
-        <td><span class="status-badge" style="background:#e8f4f8;">{{ d.date_type_label }}</span></td>
-        <td>{{ d.total_minutes }}</td>
-        <td>{{ '%0.1f'|format(d.transfer_minutes) }}</td>
-        <td>{{ '%0.1f'|format(d.transfer_km) }}</td>
-        <td>
-          {% for bn, bm in d.brackets_no_transport.items() %}
-          <small>{{ bn }}: {{ bm }}分</small>{% if not loop.last %}<br>{% endif %}
-          {% endfor %}
-        </td>
-        <td>
-          {% for bn, bm in d.brackets_with_transport.items() %}
-          <small>{{ bn }}: {{ bm }}分</small>{% if not loop.last %}<br>{% endif %}
-          {% endfor %}
-        </td>
-        <td>{{ '%0.1f'|format(d.weighted_no_transport) }}</td>
-        <td>{{ '%0.1f'|format(d.weighted_with_transport) }}</td>
+        <td><span class="status-badge" style="background:#e8f4f8; font-size:0.75rem;">{{ d.date_type_label }}</span></td>
+        <td style="text-align:right;">{{ d.total_minutes }}</td>
+        <td style="text-align:right; color:#2c7a7b;">{{ '%0.1f'|format(d.transfer_km) }}</td>
+        <td style="text-align:right;">{{ '%0.1f'|format(d.weighted_no_transport) }}</td>
+        <td style="text-align:right; font-weight:700;">{{ '%0.1f'|format(d.weighted_with_transport) }}</td>
       </tr>
       {% endfor %}
       <tr style="font-weight:900; background:#eaf1f1;">
         <td colspan="2">合計</td>
-        <td>{{ total_minutes.v }}</td>
-        <td>{{ '%0.1f'|format(total_transfer_min.v) }}</td>
+        <td style="text-align:right;">{{ total_minutes.v }}</td>
         <td></td>
-        <td></td>
-        <td></td>
-        <td>{{ '%0.1f'|format(total_weighted_no.v) }}</td>
-        <td>{{ '%0.1f'|format(total_weighted_with.v) }}</td>
+        <td style="text-align:right;">{{ '%0.1f'|format(total_weighted_no.v) }}</td>
+        <td style="text-align:right;">{{ '%0.1f'|format(total_weighted_with.v) }}</td>
       </tr>
     </tbody>
   </table>
 </div>
+<script>
+function toggleDay(el) {
+  var body = el.nextElementSibling;
+  var arrow = el.querySelector('span');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.textContent = '▼';
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▶';
+  }
+}
+</script>
 {% else %}
 <div class="card" style="text-align:center; color:#888; padding:2rem;">
   {{ month_display }} 無服務紀錄。
