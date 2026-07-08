@@ -94,20 +94,30 @@ def _month_display(d: date) -> str:
 
 
 def _month_options(db: Session) -> list[date]:
-    from sqlalchemy import func
+    from app.models.aa_code import AaCodeRecord
+    from app.models.monthly_salary import MonthlySalary
+    from sqlalchemy import func, extract
     months = set()
     
-    # 排班表月份
-    rows = (
-        db.query(
-            func.extract("year", CaregiverServiceRecord.service_date).label("y"),
-            func.extract("month", CaregiverServiceRecord.service_date).label("m"),
-        )
-        .distinct()
-        .all()
-    )
-    for r in rows:
-        months.add((int(r.y), int(r.m)))
+    for model, date_field in [
+        (CaregiverServiceRecord, "service_date"),
+        (MonthlySalary, None),
+        (AaCodeRecord, None),
+    ]:
+        if date_field:
+            rows = (
+                db.query(
+                    extract("year", getattr(model, date_field)).label("y"),
+                    extract("month", getattr(model, date_field)).label("m"),
+                )
+                .distinct()
+                .all()
+            )
+        else:
+            rows = db.query(model.year.label("y"), model.month.label("m")).distinct().all()
+        for r in rows:
+            if r.y and r.m:
+                months.add((int(r.y), int(r.m)))
     
     # 加入當月與次月（讓使用者可以提前開新月份）
     today = date.today()
