@@ -53,13 +53,10 @@ GOOGLE_MAPS_API_KEY = settings.google_maps_api_key
 
 # ── 地址清理（比照使用者腳本 2.轉場距離計算.py）───────────────
 
-_CN_DIGITS = {"0": "○", "1": "一", "2": "二", "3": "三", "4": "四",
-               "5": "五", "6": "六", "7": "七", "8": "八", "9": "九"}
-
 def clean_address(addr):
-    """NFKC + 移除括弧 + 移除空白 + 移除鄰 + 移除樓層 + 台→臺。
-    **不轉換國字數字**（如 新台五路->新臺5路 會使 Google Maps 判斷為不同道路）。
+    """NFKC + 移除括弧 + 移除空白 + 移除鄰 + 移除樓層。
     **移除樓層資訊**（如 4樓之一、12樓、三樓），讓 Google Maps 專注於地號位置。
+    **注意**：不轉換台→臺，因為「新台五路」的「台」是路名本體，非簡寫。
     """
     if not addr or not isinstance(addr, str):
         return ""
@@ -70,9 +67,8 @@ def clean_address(addr):
     # 移除樓層資訊（含國字樓層、數字樓層、樓+之+國字/數字）
     addr = re.sub(r"[一二三四五六七八九十百千]+樓", "", addr)
     addr = re.sub(r"\d+樓[之\-]?[一二三四五六七八九十百千\d]*", "", addr)
-    addr = addr.replace("台", "臺")
-    # 將路名的數字還原為國字（如 新臺5路→新臺五路）
-    addr = re.sub(r"臺(\d+)路", lambda m: "臺" + "".join(_CN_DIGITS[d] for d in m.group(1)) + "路", addr)
+    # 還原路名中的數字為國字（如 新台5路→新台五路）
+    addr = re.sub(r"台(\d+)路", lambda m: "台" + "".join("一二三四五六七八九"[int(d)-1] for d in m.group(1) if d != "0") + "路", addr)
     return addr.strip()
 
 
