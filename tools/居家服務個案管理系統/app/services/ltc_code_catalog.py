@@ -37,5 +37,90 @@ GA_SC_CODES = [
     ("SC09", "居家短照", 120),
 ]
 
-ALL_CODES = BA_CODES + GA_SC_CODES
+ZA_CODES = [
+    ("ZA04", "服務未遇（半小時工時）", 30),
+]
+
+ALL_CODES = BA_CODES + GA_SC_CODES + ZA_CODES
 CODE_LOOKUP = {code: (name, minutes) for code, name, minutes in ALL_CODES}
+
+# 對服務對象收費金額（每單位）
+CHARGE_AMOUNTS: dict[str, int] = {
+    "ZA04": 100,
+}
+
+
+def parse_funding(codes: str | None, default_funding: str, funding_detail_json: str | None) -> dict[str, str]:
+    """回傳 {service_code: funding_source} 對照表。
+    支援同碼別混合補助/自費：funding_detail 中 value 可為陣列
+    `[{"funding":"自費","qty":1},{"funding":"補助","qty":1}]`，
+    回傳鍵值為 `{code}.{index}` 格式。
+
+    Args:
+        codes: 原始 service_codes 字串，例如 "BA07x1, BA20x3"
+        default_funding: 預設值（funding_source 欄位）
+        funding_detail_json: funding_detail JSON 字串
+    Returns:
+        dict 例如 {"BA07": "自費", "BA20": "補助"} 或
+        {"BA07": "自費", "BA20.0": "自費", "BA20.1": "補助"}
+    """
+    import json, re
+    funding_detail_raw: dict = {}
+    if funding_detail_json:
+        try:
+            funding_detail_raw = json.loads(funding_detail_json)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    codes_present: set[str] = set()
+    if codes:
+        for m in re.finditer(r"([A-Z]{1,3}\d{1,2}(?:-\d+)?(?:[a-z]\d?)?)\s*x\s*(\d+)", codes, re.IGNORECASE):
+            codes_present.add(m.group(1).upper())
+
+    result: dict[str, str] = {}
+    for code in sorted(codes_present):
+        val = funding_detail_raw.get(code, default_funding)
+        if isinstance(val, list):
+            idx = 0
+            for g in val:
+                qty = g.get("qty", 1)
+                fund_val = g.get("funding", default_funding)
+                for _ in range(qty):
+                    result[f"{code}.{idx}"] = fund_val
+                    idx += 1
+        elif isinstance(val, str):
+            result[code] = val
+        else:
+            result[code] = default_funding
+    return result if result else {"*": default_funding}
+
+
+def collapse_funding_groups(funding_map: dict[str, str]) -> str | None:
+    """將 parse_funding 回傳的 dict 壓回 JSON 字串供存入資料庫。
+    若全部為預設值則回傳 None。
+    """
+    import json
+    simple: dict[str, str | list] = {}
+    groups: dict[str, list[dict]] = {}
+    for key, val in sorted(funding_map.items()):
+        if "." in key:
+            code, idx = key.rsplit(".", 1)
+            groups.setdefault(code, []).append({"funding": val, "qty": 1})
+        else:
+            simple[key] = val
+    for code, items in groups.items():
+        simple[code] = items
+    # 清理：如果只有一個碼且值與 default 相同，視情況簡化
+    # 此處直接回傳 JSON 給呼叫方決定是否簡化
+    return json.dumps(simple, ensure_ascii=False) if any(v != "補助" for v in funding_map.values()) else None
+
+
+def get_code_quantity(codes: str | None, code_target: str) -> int:
+    """從 service_codes 字串中取得指定碼別的總數量。"""
+    import re
+    total = 0
+    if codes:
+        for m in re.finditer(r"([A-Z]{1,3}\d{1,2}(?:-\d+)?(?:[a-z]\d?)?)\s*x\s*(\d+)", codes, re.IGNORECASE):
+            if m.group(1).upper() == code_target.upper():
+                total += int(m.group(2))
+    return total

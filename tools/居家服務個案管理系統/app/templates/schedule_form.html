@@ -11,6 +11,7 @@
       <div><label>開始時間</label><input type="time" name="start_time" required value="{{ schedule.start_time.strftime('%H:%M') if schedule else '' }}"></div>
       <div><label>生效起日</label><input type="date" name="effective_from" required value="{{ schedule.effective_from if schedule else '' }}"></div>
       <div><label>結束日期（選填）</label><input type="date" name="effective_until" value="{{ schedule.effective_until if schedule and schedule.effective_until else '' }}"></div>
+      <div><label>補助／自費</label><select name="funding_source"><option value="補助" {{ 'selected' if (schedule and schedule.funding_source == '補助') or (not schedule) else '' }}>補助</option><option value="自費" {{ 'selected' if schedule and schedule.funding_source == '自費' else '' }}>自費</option></select></div>
       <div><label>備註</label><input name="note" value="{{ schedule.note if schedule and schedule.note else '' }}"></div>
     </div><div style="margin-top:1rem;"><label>每週服務日</label>{% for value, label in weekday_labels %}<label style="display:inline-flex; align-items:center; margin:0 1rem 0.5rem 0; font-weight:normal;"><input type="checkbox" name="weekdays" value="{{ value }}" style="width:auto; margin-right:0.35rem;" {% if schedule and value in schedule.weekdays %}checked{% endif %}>{{ label }}</label>{% endfor %}</div></div>
     {% if dialysis_adjacent or dialysis_needs_confirmation %}

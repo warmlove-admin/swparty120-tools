@@ -4,7 +4,8 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+import os
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
@@ -18,6 +19,7 @@ from app.models.service_schedule import ServiceSchedule
 from app.models.user import User, UserRole
 from app.services.ltc_code_catalog import CODE_LOOKUP
 from app.services.schedule_formalization import STATUS_LABELS
+from app.services.excel_schedule_import import parse_directory, import_entries_to_db
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -37,6 +39,7 @@ SHORT_SERVICE_NAMES = {
     "BA15-2": "家務共用",
     "BA03": "生命徵象",
     "BA11": "肢關活動",
+    "ZA04": "服務未遇",
 }
 
 
@@ -103,7 +106,49 @@ def _short_service_name(code: str) -> str:
     return cleaned[:4] if len(cleaned) > 4 else cleaned
 
 
-def _imported_calendar_item(record: CaregiverServiceRecord) -> dict:
+def _imported_calendar_item(record: CaregiverServiceRecord, view: str = "", caregiver_id: str = "", case_id: str = "", show_names: bool = True) -> dict:
+    from app.services.ltc_code_catalog import parse_funding as _pf, get_code_quantity
+    is_leave = record.formalization_status in ("leave",)
+    label = "請假" if is_leave else STATUS_LABELS.get(record.formalization_status, "外部匯入")
+    funding_map = _pf(record.service_codes, record.funding_source, record.funding_detail)
+    raw_lines = _service_lines(record.service_codes)
+
+    # Aggregate by code (e.g. BA20x1, BA20x6 → BA20 total=7)
+    from collections import OrderedDict
+    code_agg: OrderedDict[str, dict] = OrderedDict()
+    for sl in raw_lines:
+        code = sl["code"]
+        name = sl["name"]
+        if code in code_agg:
+            code_agg[code]["qty"] += int(sl["quantity"])
+        else:
+            code_agg[code] = {"code": code, "name": name, "qty": int(sl["quantity"])}
+
+    service_lines = []
+    for code, info in code_agg.items():
+        total_qty = info["qty"]
+        instance_keys = sorted(k for k in funding_map if k.startswith(f"{code}."))
+        if instance_keys:
+            # Group per-instance keys by funding value
+            groups: dict[str, int] = {}
+            for ik in instance_keys:
+                fv = funding_map[ik]
+                groups[fv] = groups.get(fv, 0) + 1
+            for fv, qty in sorted(groups.items(), key=lambda x: -x[1] if x[0] == record.funding_source else 0):
+                service_lines.append({"code": code, "quantity": str(qty), "name": info["name"], "funding": fv})
+        else:
+            fv = funding_map.get(code, record.funding_source)
+            service_lines.append({"code": code, "quantity": str(total_qty), "name": info["name"], "funding": fv})
+
+    back_params = {"month": record.service_date.strftime('%Y-%m'), "show_names": str(show_names).lower()}
+    if view:
+        back_params["view"] = view
+    if caregiver_id:
+        back_params["caregiver_id"] = caregiver_id
+    if case_id:
+        back_params["case_id"] = case_id
+    back_qs = "&".join(f"{k}={quote(v)}" for k, v in back_params.items())
+
     return {
         "kind": "imported",
         "record": record,
@@ -113,11 +158,12 @@ def _imported_calendar_item(record: CaregiverServiceRecord) -> dict:
         "end_time": record.end_time.strftime("%H:%M"),
         "service_code": record.service_codes or "-",
         "service_name": "",
-        "service_lines": _service_lines(record.service_codes),
+        "service_lines": service_lines,
         "quantity": 1,
-        "status_label": STATUS_LABELS.get(record.formalization_status, "外部匯入"),
+        "status_label": label,
+        "is_leave": is_leave,
         "case_id": record.case_id,
-        "href": f"/cases/{record.case_id}?tab=schedule",
+        "href": f"/imported-records/{record.id}/edit?back={quote('/schedules?' + back_qs)}",
     }
 
 
@@ -260,7 +306,7 @@ async def _save(case: Case, request: Request, db: Session, schedule=None):
         "minutes": int(item["minutes_per_unit"]), "weekdays": weekdays,
         "start_time": start_time, "effective_from": effective_from,
         "effective_until": effective_until,
-        "funding_source": item.get("funding_source", "補助"),
+        "funding_source": form.get("funding_source") or item.get("funding_source", "補助"),
         "note": form.get("note") or None,
     }
     if schedule is None:
@@ -345,7 +391,7 @@ def monthly_schedule(
             if current.weekday() in item.weekdays and current >= item.effective_from and (not item.effective_until or current <= item.effective_until)
         ]
         imported_items = [
-            _imported_calendar_item(record)
+            _imported_calendar_item(record, view, caregiver_id, case_id, show_names)
             for record in imported_records
             if record.service_date == current
         ]
@@ -353,6 +399,9 @@ def monthly_schedule(
         cells.append({"day": day, "schedules": items})
     while len(cells) % 7:
         cells.append({"day": None, "schedules": []})
+    current_case_name = ""
+    if case_id and case_id in case_by_id:
+        current_case_name = case_by_id[case_id].name
     return templates.TemplateResponse(request, "schedule_calendar.html", {
         "user": user, "current_month": current_month,
         "previous_month": _month_shift(current_month, -1), "next_month": _month_shift(current_month, 1),
@@ -361,6 +410,7 @@ def monthly_schedule(
         "caregivers": caregivers, "cases": cases, "show_names": show_names,
         "imported_count": len(imported_records),
         "formal_count": len(schedules),
+        "current_case_name": current_case_name,
     })
 
 
@@ -420,6 +470,152 @@ async def edit(case_id: str, schedule_id: str, request: Request, db: Session = D
     if warning:
         redirect_url += f"?schedule_warning={quote(warning)}"
     return RedirectResponse(url=redirect_url, status_code=302)
+
+
+@router.get("/import-schedules")
+def import_schedules_page(
+    request: Request,
+    month: Optional[str] = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
+):
+    from app.services.excel_schedule_import import parse_directory as _parse_dir
+    return templates.TemplateResponse(request, "import_schedules.html", {
+        "user": user, "month": month or date.today().strftime("%Y-%m"),
+    })
+
+
+@router.post("/import-schedules/run")
+def import_schedules_run(
+    month: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
+):
+    current_month = _parse_month(month)
+    download_dir = os.path.join(os.path.expanduser("~"), "Downloads", "已執行班表6月")
+    if not os.path.isdir(download_dir):
+        return RedirectResponse(
+            url=f"/schedules?month={month}&error=找不到匯入資料夾：{download_dir}",
+            status_code=302,
+        )
+    all_entries = parse_directory(download_dir, current_month.year)
+    total = sum(len(v) for v in all_entries.values())
+    result = import_entries_to_db(
+        [e for entries in all_entries.values() for e in entries],
+        current_month, db,
+    )
+    return RedirectResponse(
+        url=f"/schedules?month={month}&success=匯入完成：已新增 {result['added']} 筆（{len(all_entries)} 位居服員），未匹配個案 {result['skipped_no_case']}，未匹配居服員 {result['skipped_no_cg']}",
+        status_code=302,
+    )
+
+
+@router.get("/imported-records/{record_id}/edit")
+def edit_imported_record(
+    record_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
+):
+    import re, collections
+    from app.services.ltc_code_catalog import parse_funding as _parse_funding
+    record = db.query(CaregiverServiceRecord).filter(CaregiverServiceRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(404, "找不到匯入記錄")
+    back = request.query_params.get("back", f"/schedules?month={record.service_date.strftime('%Y-%m')}")
+    funding_map = _parse_funding(record.service_codes, record.funding_source, record.funding_detail)
+
+    # Build per-code totals and 補/自 counts
+    code_totals: dict[str, int] = {}
+    if record.service_codes:
+        for m in re.finditer(r"([A-Z]{1,3}\d{1,2}(?:-\d+)?(?:[a-z]\d?)?)\s*x\s*(\d+)", record.service_codes, re.IGNORECASE):
+            c = m.group(1).upper()
+            code_totals[c] = code_totals.get(c, 0) + int(m.group(2))
+
+    code_funding: dict[str, dict[str, int]] = {}
+    for code in code_totals:
+        cnt: dict[str, int] = {"補助": 0, "自費": 0}
+        # Check for per-instance keys
+        for k, v in funding_map.items():
+            if k == code or k.startswith(f"{code}."):
+                cnt[v] = cnt.get(v, 0) + 1
+        if sum(cnt.values()) == 0:
+            cnt[funding_map.get(code, record.funding_source)] = code_totals[code]
+        code_funding[code] = cnt
+
+    return templates.TemplateResponse(request, "edit_imported_record.html", {
+        "user": user, "record": record, "back": back,
+        "code_totals": code_totals, "code_funding": code_funding,
+    })
+
+
+@router.post("/imported-records/{record_id}/edit")
+async def save_imported_record(
+    record_id: str,
+    request: Request,
+    funding_source: str = Form(...),
+    formalization_status: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
+):
+    import json, re
+
+    record = db.query(CaregiverServiceRecord).filter(CaregiverServiceRecord.id == record_id).first()
+    if not record:
+        raise HTTPException(404, "找不到匯入記錄")
+    record.formalization_status = formalization_status
+
+    form = dict(await request.form())
+    funding_per_code: dict[str, str | list] = {}
+
+    # 解析所有碼別及總量
+    code_total: dict[str, int] = {}
+    if record.service_codes:
+        for m in re.finditer(r"([A-Z]{1,3}\d{1,2}(?:-\d+)?(?:[a-z]\d?)?)\s*x\s*(\d+)", record.service_codes, re.IGNORECASE):
+            c = m.group(1).upper()
+            code_total[c] = code_total.get(c, 0) + int(m.group(2))
+
+    for code, total_qty in code_total.items():
+        if total_qty > 1:
+            # 從數字輸入框取得 補/自 數量
+            sub_key = f"funding_{code}_補"
+            self_key = f"funding_{code}_自"
+            try:
+                sub_cnt = int(form.get(sub_key, 0))
+                self_cnt = int(form.get(self_key, 0))
+            except (ValueError, TypeError):
+                sub_cnt = 0
+                self_cnt = 0
+            if sub_cnt + self_cnt != total_qty:
+                sub_cnt = total_qty
+                self_cnt = 0
+            groups = []
+            if sub_cnt > 0 or self_cnt == 0:
+                groups.append({"funding": "補助", "qty": sub_cnt})
+            if self_cnt > 0:
+                groups.append({"funding": "自費", "qty": self_cnt})
+            # 如果全部同一類型，用字串簡化
+            if len(groups) == 1:
+                val = groups[0]["funding"]
+                if val != funding_source:
+                    funding_per_code[code] = val
+            else:
+                funding_per_code[code] = groups
+        else:
+            # 單一數量：從 radio 取值
+            key = f"funding_{code}"
+            val = form.get(key, "")
+            if val in ("補助", "自費") and val != funding_source:
+                funding_per_code[code] = val
+
+    record.funding_source = funding_source
+    if funding_per_code:
+        record.funding_detail = json.dumps(funding_per_code, ensure_ascii=False)
+    else:
+        record.funding_detail = None
+    db.commit()
+    back = request.query_params.get("back", f"/schedules?month={record.service_date.strftime('%Y-%m')}")
+    return RedirectResponse(url=back, status_code=302)
 
 
 @router.post("/cases/{case_id}/schedules/{schedule_id}/delete")

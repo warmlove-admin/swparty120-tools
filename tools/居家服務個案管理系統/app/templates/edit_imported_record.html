@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}編輯匯入記錄{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px; margin:2rem auto;">
+  <h2>編輯匯入記錄</h2>
+  <table style="width:100%; margin:1rem 0;">
+    <tr><td style="font-weight:600; padding:0.25rem 0;">日期</td><td>{{ record.service_date }}</td></tr>
+    <tr><td style="font-weight:600; padding:0.25rem 0;">時間</td><td>{{ record.start_time.strftime('%H:%M') }}～{{ record.end_time.strftime('%H:%M') }}</td></tr>
+    <tr><td style="font-weight:600; padding:0.25rem 0;">居服員</td><td>{{ record.caregiver_name_raw }}</td></tr>
+    <tr><td style="font-weight:600; padding:0.25rem 0;">個案</td><td>{{ record.case_name_raw }}</td></tr>
+    <tr><td style="font-weight:600; padding:0.25rem 0;">分鐘</td><td>{{ record.minutes }}</td></tr>
+    <tr><td style="font-weight:600; padding:0.25rem 0;">備註</td><td>{{ record.note or '—' }}</td></tr>
+  </table>
+  <form method="post">
+    <label>狀態</label>
+    <select name="formalization_status">
+      <option value="external_import" {{ 'selected' if record.formalization_status == 'external_import' else '' }}>正常服務（計薪）</option>
+      <option value="leave" {{ 'selected' if record.formalization_status == 'leave' else '' }}>請假／暫停服務（不計薪）</option>
+    </select>
+
+    <label style="margin-top:1rem;">各服務碼補助／自費設定</label>
+    <div style="padding:0.5rem; background:#f8f9fa; border-radius:6px;">
+      {% for code in code_totals %}
+      {% set total = code_totals[code] %}
+      {% set cnt = code_funding[code] %}
+      <div style="display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0; border-bottom:1px solid #eee; flex-wrap:wrap;">
+        <span style="font-weight:700; min-width:5rem;">{{ code }}</span>
+        <span style="color:#888; font-size:0.85rem;">×{{ total }}</span>
+        {% if total > 1 %}
+        <label style="margin:0; font-size:0.85rem;">補 <input type="number" name="funding_{{ code }}_補" value="{{ cnt['補助'] }}" min="0" max="{{ total }}" style="width:3.5rem;" onchange="syncFunding(this, '{{ code }}', {{ total }})"></label>
+        <label style="margin:0; font-size:0.85rem;">自 <input type="number" name="funding_{{ code }}_自" value="{{ cnt['自費'] }}" min="0" max="{{ total }}" style="width:3.5rem;" onchange="syncFunding(this, '{{ code }}', {{ total }})"></label>
+        <span style="color:#888; font-size:0.78rem;">（總和需為 {{ total }}）</span>
+        {% else %}
+        <label style="margin:0; font-size:0.85rem;"><input type="radio" name="funding_{{ code }}" value="補助" {{ 'checked' if cnt['補助'] > 0 else '' }}> 補</label>
+        <label style="margin:0; font-size:0.85rem;"><input type="radio" name="funding_{{ code }}" value="自費" {{ 'checked' if cnt['自費'] > 0 else '' }}> 自</label>
+        {% endif %}
+      </div>
+      {% else %}
+      <span style="color:#888;">無服務碼資料</span>
+      {% endfor %}
+      <div style="margin-top:0.5rem; padding:0.35rem 0;">
+        <span style="font-weight:700; min-width:5rem; display:inline-block;">預設</span>
+        <label style="margin:0;"><input type="radio" name="funding_source" value="補助" {{ 'checked' if record.funding_source == '補助' else '' }}> 補助</label>
+        <label style="margin:0;"><input type="radio" name="funding_source" value="自費" {{ 'checked' if record.funding_source == '自費' else '' }}> 自費</label>
+        <span style="color:#888; font-size:0.78rem; margin-left:0.3rem;">（未個別設定的碼別將使用此預設值）</span>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <button type="submit" class="btn">儲存</button>
+      <a href="{{ back }}" class="btn btn-secondary">取消</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function syncFunding(el, code, totalQty) {
+  var sub = document.querySelector('input[name="funding_' + code + '_補"]');
+  var self = document.querySelector('input[name="funding_' + code + '_自"]');
+  if (!sub || !self) return;
+  var sv = parseInt(sub.value) || 0;
+  var sev = parseInt(self.value) || 0;
+  if (el.name.endsWith('_補') && sv + sev !== totalQty) {
+    self.value = Math.max(0, totalQty - sv);
+  } else if (el.name.endsWith('_自') && sv + sev !== totalQty) {
+    sub.value = Math.max(0, totalQty - sev);
+  }
+}
+</script>
+{% endblock %}

@@ -70,6 +70,48 @@
 </div>
 {% endif %}
 
+<div id="calc-status" style="display:none; background:#fef9e7; color:#9a7d0a; padding:0.65rem 1rem; border-radius:4px; margin-bottom:1rem; font-weight:700;">
+  🔄 <span id="calc-status-msg">轉場計算中...</span>
+  <span style="font-weight:400; margin-left:0.5rem; font-size:0.85rem;">（約需 5~20 分鐘，完成後自動重新整理）</span>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var jobId = params.get('job_id');
+  if (jobId) {
+    var banner = document.getElementById('calc-status');
+    var msgEl = document.getElementById('calc-status-msg');
+    banner.style.display = 'block';
+    msgEl.textContent = '檢查計算狀態...';
+
+    function poll() {
+      fetch('/transport-salary/calculate-status/' + jobId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'running') {
+            msgEl.textContent = data.message || '計算中...';
+            setTimeout(poll, 5000);
+          } else if (data.status === 'done') {
+            msgEl.textContent = data.message || '計算完成！';
+            banner.style.background = '#d4efdf';
+            banner.style.color = '#1e8449';
+            setTimeout(function() { window.location.href = '/transport-salary?month={{ current_month.year }}-{{ "%02d" % current_month.month }}'; }, 2000);
+          } else if (data.status === 'error') {
+            msgEl.textContent = data.message || '計算失敗';
+            banner.style.background = '#fce4e4';
+            banner.style.color = '#c0392b';
+          }
+        })
+        .catch(function() {
+          setTimeout(poll, 5000);
+        });
+    }
+    poll();
+  }
+})();
+</script>
+
 {% if tab == "salary" %}
 
 {% if pending_aa06_cases %}
@@ -97,7 +139,11 @@
       <span style="background:#fef9e7; color:#9a7d0a; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.82rem;">尚無班表</span>
       {% endif %}
       {% if user and user.role.value in ["居督", "主管", "主任"] %}
-      <a href="#" onclick="document.getElementById('uploadForm').style.display='block'; return false;" style="font-size:0.85rem; margin-left:0.5rem;">上傳實際服務時數（更新系統班表）</a>
+      {% if has_import_data %}
+      <a href="#" onclick="document.getElementById('uploadForm').style.display='block'; return false;" style="font-size:0.82rem; color:#999; margin-left:0.5rem;">更新班表</a>
+      {% else %}
+      <a href="#" onclick="document.getElementById('uploadForm').style.display='block'; return false;" style="font-size:0.85rem; margin-left:0.5rem;">上傳班表</a>
+      {% endif %}
       {% endif %}
     </span>
   </div>
@@ -107,7 +153,11 @@
       <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
       <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
       <button type="submit" class="btn" style="font-size:0.85rem;">上傳並更新班表</button>
-      <span style="color:#888; font-size:0.82rem;">上傳時薪明細表 → 取代該月系統班表 → 再點「① 計算轉場」「② 試算薪資」</span>
+      {% if has_import_data %}
+      <span style="color:#1e8449; font-size:0.82rem;">班表已就緒，可直接點「① 計算轉場」「② 試算薪資」</span>
+      {% else %}
+      <span style="color:#888; font-size:0.82rem;">上傳時薪明細表 → 建立系統班表 → 再點「① 計算轉場」「② 試算薪資」</span>
+      {% endif %}
     </form>
   </div>
   {% endif %}
@@ -409,7 +459,7 @@ function toggleAaGroup(el) {
 <div id="aaDetailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center;" onclick="if(event.target===this)closeAaDetail()">
   <div style="background:#fff; border-radius:8px; padding:1.5rem; max-width:640px; width:90%; max-height:85vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:2px solid #2c7a7b; padding-bottom:0.5rem;">
-      <h3 style="margin:0; color:#2c7a7b;">AA 碼獎金明細</h3>
+      <h3 style="margin:0; color:#2c7a7b;">AA 碼獎金明細 <span style="font-weight:400; font-size:0.85rem;">（{{ aa_ref_month_display }}）</span></h3>
       <span onclick="closeAaDetail()" style="cursor:pointer; font-size:1.5rem; color:#999; line-height:1;">&times;</span>
     </div>
     <div id="aaDetailBody"></div>

@@ -2,6 +2,7 @@ import calendar
 import io
 import math
 import os
+import threading
 import uuid
 from collections import defaultdict
 from datetime import date, datetime
@@ -70,12 +71,22 @@ BRACKET_DB_COL = {
 router = APIRouter(prefix="/transport-salary")
 templates = Jinja2Templates(directory="app/templates")
 
+# In-memory background job tracking
+_jobs: dict[str, dict] = {}
 
-def _parse_month(value: str | None) -> date:
-    try:
-        return datetime.strptime(value, "%Y-%m").date().replace(day=1) if value else date.today().replace(day=1)
-    except ValueError:
-        return date.today().replace(day=1)
+
+def _parse_month(value: str | None, db: Session = None) -> date:
+    if value:
+        try:
+            return datetime.strptime(value, "%Y-%m").date().replace(day=1)
+        except ValueError:
+            pass
+    # 無指定月份時，選資料庫裡最新有資料的月份
+    if db:
+        options = _month_options(db)
+        if options:
+            return options[0]
+    return date.today().replace(day=1)
 
 
 def _month_display(d: date) -> str:
@@ -97,6 +108,14 @@ def _month_options(db: Session) -> list[date]:
     )
     for r in rows:
         months.add((int(r.y), int(r.m)))
+    
+    # 加入當月與次月（讓使用者可以提前開新月份）
+    today = date.today()
+    months.add((today.year, today.month))
+    if today.month == 12:
+        months.add((today.year + 1, 1))
+    else:
+        months.add((today.year, today.month + 1))
     
     return [date(y, m, 1) for y, m in sorted(months, reverse=True)]
 
@@ -261,7 +280,9 @@ def transport_salary_index(
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director, UserRole.accountant)),
 ):
-    current_month = _parse_month(month)
+    current_month = _parse_month(month, db)
+    # AA 明細預設顯示同月份（非薪資分頁時適用）
+    aa_ref_month_display = _month_display(current_month)
 
     # ── 久任獎金分頁 ──────────────────────────────────────────────────────
     if tab == "long_term_bonus":
@@ -345,6 +366,7 @@ def transport_salary_index(
                 "aa_detail_json": {},
                 "pending_aa06_cases": pending_aa06_cases,
                 "uploaded_types": uploaded_types,
+                "aa_ref_month_display": aa_ref_month_display,
             }
         )
 
@@ -380,6 +402,7 @@ def transport_salary_index(
                 "lt_item_id": None, "today": date.today(),
                 "aa_detail_json": {},
                 "uploaded_types": set(),
+                "aa_ref_month_display": aa_ref_month_display,
             }
         )
 
@@ -399,6 +422,7 @@ def transport_salary_index(
                 "lt_item_id": None, "today": date.today(),
                 "aa_detail_json": {},
                 "uploaded_types": set(),
+                "aa_ref_month_display": aa_ref_month_display,
             }
         )
 
@@ -438,9 +462,17 @@ def transport_salary_index(
         pay_by_cg.setdefault(p.caregiver_id, {})[p.salary_item_id] = p
 
     # ── AA 碼個案明細（給薪資分頁點選展開） ──
+    # 薪資頁 AA 獎金來自前一個月：6 月薪資顯示 5 月的 AA 資料
+    if current_month.month == 1:
+        aa_q_year = current_month.year - 1
+        aa_q_month = 12
+    else:
+        aa_q_year = current_month.year
+        aa_q_month = current_month.month - 1
+    aa_ref_month_display = f"{aa_q_year}年{aa_q_month}月"
     aa_records_for_salary = db.query(AaCodeRecord).filter(
-        AaCodeRecord.year == current_month.year,
-        AaCodeRecord.month == current_month.month,
+        AaCodeRecord.year == aa_q_year,
+        AaCodeRecord.month == aa_q_month,
     ).all()
     aa_case_detail: dict[str, list[dict]] = {}
     for rec in aa_records_for_salary:
@@ -521,12 +553,14 @@ def transport_salary_index(
                 "transfer_stats": transfer_stats,
                 "error": error,
                 "has_import_data": has_import,
+                "aa_ref_month_display": aa_ref_month_display,
                 "earnings_items": earnings_items,
                 "extra_earnings_items": extra_earnings_items,
                 "deductions_items": deductions_items,
                 "lt_item_id": lt_item_id,
                 "today": date.today(),
                 "aa_detail_json": aa_detail_json,
+                "aa_ref_month_display": aa_ref_month_display,
                 "pending_aa06_cases": pending_aa06_cases,
                 "uploaded_types": set(),
             }
@@ -725,23 +759,58 @@ def run_calculate_transfers(
 ):
     current_month = _parse_month(month)
     year, mon = current_month.year, current_month.month
-    try:
-        stats = calculate_all_transfers(year, mon, db)
-        msg = (
-            f"轉場計算完成：{stats['caregivers']} 位居服員，"
-            f"成功 {stats['ok']} 筆、快取 {stats['cached']} 筆、"
-            f"跳過 {stats['skipped']} 筆、失敗 {stats['failed']} 筆"
-        )
-        return RedirectResponse(
-            url=f"/transport-salary?month={month}&success={msg}", status_code=302
-        )
-    except Exception as e:
-        return RedirectResponse(
-            url=f"/transport-salary?month={month}&error=計算失敗：{str(e)[:200]}", status_code=302
-        )
+
+    # 檢查是否有正在執行的計算
+    for job in list(_jobs.values()):
+        if job.get("status") == "running":
+            return RedirectResponse(
+                url=f"/transport-salary?month={month}&error=已有計算正在執行中", status_code=302
+            )
+
+    job_id = str(uuid.uuid4())
+    _jobs[job_id] = {"status": "running", "message": "計算排程中...", "created_at": datetime.utcnow().isoformat()}
+
+    def _run(jid: str, y: int, m: int):
+        from app.database import SessionLocal
+        bg_db = SessionLocal()
+        try:
+            _jobs[jid]["message"] = "正在查詢 Google Maps API..."
+            stats = calculate_all_transfers(y, m, bg_db)
+            bg_db.commit()
+            msg = (
+                f"轉場計算完成：{stats['caregivers']} 位居服員，"
+                f"成功 {stats['ok']} 筆、快取 {stats['cached']} 筆、"
+                f"跳過 {stats['skipped']} 筆、失敗 {stats['failed']} 筆"
+            )
+            _jobs[jid].update({"status": "done", "stats": stats, "message": msg})
+        except Exception as e:
+            bg_db.rollback()
+            _jobs[jid].update({"status": "error", "message": f"計算失敗：{e}"})
+        finally:
+            bg_db.close()
+
+    t = threading.Thread(target=_run, args=(job_id, year, mon), daemon=True)
+    t.start()
+
+    return RedirectResponse(
+        url=f"/transport-salary?month={month}&job_id={job_id}",
+        status_code=302,
+    )
 
 
 # ── 執行薪資試算 ──────────────────────────────────────────────────────────
+
+@router.get("/calculate-status/{job_id}")
+def get_calculate_status(job_id: str):
+    job = _jobs.get(job_id)
+    if not job:
+        return {"status": "not_found"}
+    return {
+        "status": job["status"],
+        "message": job.get("message", ""),
+        "stats": job.get("stats"),
+    }
+
 
 @router.post("/calculate-salaries")
 def run_calculate_salaries(
@@ -946,7 +1015,7 @@ def salary_slip(
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.director, UserRole.accountant, UserRole.manager, UserRole.caregiver)),
 ):
-    current_month = _parse_month(month)
+    current_month = _parse_month(month, db)
     caregiver = db.query(User).filter(User.id == caregiver_id).first()
     if not caregiver:
         return RedirectResponse(url="/transport-salary", status_code=302)
@@ -1029,7 +1098,7 @@ def transport_salary_detail(
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director, UserRole.accountant)),
 ):
-    current_month = _parse_month(month)
+    current_month = _parse_month(month, db)
     caregiver = db.query(User).filter(User.id == caregiver_id).first()
     if not caregiver:
         return RedirectResponse(url="/transport-salary", status_code=302)

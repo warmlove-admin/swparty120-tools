@@ -342,5 +342,23 @@ def save_allocations(db: Session, allocations: list[dict], year: int, month: int
             )
             db.add(ms)
 
+    # ── 帶入次月薪資：AA 獎金比薪資晚一個月 ──
+    # 匯入 5 月 AA → 同時更新 6 月 MonthlySalary.aa_bonus
+    next_y = year if month < 12 else year + 1
+    next_m = month + 1 if month < 12 else 1
+    db.query(MonthlySalary).filter(
+        MonthlySalary.year == next_y,
+        MonthlySalary.month == next_m,
+    ).update({"aa_bonus": 0}, synchronize_session=False)
+    db.flush()
+    for (cg_id, _y, _m), total in cg_totals.items():
+        ms = db.query(MonthlySalary).filter(
+            MonthlySalary.caregiver_id == cg_id,
+            MonthlySalary.year == next_y,
+            MonthlySalary.month == next_m,
+        ).first()
+        if ms:
+            ms.aa_bonus += total
+
     db.commit()
     return {"total_cg": len(cg_totals), "total_records": len(allocations)}

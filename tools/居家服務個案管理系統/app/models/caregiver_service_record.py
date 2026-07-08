@@ -27,7 +27,8 @@ class CaregiverServiceRecord(Base):
     caregiver_name_raw = Column(String, nullable=False)
     service_codes = Column(String)
     formalization_status = Column(String, nullable=False, default="external_import")
-    funding_source = Column(String, nullable=False, default="補助")  # 補助 / 自費
+    funding_source = Column(String, nullable=False, default="補助")  # 補助 / 自費（預設值）
+    funding_detail = Column(String)  # JSON 格式：{"BA07": "補助", "BA20": "自費"}，null 則全部沿用 funding_source
     source_file = Column(String)
     note = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)

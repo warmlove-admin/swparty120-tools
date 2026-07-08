@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}匯入已執行班表{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px; margin:2rem auto;">
+  <h2>匯入已執行班表</h2>
+  <p style="color:#666; font-size:0.9rem;">從下載目錄 <code>C:\Users\USER\Downloads\已執行班表6月\</code> 讀取 Rpt_EmpScheduleCalendarMultiplex 檔案，匯入後取代該月份所有已匯入記錄。</p>
+  {% if request.query_params.success %}
+  <div style="background:#d5f5e3; padding:0.8rem; border-radius:6px; margin:1rem 0;">
+    ✅ {{ request.query_params.success }}
+  </div>
+  {% endif %}
+  {% if request.query_params.error %}
+  <div style="background:#fadbd8; padding:0.8rem; border-radius:6px; margin:1rem 0;">
+    ❌ {{ request.query_params.error }}
+  </div>
+  {% endif %}
+  <form method="post" action="/import-schedules/run">
+    <label>選擇月份</label>
+    <input type="month" name="month" value="{{ month }}" required>
+    <div style="margin-top:1rem;">
+      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">開始匯入</button>
+      <a href="/schedules?month={{ month }}" class="btn btn-secondary">取消</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
