@@ -5,6 +5,7 @@ AA01/AA02/AA08/AA09 → 不發給居服員
 多人共同服務 → 居服員均分那 50%
 AA05：BA16-only 的居服員不發給
 AA06：需對照勾稽條件 + 班表比對誰符合
+AA07：多人共班時 380 按月依服務天數比例拆分
 """
 from __future__ import annotations
 
@@ -34,6 +35,8 @@ AA06_CONDITION_BA = {
     3: {"BA12"},
     4: {"BA01", "BA02", "BA07"},
 }
+
+AA07_MONTHLY_AMOUNT = 380  # AA07 每月固定總額，多人共班按天數比例拆分
 
 
 def parse_aa_excel(filepath: str) -> list[dict]:
@@ -208,6 +211,10 @@ def import_aa_file(
     stats = {"total": len(rows), "skipped": 0, "allocated": 0, "errors": []}
     allocations = []  # list of dict for AaCodeRecord
 
+    # AA07 逐月收集器：{(case_id, y, m): {svc_date: {cg_name, ...}}}
+    aa07_collect: dict[tuple, dict[date, set[str]]] = defaultdict(lambda: defaultdict(set))
+    aa07_cg_name_to_id: dict[str, str] = {}  # 快取居服員名稱→id
+
     for row in rows:
         aa_code = row["aa_code"]
         if aa_code in EXCLUDED_AA_CODES:
@@ -269,6 +276,17 @@ def import_aa_file(
                     continue
                 personnel = _match_aa06_condition(db, case.id, svc_date, personnel)
 
+            # AA07：收集按月資料，後續依服務天數比例拆分
+            if aa_code == "AA07":
+                key = (case.id, year, month)
+                for name in personnel:
+                    aa07_collect[key][svc_date].add(name)
+                    if name not in aa07_cg_name_to_id:
+                        cg = _get_caregiver_by_name(db, name)
+                        if cg:
+                            aa07_cg_name_to_id[name] = cg.id
+                continue  # 暫不加入 allocation，主迴圈結束後統一處理
+
             # 均分
             n = len(personnel)
             if n == 0:
@@ -294,6 +312,60 @@ def import_aa_file(
                     "source_file": f"[{source_type}] {source_label}" if source_type else source_label,
                 })
                 stats["allocated"] += 1
+
+    # ── AA07 後處理：按月依服務天數比例拆分 380 ──
+    for (case_id, y, m), date_data in aa07_collect.items():
+        # 從班表取得實際服務天數（優先）或回退到 Excel 日期
+        all_records = db.query(CaregiverServiceRecord).filter(
+            CaregiverServiceRecord.case_id == case_id,
+            CaregiverServiceRecord.service_date >= date(y, m, 1),
+            CaregiverServiceRecord.service_date < date(y + (m // 12), (m % 12) + 1, 1),
+        ).all()
+
+        cg_day_count: dict[str, int] = defaultdict(int)
+        if all_records:
+            unique_dates: set[date] = set()
+            cg_dates: dict[str, set[date]] = defaultdict(set)
+            for r in all_records:
+                cg_dates[r.caregiver_id].add(r.service_date)
+                unique_dates.add(r.service_date)
+            total_d = len(unique_dates)
+            for cg_id, dates in cg_dates.items():
+                cg_day_count[cg_id] = len(dates)
+        else:
+            # 回退：用 Excel 的日期（每個日期所有居服員都算一天）
+            unique_excel_dates: set[date] = set()
+            cg_excel_dates: dict[str, set[date]] = defaultdict(set)
+            for svc_date, names in date_data.items():
+                unique_excel_dates.add(svc_date)
+                for name in names:
+                    cg_id = aa07_cg_name_to_id.get(name)
+                    if cg_id:
+                        cg_excel_dates[cg_id].add(svc_date)
+            total_d = len(unique_excel_dates)
+            for cg_id, dates in cg_excel_dates.items():
+                cg_day_count[cg_id] = len(dates)
+
+        if total_d == 0 or not cg_day_count:
+            continue
+
+        remaining = AA07_MONTHLY_AMOUNT
+        sorted_cgs = sorted(cg_day_count.items(), key=lambda x: -x[1])
+        for i, (cg_id, days) in enumerate(sorted_cgs):
+            amount = remaining if i == len(sorted_cgs) - 1 else AA07_MONTHLY_AMOUNT * days // total_d
+            remaining -= amount
+            allocations.append({
+                "caregiver_id": cg_id,
+                "case_id": case_id,
+                "aa_code": "AA07",
+                "service_date": date(y, m, 1),
+                "unit_price": AA07_MONTHLY_AMOUNT,
+                "caregiver_share": amount,
+                "year": y,
+                "month": m,
+                "source_file": f"[{source_type}] {source_label}" if source_type else source_label,
+            })
+            stats["allocated"] += 1
 
     return {"rows": rows, "allocations": allocations, "stats": stats}
 
