@@ -277,10 +277,12 @@ def import_aa_file(
                 personnel = _match_aa06_condition(db, case.id, svc_date, personnel)
 
             # AA07：收集按月資料，後續依服務天數比例拆分
+            # 注意：key 用 svc_date 的「服務月份」而非 target_month（處理月份），
+            # 這樣查班表時才能找到當月實際服務紀錄。
             if aa_code == "AA07":
-                key = (case.id, year, month)
+                svc_key = (case.id, svc_date.year, svc_date.month)
                 for name in personnel:
-                    aa07_collect[key][svc_date].add(name)
+                    aa07_collect[svc_key][svc_date].add(name)
                     if name not in aa07_cg_name_to_id:
                         cg = _get_caregiver_by_name(db, name)
                         if cg:
@@ -314,12 +316,12 @@ def import_aa_file(
                 stats["allocated"] += 1
 
     # ── AA07 後處理：按月依服務天數比例拆分 380 ──
-    for (case_id, y, m), date_data in aa07_collect.items():
+    for (case_id, svc_y, svc_m), date_data in aa07_collect.items():
         # 從班表取得實際服務天數（優先）或回退到 Excel 日期
         all_records = db.query(CaregiverServiceRecord).filter(
             CaregiverServiceRecord.case_id == case_id,
-            CaregiverServiceRecord.service_date >= date(y, m, 1),
-            CaregiverServiceRecord.service_date < date(y + (m // 12), (m % 12) + 1, 1),
+            CaregiverServiceRecord.service_date >= date(svc_y, svc_m, 1),
+            CaregiverServiceRecord.service_date < date(svc_y + (svc_m // 12), (svc_m % 12) + 1, 1),
         ).all()
 
         cg_day_count: dict[str, int] = defaultdict(int)
@@ -329,6 +331,13 @@ def import_aa_file(
             for r in all_records:
                 cg_dates[r.caregiver_id].add(r.service_date)
                 unique_dates.add(r.service_date)
+            # 補充：Excel 列出的居服員若不在班表內仍加入（班表可能不完整）
+            for svc_date_excel, names in date_data.items():
+                for name in names:
+                    cg_id = aa07_cg_name_to_id.get(name)
+                    if cg_id and cg_id not in cg_dates:
+                        cg_dates[cg_id].add(svc_date_excel)
+                        unique_dates.add(svc_date_excel)
             total_d = len(unique_dates)
             for cg_id, dates in cg_dates.items():
                 cg_day_count[cg_id] = len(dates)
@@ -349,6 +358,10 @@ def import_aa_file(
         if total_d == 0 or not cg_day_count:
             continue
 
+        # 儲存時用 target_month（處理月份），非服務月份
+        store_y = target_year if target_year is not None else svc_y
+        store_m = target_month if target_month is not None else svc_m
+
         remaining = AA07_MONTHLY_AMOUNT
         sorted_cgs = sorted(cg_day_count.items(), key=lambda x: -x[1])
         for i, (cg_id, days) in enumerate(sorted_cgs):
@@ -358,11 +371,11 @@ def import_aa_file(
                 "caregiver_id": cg_id,
                 "case_id": case_id,
                 "aa_code": "AA07",
-                "service_date": date(y, m, 1),
+                "service_date": date(svc_y, svc_m, 1),
                 "unit_price": AA07_MONTHLY_AMOUNT,
                 "caregiver_share": amount,
-                "year": y,
-                "month": m,
+                "year": store_y,
+                "month": store_m,
                 "source_file": f"[{source_type}] {source_label}" if source_type else source_label,
             })
             stats["allocated"] += 1
