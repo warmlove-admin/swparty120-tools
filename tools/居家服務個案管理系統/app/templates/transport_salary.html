@@ -318,29 +318,31 @@ function filterCaregiver() {
 
   <div style="margin-top:0.8rem; padding:0.8rem; background:#f0f8ff; border-radius:6px;">
     <div style="font-weight:700; margin-bottom:0.5rem;">① 匯入報表</div>
-    <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data">
-      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-        <label style="margin:0; white-space:nowrap;">上傳 AA 碼清冊：</label>
-        <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
-        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入報表</button>
-      </div>
-      <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
-        <label style="cursor:pointer; font-size:0.88rem;">
-          <input type="radio" name="file_type" value="居家服務+喘息" checked style="margin-right:0.3rem;">
+    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+      <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data" style="flex:1; min-width:260px; padding:0.6rem; border:1px solid #d0e0f0; border-radius:4px; background:#f8fbff;">
+        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+        <input type="hidden" name="file_type" value="居家服務+喘息">
+        <div style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem;">
           居家服務+喘息
           {% if "居家服務+喘息" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
-        </label>
-        <label style="cursor:pointer; font-size:0.88rem;">
-          <input type="radio" name="file_type" value="居家短照" style="margin-right:0.3rem;">
+        </div>
+        <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem; width:100%; box-sizing:border-box; margin-bottom:0.3rem;">
+        <button type="submit" class="btn" style="font-size:0.85rem;" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">上傳並匯入</button>
+      </form>
+      <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data" style="flex:1; min-width:260px; padding:0.6rem; border:1px solid #f0e0c0; border-radius:4px; background:#fffcf5;">
+        <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+        <input type="hidden" name="file_type" value="居家短照">
+        <div style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem;">
           居家短照
           {% if "居家短照" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
-        </label>
-      </div>
-      <div style="margin-top:0.4rem; font-size:0.82rem; color:#888;">
-        只讀取報表的個案、碼別、日期、數量、金額（不看人員欄），重新上傳會取代同類型舊資料。
-      </div>
-    </form>
+        </div>
+        <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem; width:100%; box-sizing:border-box; margin-bottom:0.3rem;">
+        <button type="submit" class="btn" style="font-size:0.85rem;" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">上傳並匯入</button>
+      </form>
+    </div>
+    <div style="margin-top:0.4rem; font-size:0.82rem; color:#888;">
+      各自上傳，互不影響。重新上傳會取代同類型的舊資料。
+    </div>
   </div>
 
   <div style="margin-top:0.8rem; padding:0.8rem; background:#fff8e1; border-radius:6px;">

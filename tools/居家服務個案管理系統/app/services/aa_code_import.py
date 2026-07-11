@@ -39,22 +39,26 @@ AA06_CONDITION_BA = {
 AA07_MONTHLY_AMOUNT = 380  # AA07 每月固定總額，多人共班按天數比例拆分
 
 
+def _sg(row: tuple, idx: int, default=""):
+    """safe get from tuple row, return default if index out of range"""
+    return row[idx] if len(row) > idx else default
+
 def parse_aa_excel(filepath: str) -> list[dict]:
     """解析 AA 碼清冊 Excel，回傳 list of dict"""
     wb = openpyxl.load_workbook(filepath)
     ws = wb.active
     rows = []
     for row in ws.iter_rows(min_row=5, values_only=True):
-        aa_code = row[1]
+        aa_code = _sg(row, 1)
         if not aa_code or not str(aa_code).strip():
             continue
-        case_idno = str(row[5] or "").strip()
-        case_name = str(row[6] or "").strip()
-        price_raw = str(row[7] or "0").strip()
-        qty = row[8] or 0
-        service_dates_raw = str(row[10] or "").strip()
-        service_personnel = str(row[16] or "").strip()
-        remark = str(row[17] or "").strip() if len(row) > 17 else ""
+        case_idno = str(_sg(row, 5) or "").strip()
+        case_name = str(_sg(row, 6) or "").strip()
+        price_raw = str(_sg(row, 7) or "0").strip()
+        qty = _sg(row, 8, 0) or 0
+        service_dates_raw = str(_sg(row, 10) or "").strip()
+        service_personnel = str(_sg(row, 16) or "").strip()
+        remark = str(_sg(row, 17) or "").strip()
 
         # 解析價格 A/B → 取 A（機構價格）
         price_a = _parse_price_a(price_raw)
@@ -371,11 +375,10 @@ def import_aa_file(
         store_y = target_year if target_year is not None else svc_y
         store_m = target_month if target_month is not None else svc_m
 
-        remaining = AA07_MONTHLY_AMOUNT
+        import math
         sorted_cgs = sorted(cg_day_count.items(), key=lambda x: -x[1])
-        for i, (cg_id, days) in enumerate(sorted_cgs):
-            amount = remaining if i == len(sorted_cgs) - 1 else AA07_MONTHLY_AMOUNT * days // total_d
-            remaining -= amount
+        for cg_id, days in sorted_cgs:
+            amount = math.ceil(AA07_MONTHLY_AMOUNT * days / total_d)
             allocations.append({
                 "caregiver_id": cg_id,
                 "case_id": case_id,
@@ -432,6 +435,8 @@ def import_aa_raw(
             stats["skipped"] += 1
             continue
 
+        personnel_str = ",".join(row["personnel"]) if row["personnel"] else ""
+
         for svc_date in row["dates"]:
             year = target_year if target_year is not None else svc_date.year
             month = target_month if target_month is not None else svc_date.month
@@ -444,6 +449,7 @@ def import_aa_raw(
                 unit_price=row["price_a"],
                 source_type=source_type,
                 source_file=source_label,
+                personnel=personnel_str,
                 year=year,
                 month=month,
             ))
@@ -497,6 +503,21 @@ def _get_serving_caregiver_ids(db: Session, case_id: str, svc_date: date) -> lis
     return list(set(r.caregiver_id for r in records))
 
 
+def _get_report_caregiver_ids(db: Session, rec: AaImportRawRecord) -> list[str]:
+    """從原始記錄的人員欄位解析居服員 ID 列表"""
+    if not rec.personnel or not rec.personnel.strip():
+        return []
+    ids = []
+    for name in rec.personnel.split(","):
+        name = name.strip()
+        if not name:
+            continue
+        cg = _get_caregiver_by_name(db, name)
+        if cg:
+            ids.append(cg.id)
+    return ids
+
+
 def calculate_aa_allocations(db: Session, year: int, month: int, target_year: int | None = None, target_month: int | None = None) -> dict:
     """從原始匯入資料重新計算 AA 獎金分配
 
@@ -538,7 +559,7 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
 
         cg_share_total = price_a // 2
 
-        # 取得當日實際服務人員
+        # 查班表確認該日實際服務人員
         caregiver_ids = _get_serving_caregiver_ids(db, rec.case_id, svc_date)
         if not caregiver_ids:
             stats["unmatched_dates"].append(f"{rec.case.name or '?'} {aa_code} {svc_date}")
@@ -563,7 +584,6 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
         if aa_code == "AA06":
             qual = _match_aa06_by_id(db, rec.case_id, svc_date, caregiver_ids)
             if not qual:
-                # 可能無條件或無人符合
                 conditions = _get_aa06_conditions(db, rec.case_id)
                 if not conditions:
                     pending_key = (rec.case_id, rec.case.name or "")
@@ -573,8 +593,8 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
                         if cg:
                             cg_names.append(cg.display_name)
                     stats["pending_aa06"].setdefault(pending_key, set()).update(cg_names)
-                    # 寫入 caregiver_share=0 以便頁面能找到
                     for cg_id in caregiver_ids:
+                        src_file = f"[{rec.source_type}] {rec.source_file}" if rec.source_type else (rec.source_file or "")
                         allocations.append({
                             "caregiver_id": cg_id,
                             "case_id": rec.case_id,
@@ -584,7 +604,7 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
                             "caregiver_share": 0,
                             "year": svc_year,
                             "month": svc_month,
-                            "source_file": rec.source_file or "",
+                            "source_file": src_file,
                         })
                 stats["skipped"] += 1
                 continue
@@ -607,6 +627,7 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
 
         for i, cg_id in enumerate(caregiver_ids):
             amount = per_person + (1 if i < remainder else 0)
+            src_file = f"[{rec.source_type}] {rec.source_file}" if rec.source_type else (rec.source_file or "")
             allocations.append({
                 "caregiver_id": cg_id,
                 "case_id": rec.case_id,
@@ -616,7 +637,7 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
                 "caregiver_share": amount,
                 "year": svc_year,
                 "month": svc_month,
-                "source_file": rec.source_file or "",
+                "source_file": src_file,
             })
             stats["allocated"] += 1
 
@@ -635,9 +656,10 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
             cg_dates[r.caregiver_id].add(r.service_date)
             unique_dates.add(r.service_date)
 
-        if not cg_dates:
-            for svc_date_excel, cg_ids in date_data.items():
-                for cg_id in cg_ids:
+        # 補充：報表列出的居服員若不在班表內仍加入（同舊邏輯）
+        for svc_date_excel, cg_ids in date_data.items():
+            for cg_id in cg_ids:
+                if cg_id not in cg_dates:
                     cg_dates[cg_id].add(svc_date_excel)
                     unique_dates.add(svc_date_excel)
 
@@ -651,11 +673,10 @@ def calculate_aa_allocations(db: Session, year: int, month: int, target_year: in
         store_y = target_year if target_year is not None else svc_y
         store_m = target_month if target_month is not None else svc_m
 
-        remaining = AA07_MONTHLY_AMOUNT
+        import math
         sorted_cgs = sorted(cg_day_count.items(), key=lambda x: -x[1])
-        for i, (cg_id, days) in enumerate(sorted_cgs):
-            amount = remaining if i == len(sorted_cgs) - 1 else AA07_MONTHLY_AMOUNT * days // total_d
-            remaining -= amount
+        for cg_id, days in sorted_cgs:
+            amount = math.ceil(AA07_MONTHLY_AMOUNT * days / total_d)
             source_types = set()
             for rec in raw_records:
                 if rec.case_id == case_id and rec.aa_code == "AA07" and rec.service_date.month == svc_m:

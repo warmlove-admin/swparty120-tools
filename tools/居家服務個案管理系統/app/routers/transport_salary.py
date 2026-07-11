@@ -1296,8 +1296,21 @@ def import_aa_codes(
             )
 
         try:
+            # 自動偵測目標月份：以檔案中最多的服務日期月份為準
+            import collections
+            from app.services.aa_code_import import parse_aa_excel
+            preview = parse_aa_excel(temp_path)
+            date_months = collections.Counter()
+            for row in preview:
+                for d in row.get("dates", []):
+                    date_months[(d.year, d.month)] += 1
+            if date_months:
+                (auto_year, auto_month), _ = date_months.most_common(1)[0]
+            else:
+                auto_year, auto_month = current_month.year, current_month.month
             stats = import_aa_raw(db, temp_path, source_label=file.filename, source_type=file_type,
-                                  target_year=current_month.year, target_month=current_month.month)
+                                  target_year=auto_year, target_month=auto_month)
+            db.commit()
         except Exception as e:
             err_detail = f"{type(e).__name__}: {e}"
             try: os.remove(temp_path)

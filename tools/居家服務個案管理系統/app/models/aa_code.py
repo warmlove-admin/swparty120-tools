@@ -32,7 +32,7 @@ class AaCodeRecord(Base):
 
 
 class AaImportRawRecord(Base):
-    """AA碼原始匯入記錄：只存清冊原始資料（個案、碼別、日期、數量、金額），不含人員分配"""
+    """AA碼原始匯入記錄：存清冊原始資料（個案、碼別、日期、數量、金額、人員）"""
     __tablename__ = "aa_import_raw_records"
 
     id = Column(String, primary_key=True, default=gen_uuid)
@@ -43,6 +43,7 @@ class AaImportRawRecord(Base):
     unit_price = Column(Integer, default=0)
     source_type = Column(String(20))
     source_file = Column(String)
+    personnel = Column(String)  # 逗號分隔的居服員名稱，取自報表人員欄
     year = Column(Integer, nullable=False)
     month = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

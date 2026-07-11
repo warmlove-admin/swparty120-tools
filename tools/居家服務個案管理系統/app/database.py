@@ -129,6 +129,10 @@ def apply_compatible_schema_updates():
             for col in ("is_dialysis", "dialysis_hospital_address", "dialysis_direction"):
                 if col not in columns:
                     connection.execute(text(f"ALTER TABLE cases ADD COLUMN {col} VARCHAR"))
+        if "aa_import_raw_records" in inspector.get_table_names():
+            columns = {c["name"] for c in inspector.get_columns("aa_import_raw_records")}
+            if "personnel" not in columns:
+                connection.execute(text("ALTER TABLE aa_import_raw_records ADD COLUMN personnel VARCHAR"))
         if "import_salary_records" not in inspector.get_table_names():
             from app.models.import_salary_record import ImportSalaryRecord
             ImportSalaryRecord.__table__.create(connection)
