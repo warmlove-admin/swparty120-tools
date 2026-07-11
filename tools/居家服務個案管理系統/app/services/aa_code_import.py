@@ -239,16 +239,25 @@ def import_aa_file(
             year = target_year if target_year is not None else svc_date.year
             month = target_month if target_month is not None else svc_date.month
 
-            # AA05：排除 BA16-only 的居服員
+            # AA05：排除 BA16-only + 依班表核對當日實際服務人員
             if aa_code == "AA05":
                 qualified = []
                 for name in personnel:
                     cg = _get_caregiver_by_name(db, name)
-                    if cg and _caregiver_ba16_only_on_date(db, cg.id, case.id, svc_date):
-                        continue  # BA16-only 不發給
+                    if not cg:
+                        continue
+                    if _caregiver_ba16_only_on_date(db, cg.id, case.id, svc_date):
+                        continue
+                    has_service = db.query(CaregiverServiceRecord).filter(
+                        CaregiverServiceRecord.caregiver_id == cg.id,
+                        CaregiverServiceRecord.case_id == case.id,
+                        CaregiverServiceRecord.service_date == svc_date,
+                    ).first() is not None
+                    if not has_service:
+                        continue
                     qualified.append(name)
                 if not qualified:
-                    continue  # 所有人都 BA16-only
+                    continue
                 personnel = qualified
 
             # AA06：條件過濾
