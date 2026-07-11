@@ -351,12 +351,17 @@ def transport_salary_index(
             for r in records:
                 by_code_global[r.aa_code]["count"] += 1
                 by_code_global[r.aa_code]["total"] += r.caregiver_share
+            # 依來源類型分組（跨個案彙總，給總表欄位用）
+            by_source_global: dict[str, int] = defaultdict(int)
+            for r in records:
+                by_source_global[_aa_source_type(r)] += r.caregiver_share
             aa_results.append({
                 "caregiver": cg,
                 "total": total,
                 "records": records,
                 "by_code": dict(by_code_global),
                 "by_case": by_case,
+                "by_source_global": dict(by_source_global),
             })
         aa_results.sort(key=lambda x: x["caregiver"].display_name if x["caregiver"] else "")
         # 找出當月有 AA06 但尚未設定條件的個案
@@ -514,14 +519,19 @@ def transport_salary_index(
         for case_id, group in case_groups.items():
             case = group[0].case
             by_code = defaultdict(lambda: {"count": 0, "total": 0})
+            by_source_codes: dict[str, dict] = defaultdict(lambda: defaultdict(lambda: {"count": 0, "total": 0}))
             for r in group:
                 by_code[r.aa_code]["count"] += 1
                 by_code[r.aa_code]["total"] += r.caregiver_share
+                src = _aa_source_type(r)
+                by_source_codes[src][r.aa_code]["count"] += 1
+                by_source_codes[src][r.aa_code]["total"] += r.caregiver_share
             total = sum(r.caregiver_share for r in group)
             entries.append({
                 "case_name": case.name if case else "（已刪除）",
                 "total": total,
                 "codes": [{"code": k, "count": v["count"], "total": v["total"]} for k, v in by_code.items()],
+                "by_source": {k: [{"code": c, "count": v[c]["count"], "total": v[c]["total"]} for c in v] for k, v in by_source_codes.items()},
             })
         entries.sort(key=lambda x: x["case_name"])
         aa_detail_json[cg_id] = entries

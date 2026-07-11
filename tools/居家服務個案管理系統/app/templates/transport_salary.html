@@ -364,7 +364,7 @@ function filterCaregiver() {
 {% endif %}
 
 {% if aa_results %}
-<div class="card">
+<div class="card" style="overflow-x:auto;">
   <style>
     .aa-cg-header { cursor:pointer; user-select:none; }
     .aa-cg-header:hover { background:#f5f7fa; }
@@ -373,48 +373,67 @@ function filterCaregiver() {
     .aa-case-card table { width:100%; border-collapse:collapse; font-size:0.85rem; }
     .aa-case-card td, .aa-case-card th { padding:0.2rem 0.75rem; }
   </style>
+  <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+    <thead>
+      <tr style="background:#f0f4f8; border-bottom:2px solid #d0d8e0;">
+        <th style="text-align:left; padding:0.5rem 0.75rem; width:30%;">姓名</th>
+        <th style="text-align:right; padding:0.5rem 0.75rem;">居家服務+喘息</th>
+        <th style="text-align:right; padding:0.5rem 0.75rem;">居家短照</th>
+        <th style="text-align:right; padding:0.5rem 0.75rem; border-left:2px solid #d0d8e0;">總金額</th>
+      </tr>
+    </thead>
+    <tbody>
   {% for item in aa_results %}
-  <div style="margin-bottom:0.5rem;">
-    <div class="aa-cg-header" onclick="toggleAaGroup(this)" style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.6rem; border:1px solid #ddd; border-radius:6px;">
-      <span><span class="arrow-icon" style="color:#2c7a7b;">▶</span> <strong>{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong></span>
-      <span style="font-weight:900; color:#1e8449;">{{ item.total | int }} 元</span>
-    </div>
-    <div class="aa-cases-body" style="display:none; margin-top:0.3rem;">
-      {% for case_item in item.by_case %}
-      <div class="aa-case-card">
-        <div class="case-label">{{ case_item.case.name if case_item.case else "（已刪除）" }}</div>
-        <table>
-          <tbody>
-            {% for source_type, codes in case_item.by_source.items() %}
-            <tr style="border-top:1px solid #e0e0e0; background:#f8f9fa;">
-              <td colspan="3" style="font-size:0.78rem; color:#555; padding:0.15rem 0.75rem; font-weight:600;">▸ {{ source_type }}</td>
-            </tr>
-            {% for code, info in codes.items() %}
-            <tr style="border-top:1px solid #f0f0f0;">
-              <td style="font-weight:600; width:1%; white-space:nowrap;">{{ code }}</td>
-              <td style="color:#888;">×{{ info.count }}</td>
-              <td style="text-align:right; font-weight:800; color:#1e8449;">{{ info.total | int }} 元</td>
-            </tr>
+      <tr class="aa-cg-header" onclick="toggleAaGroup(this)">
+        <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8;">
+          <span class="arrow-icon" style="color:#2c7a7b; font-size:0.75rem;">▶</span>
+          <strong style="margin-left:0.3rem;">{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong>
+        </td>
+        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; color:#1e8449; font-weight:700;">{{ item.by_source_global.get("居家服務+喘息", 0) | int }}</td>
+        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; color:#1e8449; font-weight:700;">{{ item.by_source_global.get("居家短照", 0) | int }}</td>
+        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; border-left:2px solid #d0d8e0; color:#1e8449; font-weight:900;">{{ item.total | int }}</td>
+      </tr>
+      <tr style="display:none;">
+        <td colspan="4" style="padding:0 0.75rem 0.5rem 1.5rem; background:#fafbfc;">
+          <div style="margin-top:0.3rem;">
+            {% for case_item in item.by_case %}
+            <div class="aa-case-card">
+              <div class="case-label">{{ case_item.case.name if case_item.case else "（已刪除）" }}</div>
+              <table>
+                <tbody>
+                  {% for source_type, codes in case_item.by_source.items() %}
+                  <tr style="border-top:1px solid #e0e0e0; background:#f8f9fa;">
+                    <td colspan="3" style="font-size:0.78rem; color:#555; padding:0.15rem 0.75rem; font-weight:600;">▸ {{ source_type }}</td>
+                  </tr>
+                  {% for code, info in codes.items() %}
+                  <tr style="border-top:1px solid #f0f0f0;">
+                    <td style="font-weight:600; width:1%; white-space:nowrap;">{{ code }}</td>
+                    <td style="color:#888;">×{{ info.count }}</td>
+                    <td style="text-align:right; font-weight:800; color:#1e8449;">{{ info.total | int }} 元</td>
+                  </tr>
+                  {% endfor %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
             {% endfor %}
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
+          </div>
+        </td>
+      </tr>
   {% endfor %}
+    </tbody>
+  </table>
 </div>
 <script>
 function toggleAaGroup(el) {
-  var body = el.nextElementSibling;
+  var detailRow = el.nextElementSibling;
   var arrow = el.querySelector('.arrow-icon');
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    arrow.textContent = '▼';
-  } else {
-    body.style.display = 'none';
-    arrow.textContent = '▶';
+  if (detailRow && detailRow.style.display === 'none') {
+    detailRow.style.display = 'table-row';
+    if (arrow) arrow.textContent = '▼';
+  } else if (detailRow) {
+    detailRow.style.display = 'none';
+    if (arrow) arrow.textContent = '▶';
   }
 }
 </script>
@@ -493,14 +512,33 @@ function showAaDetail(cgId) {
     html += '<div style="margin-bottom:0.6rem; border:1px solid #e0e0e0; border-radius:6px; overflow:hidden;">';
     html += '<div style="background:#f5f7fa; padding:0.4rem 0.75rem; font-weight:700; font-size:0.95rem; border-bottom:1px solid #e0e0e0;">' + ent.case_name + '</div>';
     html += '<table style="width:100%; border-collapse:collapse; font-size:0.88rem;">';
-    html += '<thead><tr style="background:#fafafa;"><th style="text-align:left; padding:0.3rem 0.75rem; width:1%;">碼別</th><th style="text-align:right; padding:0.3rem 0.75rem;">次數</th><th style="text-align:right; padding:0.3rem 0.75rem;">金額</th></tr></thead><tbody>';
-    for (var c = 0; c < ent.codes.length; c++) {
-      var code = ent.codes[c];
-      html += '<tr style="border-top:1px solid #f0f0f0;">';
-      html += '<td style="padding:0.3rem 0.75rem; font-weight:600;">' + code.code + '</td>';
-      html += '<td style="text-align:right; padding:0.3rem 0.75rem;">×' + code.count + '</td>';
-      html += '<td style="text-align:right; padding:0.3rem 0.75rem; font-weight:800; color:#1e8449;">' + code.total + ' 元</td>';
-      html += '</tr>';
+    html += '<thead><tr style="background:#fafafa;"><th style="text-align:left; padding:0.3rem 0.75rem; width:1%;">碼別</th><th style="text-align:right; padding:0.3rem 0.75rem;">次數</th><th style="text-align:right; padding:0.3rem 0.75rem;">金額</th><th style="text-align:left; padding:0.3rem 0.75rem;">來源</th></tr></thead><tbody>';
+    if (ent.by_source) {
+      for (var src in ent.by_source) {
+        if (Object.keys(ent.by_source).length > 1) {
+          html += '<tr style="background:#f8f9fa;"><td colspan="4" style="font-size:0.78rem; color:#555; padding:0.15rem 0.75rem; font-weight:600;">▸ ' + src + '</td></tr>';
+        }
+        var codes = ent.by_source[src];
+        for (var c = 0; c < codes.length; c++) {
+          var code = codes[c];
+          html += '<tr style="border-top:1px solid #f0f0f0;">';
+          html += '<td style="padding:0.3rem 0.75rem; font-weight:600;">' + code.code + '</td>';
+          html += '<td style="text-align:right; padding:0.3rem 0.75rem;">×' + code.count + '</td>';
+          html += '<td style="text-align:right; padding:0.3rem 0.75rem; font-weight:800; color:#1e8449;">' + code.total + ' 元</td>';
+          html += '<td style="padding:0.3rem 0.75rem; font-size:0.8rem; color:#888;">' + src + '</td>';
+          html += '</tr>';
+        }
+      }
+    } else {
+      for (var c = 0; c < ent.codes.length; c++) {
+        var code = ent.codes[c];
+        html += '<tr style="border-top:1px solid #f0f0f0;">';
+        html += '<td style="padding:0.3rem 0.75rem; font-weight:600;">' + code.code + '</td>';
+        html += '<td style="text-align:right; padding:0.3rem 0.75rem;">×' + code.count + '</td>';
+        html += '<td style="text-align:right; padding:0.3rem 0.75rem; font-weight:800; color:#1e8449;">' + code.total + ' 元</td>';
+        html += '<td style="padding:0.3rem 0.75rem;"></td>';
+        html += '</tr>';
+      }
     }
     html += '</tbody></table></div>';
   }
