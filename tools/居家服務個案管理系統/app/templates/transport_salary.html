@@ -384,37 +384,41 @@ function filterCaregiver() {
     </thead>
     <tbody>
   {% for item in aa_results %}
-      <tr class="aa-cg-header" onclick="toggleAaGroup(this)">
+      <tr class="aa-cg-header">
         <td style="padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8;">
-          <span class="arrow-icon" style="color:#2c7a7b; font-size:0.75rem;">▶</span>
-          <strong style="margin-left:0.3rem;">{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong>
+          <span class="arrow-icon" style="color:#2c7a7b; font-size:0.75rem; cursor:pointer;" onclick="toggleAaDetail(this, null)">▶</span>
+          <strong style="margin-left:0.3rem; cursor:pointer;" onclick="toggleAaDetail(this, null)">{{ item.caregiver.display_name if item.caregiver else "（未知）" }}</strong>
         </td>
-        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; color:#1e8449; font-weight:700;">{{ item.by_source_global.get("居家服務+喘息", 0) | int }}</td>
-        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; color:#1e8449; font-weight:700;">{{ item.by_source_global.get("居家短照", 0) | int }}</td>
-        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; border-left:2px solid #d0d8e0; color:#1e8449; font-weight:900;">{{ item.total | int }}</td>
+        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; color:#1e8449; font-weight:700; cursor:pointer;" onclick="toggleAaDetail(this, '居家服務+喘息')">{{ item.by_source_global.get("居家服務+喘息", 0) | int }}</td>
+        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; color:#1e8449; font-weight:700; cursor:pointer;" onclick="toggleAaDetail(this, '居家短照')">{{ item.by_source_global.get("居家短照", 0) | int }}</td>
+        <td style="text-align:right; padding:0.5rem 0.75rem; border-bottom:1px solid #e8e8e8; border-left:2px solid #d0d8e0; color:#1e8449; font-weight:900; cursor:pointer;" onclick="toggleAaDetail(this, '全部')">{{ item.total | int }}</td>
       </tr>
-      <tr style="display:none;">
+      <tr class="aa-detail-row" style="display:none;">
         <td colspan="4" style="padding:0 0.75rem 0.5rem 1.5rem; background:#fafbfc;">
           <div style="margin-top:0.3rem;">
             {% for case_item in item.by_case %}
             <div class="aa-case-card">
               <div class="case-label">{{ case_item.case.name if case_item.case else "（已刪除）" }}</div>
-              <table>
-                <tbody>
-                  {% for source_type, codes in case_item.by_source.items() %}
-                  <tr style="border-top:1px solid #e0e0e0; background:#f8f9fa;">
-                    <td colspan="3" style="font-size:0.78rem; color:#555; padding:0.15rem 0.75rem; font-weight:600;">▸ {{ source_type }}</td>
-                  </tr>
-                  {% for code, info in codes.items() %}
-                  <tr style="border-top:1px solid #f0f0f0;">
-                    <td style="font-weight:600; width:1%; white-space:nowrap;">{{ code }}</td>
-                    <td style="color:#888;">×{{ info.count }}</td>
-                    <td style="text-align:right; font-weight:800; color:#1e8449;">{{ info.total | int }} 元</td>
-                  </tr>
-                  {% endfor %}
-                  {% endfor %}
-                </tbody>
-              </table>
+              <div class="aa-case-body">
+              {% for source_type, codes in case_item.by_source.items() %}
+                <div class="aa-source-block" data-source="{{ source_type }}">
+                  <table>
+                    <tbody>
+                    <tr style="border-top:1px solid #e0e0e0; background:#f8f9fa;">
+                      <td colspan="3" style="font-size:0.78rem; color:#555; padding:0.15rem 0.75rem; font-weight:600;">▸ {{ source_type }}</td>
+                    </tr>
+                    {% for code, info in codes.items() %}
+                    <tr style="border-top:1px solid #f0f0f0;">
+                      <td style="font-weight:600; width:1%; white-space:nowrap;">{{ code }}</td>
+                      <td style="color:#888;">×{{ info.count }}</td>
+                      <td style="text-align:right; font-weight:800; color:#1e8449;">{{ info.total | int }} 元</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% endfor %}
+              </div>
             </div>
             {% endfor %}
           </div>
@@ -425,15 +429,37 @@ function filterCaregiver() {
   </table>
 </div>
 <script>
-function toggleAaGroup(el) {
-  var detailRow = el.nextElementSibling;
-  var arrow = el.querySelector('.arrow-icon');
-  if (detailRow && detailRow.style.display === 'none') {
-    detailRow.style.display = 'table-row';
-    if (arrow) arrow.textContent = '▼';
-  } else if (detailRow) {
+function toggleAaDetail(el, source) {
+  // Find the detail row: navigate up to tr, then next tr
+  var tr = el.tagName === 'TR' ? el : el.closest('tr');
+  var detailRow = tr.nextElementSibling;
+  while (detailRow && !detailRow.classList.contains('aa-detail-row')) {
+    detailRow = detailRow.nextElementSibling;
+  }
+  if (!detailRow) return;
+
+  var arrow = tr.querySelector('.arrow-icon');
+  var isVisible = detailRow.style.display !== 'none';
+
+  if (source === null && isVisible) {
+    // Clicking name/arrow when already open → close
     detailRow.style.display = 'none';
     if (arrow) arrow.textContent = '▶';
+    return;
+  }
+
+  // Show the detail row
+  detailRow.style.display = 'table-row';
+  if (arrow) arrow.textContent = '▼';
+
+  // Filter source blocks
+  var blocks = detailRow.querySelectorAll('.aa-source-block');
+  for (var b = 0; b < blocks.length; b++) {
+    if (source === '全部' || source === null) {
+      blocks[b].style.display = '';
+    } else {
+      blocks[b].style.display = blocks[b].getAttribute('data-source') === source ? '' : 'none';
+    }
   }
 }
 </script>
