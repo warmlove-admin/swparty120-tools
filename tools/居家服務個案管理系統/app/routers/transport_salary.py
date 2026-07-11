@@ -294,6 +294,10 @@ def transport_salary_index(
     # AA 明細預設顯示同月份（非薪資分頁時適用）
     aa_ref_month_display = _month_display(current_month)
 
+    # ── Google Maps API 金鑰狀態（全分頁共用，實際呼叫 API 驗證） ──
+    from app.services.salary_engine import check_api_key_valid
+    api_key_valid, api_key_message = check_api_key_valid()
+
     # ── 久任獎金分頁 ──────────────────────────────────────────────────────
     if tab == "long_term_bonus":
         return _handle_long_term_bonus(request, current_month, db, user)
@@ -377,6 +381,8 @@ def transport_salary_index(
                 "pending_aa06_cases": pending_aa06_cases,
                 "uploaded_types": uploaded_types,
                 "aa_ref_month_display": aa_ref_month_display,
+                "api_key_valid": api_key_valid,
+                "api_key_message": api_key_message,
             }
         )
 
@@ -413,6 +419,8 @@ def transport_salary_index(
                 "aa_detail_json": {},
                 "uploaded_types": set(),
                 "aa_ref_month_display": aa_ref_month_display,
+                "api_key_valid": api_key_valid,
+                "api_key_message": api_key_message,
             }
         )
 
@@ -433,6 +441,8 @@ def transport_salary_index(
                 "aa_detail_json": {},
                 "uploaded_types": set(),
                 "aa_ref_month_display": aa_ref_month_display,
+                "api_key_valid": api_key_valid,
+                "api_key_message": api_key_message,
             }
         )
 
@@ -573,6 +583,8 @@ def transport_salary_index(
                 "aa_ref_month_display": aa_ref_month_display,
                 "pending_aa06_cases": pending_aa06_cases,
                 "uploaded_types": set(),
+                "api_key_valid": api_key_valid,
+                "api_key_message": api_key_message,
             }
         )
 
@@ -769,6 +781,18 @@ def run_calculate_transfers(
 ):
     current_month = _parse_month(month)
     year, mon = current_month.year, current_month.month
+
+    # 檢查 Google Maps API 金鑰（實際呼叫 API 驗證）
+    from app.services.salary_engine import check_api_key_valid, check_api_key_exists
+    if not check_api_key_exists():
+        return RedirectResponse(
+            url=f"/transport-salary?month={month}&error=未設定 GOOGLE_MAPS_API_KEY，請更新 .env", status_code=302
+        )
+    api_ok, api_msg = check_api_key_valid()
+    if not api_ok:
+        return RedirectResponse(
+            url=f"/transport-salary?month={month}&error={api_msg}（計算仍會執行，但無快取的新路線將得到 0 距離）", status_code=302
+        )
 
     # 檢查是否有正在執行的計算
     for job in list(_jobs.values()):

@@ -4,6 +4,17 @@
 
 <h2>🚚 交通津貼／薪資</h2>
 
+{% if api_key_valid is defined %}
+<div style="background:{{ '#e8f5e9' if api_key_valid else '#ffebee' }}; border:1px solid {{ '#4caf50' if api_key_valid else '#ef5350' }}; border-radius:6px; padding:0.5rem 1rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;">
+  <span style="font-size:1rem;">{{ '✅' if api_key_valid else '❌' }}</span>
+  <div>
+    <strong>Google Maps API：{{ '正常' if api_key_valid else '異常' }}</strong>
+    {% if not api_key_valid %}<br>{{ api_key_message }} — 轉場計算時無快取的新路線會得到 0 距離。{% endif %}
+    <span style="color:#888; margin-left:0.5rem;">（每次進頁面即時驗證）</span>
+  </div>
+</div>
+{% endif %}
+
 <div style="display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:1rem;">
   <form method="get" action="/transport-salary" style="margin:0; display:flex; align-items:center; gap:0.4rem;">
     <label style="margin:0; white-space:nowrap; font-weight:800;">分類：</label>
@@ -128,8 +139,9 @@
     {% if transfer_stats.total == 0 %}
     <span style="color:#888;">尚未計算</span>
     {% else %}
-    <span style="color:#1e8449;">成功 {{ transfer_stats.ok }} 筆</span>
-    {% if transfer_stats.failed > 0 %}<span style="color:#c0392b;">失敗 {{ transfer_stats.failed }} 筆</span>{% endif %}
+    <span style="color:#1e8449;">成功/快取 {{ transfer_stats.ok }} 筆</span>
+    {% if transfer_stats.cached is defined and transfer_stats.cached > 0 %}<span style="color:#5dade2;">（快取 {{ transfer_stats.cached }} 筆）</span>{% endif %}
+    {% if transfer_stats.failed > 0 %}<span style="color:#c0392b;">失敗 {{ transfer_stats.failed }} 筆 ⚠️</span>{% endif %}
     <span style="color:#888;">共 {{ transfer_stats.total }} 筆</span>
     {% endif %}
     <span style="margin-left:auto; display:flex; gap:0.5rem; align-items:center;">

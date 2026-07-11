@@ -51,6 +51,26 @@ from app.config import settings
 GOOGLE_MAPS_API_KEY = settings.google_maps_api_key
 
 
+def check_api_key_valid() -> tuple[bool, str]:
+    if not GOOGLE_MAPS_API_KEY:
+        return False, "未設定 GOOGLE_MAPS_API_KEY"
+    try:
+        url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+        params = {"origins": "新北市板橋區中山路一段1號", "destinations": "新北市板橋區中山路一段2號", "key": GOOGLE_MAPS_API_KEY, "language": "zh-TW", "mode": "driving", "region": "tw"}
+        r = requests.get(url, params=params, timeout=10)
+        j = r.json()
+        if j.get("status") == "OK":
+            return True, ""
+        err = j.get("error_message", j.get("status", "未知錯誤"))
+        return False, f"Google Maps API 錯誤：{err}"
+    except Exception as e:
+        return False, f"Google Maps API 連線失敗：{e}"
+
+
+def check_api_key_exists() -> bool:
+    return bool(GOOGLE_MAPS_API_KEY)
+
+
 # ── 地址清理（比照使用者腳本 2.轉場距離計算.py）───────────────
 
 def clean_address(addr):
