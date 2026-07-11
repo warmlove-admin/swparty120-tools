@@ -298,33 +298,26 @@ def import_aa_file(
     return {"rows": rows, "allocations": allocations, "stats": stats}
 
 
-def save_allocations(db: Session, allocations: list[dict], year: int, month: int, source_type: str = "") -> dict:
-    """儲存 AA 碼分配結果到資料庫，並更新 MonthlySalary.aa_bonus"""
-    # 只刪除同一檔案類型的舊記錄（兩種檔案類型可共存）
-    q = db.query(AaCodeRecord).filter(
+def _calculate_aa_bonus_totals(db: Session, year: int, month: int) -> dict[tuple, int]:
+    """從 AaCodeRecord 重新加總兩種來源的 caregiver_share，回傳 {(cg_id, y, m): total}"""
+    records = db.query(AaCodeRecord).filter(
         AaCodeRecord.year == year,
         AaCodeRecord.month == month,
-    )
-    if source_type:
-        q = q.filter(AaCodeRecord.source_file.startswith(f"[{source_type}]"))
-    q.delete(synchronize_session=False)
+        AaCodeRecord.caregiver_share > 0,
+    ).all()
+    totals: dict[tuple, int] = defaultdict(int)
+    for r in records:
+        totals[(r.caregiver_id, r.year, r.month)] += r.caregiver_share
+    return dict(totals)
 
-    # 重置該月份所有 aa_bonus（避免重複累加）
+
+def _write_aa_bonus(db: Session, cg_totals: dict[tuple, int], year: int, month: int):
+    """將 cg_totals 寫入 MonthlySalary（該月 aa_bonus 欄位）"""
     db.query(MonthlySalary).filter(
         MonthlySalary.year == year,
         MonthlySalary.month == month,
     ).update({"aa_bonus": 0}, synchronize_session=False)
     db.flush()
-
-    for alloc in allocations:
-        db.add(AaCodeRecord(**alloc))
-    db.flush()
-
-    # 更新 MonthlySalary.aa_bonus（以重置後的 0 為基準累加）
-    cg_totals = defaultdict(int)
-    for alloc in allocations:
-        cg_totals[(alloc["caregiver_id"], alloc["year"], alloc["month"])] += alloc["caregiver_share"]
-
     for (cg_id, y, m), total in cg_totals.items():
         ms = db.query(MonthlySalary).filter(
             MonthlySalary.caregiver_id == cg_id,
@@ -334,31 +327,41 @@ def save_allocations(db: Session, allocations: list[dict], year: int, month: int
         if ms:
             ms.aa_bonus += total
         else:
-            ms = MonthlySalary(
-                caregiver_id=cg_id,
-                year=y, month=m,
-                aa_bonus=total,
-                calculated_at=datetime.utcnow(),
-            )
-            db.add(ms)
+            db.add(MonthlySalary(
+                caregiver_id=cg_id, year=y, month=m,
+                aa_bonus=total, calculated_at=datetime.utcnow(),
+            ))
+
+
+def save_allocations(db: Session, allocations: list[dict], year: int, month: int, source_type: str = "") -> dict:
+    """儲存 AA 碼分配結果到資料庫，並更新 MonthlySalary.aa_bonus
+
+    兩種檔案類型（居家服務+喘息、居家短照）各自獨立管理：
+    - 只刪除同一類型的舊 AaCodeRecord（兩者可共存）
+    - aa_bonus 從所有類型的 AaCodeRecord 重新加總，確保合併正確
+    """
+    # 只刪除同一檔案類型的舊記錄（兩種檔案類型可共存）
+    q = db.query(AaCodeRecord).filter(
+        AaCodeRecord.year == year,
+        AaCodeRecord.month == month,
+    )
+    if source_type:
+        q = q.filter(AaCodeRecord.source_file.startswith(f"[{source_type}]"))
+    q.delete(synchronize_session=False)
+
+    for alloc in allocations:
+        db.add(AaCodeRecord(**alloc))
+    db.flush()
+
+    # 從所有來源重新加總，確保兩種檔案合併正確
+    cg_totals = _calculate_aa_bonus_totals(db, year, month)
+    _write_aa_bonus(db, cg_totals, year, month)
 
     # ── 帶入次月薪資：AA 獎金比薪資晚一個月 ──
-    # 匯入 5 月 AA → 同時更新 6 月 MonthlySalary.aa_bonus
+    # 匯入 5 月 AA → 同時更新 6 月 MonthlySalary.aa_bonus（值與 5 月相同）
     next_y = year if month < 12 else year + 1
     next_m = month + 1 if month < 12 else 1
-    db.query(MonthlySalary).filter(
-        MonthlySalary.year == next_y,
-        MonthlySalary.month == next_m,
-    ).update({"aa_bonus": 0}, synchronize_session=False)
-    db.flush()
-    for (cg_id, _y, _m), total in cg_totals.items():
-        ms = db.query(MonthlySalary).filter(
-            MonthlySalary.caregiver_id == cg_id,
-            MonthlySalary.year == next_y,
-            MonthlySalary.month == next_m,
-        ).first()
-        if ms:
-            ms.aa_bonus += total
+    _write_aa_bonus(db, cg_totals, next_y, next_m)
 
     db.commit()
     return {"total_cg": len(cg_totals), "total_records": len(allocations)}
