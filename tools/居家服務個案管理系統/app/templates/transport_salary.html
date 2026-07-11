@@ -313,32 +313,56 @@ function filterCaregiver() {
 {% elif tab == "aa_bonus" %}
 <div class="card" style="margin-bottom:1rem;">
   <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-    <span style="font-weight:800;">AA 碼獎金分配（跳過 {{ excluded_codes | join('、') }}）</span>
-    <span style="color:#888; font-size:0.85rem;">政府價格對半拆（公司50%、居服員50%）</span>
+    <span style="font-weight:800;">AA 碼獎金管理（跳過 {{ excluded_codes | join('、') }}）</span>
   </div>
-  <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data" style="margin-top:0.8rem;">
-    <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
-    <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-      <label style="margin:0; white-space:nowrap;">上傳 AA 碼清冊：</label>
-      <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
-      <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入 &amp; 分配</button>
-    </div>
-    <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
-      <label style="cursor:pointer; font-size:0.88rem;">
-        <input type="radio" name="file_type" value="居家服務+喘息" checked style="margin-right:0.3rem;">
-        居家服務+喘息
-        {% if "居家服務+喘息" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
-      </label>
-      <label style="cursor:pointer; font-size:0.88rem;">
-        <input type="radio" name="file_type" value="居家短照" style="margin-right:0.3rem;">
-        居家短照
-        {% if "居家短照" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
-      </label>
-    </div>
-    <div style="margin-top:0.4rem; font-size:0.82rem; color:#888;">
-      兩種檔案類型獨立管理，重新上傳只取代同一類型的舊資料。
-    </div>
-  </form>
+
+  <div style="margin-top:0.8rem; padding:0.8rem; background:#f0f8ff; border-radius:6px;">
+    <div style="font-weight:700; margin-bottom:0.5rem;">① 匯入報表</div>
+    <form method="post" action="/transport-salary/import-aa-codes" enctype="multipart/form-data">
+      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <label style="margin:0; white-space:nowrap;">上傳 AA 碼清冊：</label>
+        <input type="file" name="file" accept=".xlsx,.xls" required style="font-size:0.85rem;">
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='匯入中…'},100)">匯入報表</button>
+      </div>
+      <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
+        <label style="cursor:pointer; font-size:0.88rem;">
+          <input type="radio" name="file_type" value="居家服務+喘息" checked style="margin-right:0.3rem;">
+          居家服務+喘息
+          {% if "居家服務+喘息" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
+        </label>
+        <label style="cursor:pointer; font-size:0.88rem;">
+          <input type="radio" name="file_type" value="居家短照" style="margin-right:0.3rem;">
+          居家短照
+          {% if "居家短照" in uploaded_types %}<span style="color:#1e8449;">✓ 已上傳</span>{% endif %}
+        </label>
+      </div>
+      <div style="margin-top:0.4rem; font-size:0.82rem; color:#888;">
+        只讀取報表的個案、碼別、日期、數量、金額（不看人員欄），重新上傳會取代同類型舊資料。
+      </div>
+    </form>
+  </div>
+
+  <div style="margin-top:0.8rem; padding:0.8rem; background:#fff8e1; border-radius:6px;">
+    <div style="font-weight:700; margin-bottom:0.5rem;">② 計算 AA 獎金</div>
+    <form method="post" action="/transport-salary/calculate-aa">
+      <input type="hidden" name="month" value="{{ current_month.year }}-{{ '%02d' % current_month.month }}">
+      <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <span style="font-size:0.85rem; color:#555;">
+          依已匯入的原始資料，比對實際服務班表重新分配
+        </span>
+        <button type="submit" class="btn" onclick="setTimeout(()=>{this.disabled=true;this.textContent='計算中…'},100)"
+          {% if not uploaded_types %}disabled style="opacity:0.5;"{% endif %}>
+          計算 AA 獎金
+        </button>
+      </div>
+      <div style="margin-top:0.4rem; font-size:0.82rem; color:#888;">
+        {% if not uploaded_types %}尚未匯入任何報表，請先執行①。{% endif %}
+        {% if has_calculated %}最後計算時間：{{ calculated_at }}{% endif %}
+      </div>
+    </form>
+  </div>
+
   <div style="margin-top:0.6rem; font-size:0.85rem;">
     <a href="/transport-salary/aa06-conditions" target="_blank" style="color:#2c7a7b;">📋 檢視／編輯全部 AA06 條件設定</a>
   </div>
@@ -358,7 +382,7 @@ function filterCaregiver() {
     {% endfor %}
   </ul>
   <div style="margin-top:0.5rem; font-size:0.85rem; color:#856404;">
-    點擊個案名稱前往設定 AA06 條件，設定完成後請重新上傳清冊。
+    點擊個案名稱前往設定 AA06 條件，設定完成後請重新計算。
   </div>
 </div>
 {% endif %}
@@ -465,7 +489,7 @@ function toggleAaDetail(el, source) {
 </script>
 {% else %}
 <div class="card" style="text-align:center; color:#888; padding:2rem;">
-  {{ month_display }} 尚無 AA 碼獎金資料，請上傳清冊。
+  {{ month_display }} 尚無 AA 碼獎金資料，請先①匯入報表，再②計算獎金。
 </div>
 {% endif %}
 

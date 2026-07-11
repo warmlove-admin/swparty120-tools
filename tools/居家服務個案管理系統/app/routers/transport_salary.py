@@ -23,7 +23,7 @@ from app.models.case import Case
 from app.models.monthly_salary import MonthlySalary
 from app.models.salary_item import SalaryItem
 from app.models.salary_payment import SalaryPayment
-from app.models.aa_code import AaCodeRecord, Aa06CaseCondition
+from app.models.aa_code import AaCodeRecord, AaImportRawRecord, Aa06CaseCondition
 from app.models.user import User, UserRole
 from app.services.attendance_engine import (
     BRACKET_CAPS_MINUTES,
@@ -32,6 +32,8 @@ from app.services.attendance_engine import (
 )
 from app.services.aa_code_import import (
     import_aa_file,
+    import_aa_raw,
+    calculate_aa_allocations,
     save_allocations,
     parse_aa_excel,
     EXCLUDED_AA_CODES,
@@ -366,12 +368,19 @@ def transport_salary_index(
         aa_results.sort(key=lambda x: x["caregiver"].display_name if x["caregiver"] else "")
         # 找出當月有 AA06 但尚未設定條件的個案
         pending_aa06_cases = _get_pending_aa06_cases(db, current_month.year, current_month.month)
-        # 當月已上傳的檔案類型
+        # 當月已上傳的檔案類型（檢查原始匯入記錄 + 已分配記錄）
+        uploaded_types = set()
+        raw_sources = db.query(AaImportRawRecord.source_type).filter(
+            AaImportRawRecord.year == current_month.year,
+            AaImportRawRecord.month == current_month.month,
+        ).distinct().all()
+        for (st,) in raw_sources:
+            if st:
+                uploaded_types.add(st)
         existing_sources = db.query(AaCodeRecord.source_file).filter(
             AaCodeRecord.year == current_month.year,
             AaCodeRecord.month == current_month.month,
         ).distinct().all()
-        uploaded_types = set()
         for (sf,) in existing_sources:
             if sf and sf.startswith("["):
                 stype = sf[1:sf.index("]")]
@@ -392,6 +401,11 @@ def transport_salary_index(
                 "aa_detail_json": {},
                 "pending_aa06_cases": pending_aa06_cases,
                 "uploaded_types": uploaded_types,
+                "has_calculated": db.query(AaCodeRecord).filter(
+                    AaCodeRecord.year == current_month.year,
+                    AaCodeRecord.month == current_month.month,
+                ).first() is not None,
+                "calculated_at": "",
                 "aa_ref_month_display": aa_ref_month_display,
                 "api_key_valid": api_key_valid,
                 "api_key_message": api_key_message,
@@ -1282,8 +1296,8 @@ def import_aa_codes(
             )
 
         try:
-            result = import_aa_file(db, temp_path, source_label=file.filename, source_type=file_type,
-                                    target_year=current_month.year, target_month=current_month.month)
+            stats = import_aa_raw(db, temp_path, source_label=file.filename, source_type=file_type,
+                                  target_year=current_month.year, target_month=current_month.month)
         except Exception as e:
             err_detail = f"{type(e).__name__}: {e}"
             try: os.remove(temp_path)
@@ -1292,38 +1306,18 @@ def import_aa_codes(
                 url=f"/transport-salary?tab=aa_bonus&month={month}&error=匯入解析失敗：{quote(err_detail)}",
                 status_code=302,
             )
-        stats = result["stats"]
-        allocations = result["allocations"]
 
-        pending_aa06 = stats.get("pending_aa06", {})
-        pending_count = len(pending_aa06)
-
-        if allocations:
-            try:
-                save_result = save_allocations(db, allocations, current_month.year, current_month.month, source_type=file_type)
-            except Exception as e:
-                err_detail = f"{type(e).__name__}: {e}"
-                return RedirectResponse(
-                    url=f"/transport-salary?tab=aa_bonus&month={month}&error=儲存分配失敗：{quote(err_detail)}",
-                    status_code=302,
-                )
-        else:
-            save_result = {"total_cg": 0, "total_records": 0}
-
-        # 清理暫存檔
         try:
             os.remove(temp_path)
         except OSError:
             pass
 
         msg_parts = [
-            f"匯入完成：共 {stats['total']} 筆，跳過 {stats['skipped']} 筆（AA01/02/08/09），"
-            f"分配 {stats['allocated']} 筆予 {save_result['total_cg']} 位居服員",
+            f"報表匯入完成：共 {stats['total']} 筆，"
+            f"匯入 {stats['matched']} 筆明細，跳過 {stats['skipped']} 筆（排除碼或無對應個案）",
         ]
         if stats["errors"]:
             msg_parts.append(f"（{len(stats['errors'])} 個錯誤）")
-        if pending_count:
-            msg_parts.append(f"，{pending_count} 個 AA06 個案待設定條件（暫未分配）")
 
         return RedirectResponse(
             url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",
@@ -1333,6 +1327,42 @@ def import_aa_codes(
         err_detail = f"{type(e).__name__}: {e}"
         return RedirectResponse(
             url=f"/transport-salary?tab=aa_bonus&month={month}&error=匯入失敗：{quote(err_detail)}",
+            status_code=302,
+        )
+
+
+@router.post("/calculate-aa")
+def calculate_aa(
+    request: Request,
+    month: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_roles(UserRole.manager, UserRole.director, UserRole.accountant)),
+):
+    try:
+        current_month = _parse_month(month)
+        stats = calculate_aa_allocations(db, current_month.year, current_month.month,
+                                         target_year=current_month.year, target_month=current_month.month)
+
+        msg_parts = [
+            f"計算完成：處理 {stats['total_raw']} 筆明細，"
+            f"分配 {stats['allocated']} 筆予 {stats.get('total_cg', 0)} 位居服員，"
+            f"跳過 {stats['skipped']} 筆",
+        ]
+        if stats["unmatched_dates"]:
+            msg_parts.append(f"（{len(stats['unmatched_dates'])} 筆無對應班表）")
+        if stats["pending_aa06"]:
+            msg_parts.append(f"，{len(stats['pending_aa06'])} 個 AA06 個案待設定條件")
+        if stats["errors"]:
+            msg_parts.append(f"（{len(stats['errors'])} 個錯誤）")
+
+        return RedirectResponse(
+            url=f"/transport-salary?tab=aa_bonus&month={month}&success={quote('；'.join(msg_parts))}",
+            status_code=302,
+        )
+    except Exception as e:
+        err_detail = f"{type(e).__name__}: {e}"
+        return RedirectResponse(
+            url=f"/transport-salary?tab=aa_bonus&month={month}&error=計算失敗：{quote(err_detail)}",
             status_code=302,
         )
 

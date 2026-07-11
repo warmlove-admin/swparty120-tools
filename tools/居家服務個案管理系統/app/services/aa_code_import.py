@@ -19,7 +19,7 @@ import openpyxl
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models.aa_code import AaCodeRecord, Aa06CaseCondition
+from app.models.aa_code import AaCodeRecord, AaImportRawRecord, Aa06CaseCondition
 from app.models.caregiver_service_record import CaregiverServiceRecord
 from app.models.case import Case
 from app.models.monthly_salary import MonthlySalary
@@ -390,6 +390,315 @@ def import_aa_file(
             stats["allocated"] += 1
 
     return {"rows": rows, "allocations": allocations, "stats": stats}
+
+
+def import_aa_raw(
+    db: Session,
+    filepath: str,
+    source_label: str = "",
+    source_type: str = "",
+    target_year: int | None = None,
+    target_month: int | None = None,
+) -> dict:
+    """匯入 AA 清冊原始資料：只存個案、碼別、日期、數量、金額，不看人員欄
+
+    - 先清除該月份/該來源類型的舊原始資料
+    - 逐筆寫入 AaImportRawRecord
+    """
+    # 先清除舊的原始資料（同來源、同月份）
+    delete_year = target_year if target_year is not None else 0
+    delete_month = target_month if target_month is not None else 0
+    q = db.query(AaImportRawRecord).filter(
+        AaImportRawRecord.year == delete_year,
+        AaImportRawRecord.month == delete_month,
+    )
+    if source_type:
+        q = q.filter(AaImportRawRecord.source_type == source_type)
+    q.delete(synchronize_session=False)
+    db.flush()
+
+    rows = parse_aa_excel(filepath)
+    stats = {"total": len(rows), "matched": 0, "skipped": 0, "errors": []}
+
+    for row in rows:
+        aa_code = row["aa_code"]
+        if aa_code in EXCLUDED_AA_CODES:
+            stats["skipped"] += 1
+            continue
+
+        case = _get_or_create_case(db, row["case_idno"], row["case_name"])
+        if not case:
+            stats["errors"].append(f"找不到個案 {row['case_name']}({row['case_idno']})")
+            stats["skipped"] += 1
+            continue
+
+        for svc_date in row["dates"]:
+            year = target_year if target_year is not None else svc_date.year
+            month = target_month if target_month is not None else svc_date.month
+
+            db.add(AaImportRawRecord(
+                case_id=case.id,
+                aa_code=aa_code,
+                service_date=svc_date,
+                quantity=row["qty"],
+                unit_price=row["price_a"],
+                source_type=source_type,
+                source_file=source_label,
+                year=year,
+                month=month,
+            ))
+            stats["matched"] += 1
+
+    db.flush()
+    return stats
+
+
+def _match_aa06_by_id(
+    db: Session, case_id: str, svc_date: date, caregiver_ids: list[str],
+) -> list[str]:
+    """比對 AA06 條件（用 caregiver_id 版本）"""
+    conditions = _get_aa06_conditions(db, case_id)
+    if not conditions:
+        return []
+
+    qualifying = []
+    for cg_id in caregiver_ids:
+        for cond_num in conditions:
+            ba_codes = AA06_CONDITION_BA.get(cond_num, set())
+            if not ba_codes:
+                continue
+            records = db.query(CaregiverServiceRecord).filter(
+                CaregiverServiceRecord.caregiver_id == cg_id,
+                CaregiverServiceRecord.case_id == case_id,
+                CaregiverServiceRecord.service_date == svc_date,
+            ).all()
+            found = False
+            for r in records:
+                if r.service_codes:
+                    for part in r.service_codes.split(","):
+                        code = part.strip().split("x")[0].strip()
+                        if code in ba_codes:
+                            qualifying.append(cg_id)
+                            found = True
+                            break
+                if found:
+                    break
+            if found:
+                break
+    return qualifying
+
+
+def _get_serving_caregiver_ids(db: Session, case_id: str, svc_date: date) -> list[str]:
+    """查班表取得該個案當日的所有服務居服員 ID"""
+    records = db.query(CaregiverServiceRecord).filter(
+        CaregiverServiceRecord.case_id == case_id,
+        CaregiverServiceRecord.service_date == svc_date,
+    ).all()
+    return list(set(r.caregiver_id for r in records))
+
+
+def calculate_aa_allocations(db: Session, year: int, month: int, target_year: int | None = None, target_month: int | None = None) -> dict:
+    """從原始匯入資料重新計算 AA 獎金分配
+
+    流程：
+    1. 讀取 AaImportRawRecord（該月份兩種來源）
+    2. 逐筆比對 CaregiverServiceRecord 找出實際服務人員
+    3. 套用分配規則（AA05 排除 BA16-only、AA06 條件過濾、AA07 依天數比例、其餘均分）
+    4. 清除該月份舊 AaCodeRecord 並寫入新分配結果
+    5. 更新 MonthlySalary.aa_bonus
+    """
+    from datetime import date as dt_date  # avoid shadowing module name
+
+    raw_records = db.query(AaImportRawRecord).filter(
+        AaImportRawRecord.year == year,
+        AaImportRawRecord.month == month,
+    ).all()
+
+    stats = {
+        "total_raw": len(raw_records),
+        "allocated": 0,
+        "skipped": 0,
+        "errors": [],
+        "unmatched_dates": [],
+        "pending_aa06": {},
+    }
+
+    # AA07 逐月收集器（按服務月份收集，儲存時用 target_month）
+    aa07_collect: dict[tuple, dict[date, set[str]]] = defaultdict(lambda: defaultdict(set))
+
+    allocations = []
+
+    for rec in raw_records:
+        svc_date = rec.service_date
+        aa_code = rec.aa_code
+        price_a = rec.unit_price
+        if price_a <= 0:
+            stats["skipped"] += 1
+            continue
+
+        cg_share_total = price_a // 2
+
+        # 取得當日實際服務人員
+        caregiver_ids = _get_serving_caregiver_ids(db, rec.case_id, svc_date)
+        if not caregiver_ids:
+            stats["unmatched_dates"].append(f"{rec.case.name or '?'} {aa_code} {svc_date}")
+            stats["skipped"] += 1
+            continue
+
+        svc_year = target_year if target_year is not None else year
+        svc_month = target_month if target_month is not None else month
+
+        # AA05：過濾 BA16-only
+        if aa_code == "AA05":
+            qualified = []
+            for cg_id in caregiver_ids:
+                if not _caregiver_ba16_only_on_date(db, cg_id, rec.case_id, svc_date):
+                    qualified.append(cg_id)
+            if not qualified:
+                stats["skipped"] += 1
+                continue
+            caregiver_ids = qualified
+
+        # AA06：條件過濾（無條件則跳過，回報待設定）
+        if aa_code == "AA06":
+            qual = _match_aa06_by_id(db, rec.case_id, svc_date, caregiver_ids)
+            if not qual:
+                # 可能無條件或無人符合
+                conditions = _get_aa06_conditions(db, rec.case_id)
+                if not conditions:
+                    pending_key = (rec.case_id, rec.case.name or "")
+                    cg_names = []
+                    for cg_id in caregiver_ids:
+                        cg = db.query(User).filter(User.id == cg_id).first()
+                        if cg:
+                            cg_names.append(cg.display_name)
+                    stats["pending_aa06"].setdefault(pending_key, set()).update(cg_names)
+                    # 寫入 caregiver_share=0 以便頁面能找到
+                    for cg_id in caregiver_ids:
+                        allocations.append({
+                            "caregiver_id": cg_id,
+                            "case_id": rec.case_id,
+                            "aa_code": aa_code,
+                            "service_date": svc_date,
+                            "unit_price": price_a,
+                            "caregiver_share": 0,
+                            "year": svc_year,
+                            "month": svc_month,
+                            "source_file": rec.source_file or "",
+                        })
+                stats["skipped"] += 1
+                continue
+            caregiver_ids = qual
+
+        # AA07：收集按月資料，主迴圈結束後統一處理
+        if aa_code == "AA07":
+            svc_key = (rec.case_id, svc_date.year, svc_date.month)
+            for cg_id in caregiver_ids:
+                aa07_collect[svc_key][svc_date].add(cg_id)
+            continue
+
+        # 一般 AA 碼：均分
+        n = len(caregiver_ids)
+        if n == 0:
+            stats["skipped"] += 1
+            continue
+        per_person = cg_share_total // n
+        remainder = cg_share_total % n
+
+        for i, cg_id in enumerate(caregiver_ids):
+            amount = per_person + (1 if i < remainder else 0)
+            allocations.append({
+                "caregiver_id": cg_id,
+                "case_id": rec.case_id,
+                "aa_code": aa_code,
+                "service_date": svc_date,
+                "unit_price": price_a,
+                "caregiver_share": amount,
+                "year": svc_year,
+                "month": svc_month,
+                "source_file": rec.source_file or "",
+            })
+            stats["allocated"] += 1
+
+    # ── AA07 後處理：按月依服務天數比例拆分 ──
+    for (case_id, svc_y, svc_m), date_data in aa07_collect.items():
+        all_records = db.query(CaregiverServiceRecord).filter(
+            CaregiverServiceRecord.case_id == case_id,
+            CaregiverServiceRecord.service_date >= dt_date(svc_y, svc_m, 1),
+            CaregiverServiceRecord.service_date < dt_date(svc_y + (svc_m // 12), (svc_m % 12) + 1, 1),
+        ).all()
+
+        cg_day_count: dict[str, int] = defaultdict(int)
+        cg_dates: dict[str, set[date]] = defaultdict(set)
+        unique_dates: set[date] = set()
+        for r in all_records:
+            cg_dates[r.caregiver_id].add(r.service_date)
+            unique_dates.add(r.service_date)
+
+        if not cg_dates:
+            for svc_date_excel, cg_ids in date_data.items():
+                for cg_id in cg_ids:
+                    cg_dates[cg_id].add(svc_date_excel)
+                    unique_dates.add(svc_date_excel)
+
+        total_d = len(unique_dates)
+        for cg_id, dates in cg_dates.items():
+            cg_day_count[cg_id] = len(dates)
+
+        if total_d == 0 or not cg_day_count:
+            continue
+
+        store_y = target_year if target_year is not None else svc_y
+        store_m = target_month if target_month is not None else svc_m
+
+        remaining = AA07_MONTHLY_AMOUNT
+        sorted_cgs = sorted(cg_day_count.items(), key=lambda x: -x[1])
+        for i, (cg_id, days) in enumerate(sorted_cgs):
+            amount = remaining if i == len(sorted_cgs) - 1 else AA07_MONTHLY_AMOUNT * days // total_d
+            remaining -= amount
+            source_types = set()
+            for rec in raw_records:
+                if rec.case_id == case_id and rec.aa_code == "AA07" and rec.service_date.month == svc_m:
+                    if rec.source_type:
+                        source_types.add(rec.source_type)
+            allocations.append({
+                "caregiver_id": cg_id,
+                "case_id": case_id,
+                "aa_code": "AA07",
+                "service_date": dt_date(svc_y, svc_m, 1),
+                "unit_price": AA07_MONTHLY_AMOUNT,
+                "caregiver_share": amount,
+                "year": store_y,
+                "month": store_m,
+                "source_file": f"[{' + '.join(sorted(source_types))}] AA07",
+            })
+            stats["allocated"] += 1
+
+    # ── 清除舊分配並寫入新結果 ──
+    if allocations:
+        db.query(AaCodeRecord).filter(
+            AaCodeRecord.year == year,
+            AaCodeRecord.month == month,
+        ).delete(synchronize_session=False)
+        db.flush()
+
+        for alloc in allocations:
+            db.add(AaCodeRecord(**alloc))
+        db.flush()
+
+    # ── 更新 MonthlySalary ──
+    cg_totals = _calculate_aa_bonus_totals(db, year, month)
+    _write_aa_bonus(db, cg_totals, year, month)
+
+    next_y = year if month < 12 else year + 1
+    next_m = month + 1 if month < 12 else 1
+    _write_aa_bonus(db, cg_totals, next_y, next_m)
+
+    db.commit()
+
+    stats["total_cg"] = len(cg_totals)
+    stats["total_allocations"] = len(allocations)
+    return stats
 
 
 def _calculate_aa_bonus_totals(db: Session, year: int, month: int) -> dict[tuple, int]:

@@ -357,12 +357,18 @@ def monthly_schedule(
         .all()
     )
     case_by_id = {}
-    case_query = db.query(Case).join(ServiceSchedule).distinct().filter(Case.status != CaseStatus.closed)
+    case_query = db.query(Case).join(ServiceSchedule).distinct().filter(
+        or_(Case.status != CaseStatus.closed,
+            Case.close_date >= date(current_month.year, current_month.month, 1))
+    )
     if user.role == UserRole.caregiver:
         case_query = case_query.filter(ServiceSchedule.caregiver_id == user.id)
     for case in case_query.all():
         case_by_id[case.id] = case
-    imported_case_query = db.query(Case).join(CaregiverServiceRecord).distinct().filter(Case.status != CaseStatus.closed)
+    imported_case_query = db.query(Case).join(CaregiverServiceRecord).distinct().filter(
+        or_(Case.status != CaseStatus.closed,
+            Case.close_date >= date(current_month.year, current_month.month, 1))
+    )
     if user.role == UserRole.caregiver:
         imported_case_query = imported_case_query.filter(CaregiverServiceRecord.caregiver_id == user.id)
     for case in imported_case_query.all():
