@@ -139,6 +139,12 @@ def _has_import_data(year: int, month: int, db: Session) -> bool:
     ).first() is not None
 
 
+def _aa_source_type(rec) -> str:
+    """從 AaCodeRecord.source_file 解析來源類型（居家服務+喘息／居家短照）"""
+    sf = getattr(rec, "source_file", "") or ""
+    return sf[1:sf.index("]")] if sf.startswith("[") else "其他"
+
+
 def _get_pending_aa06_cases(db: Session, year: int, month: int) -> list[dict]:
     """回傳當月有 AA06 但尚未設定條件的個案清單"""
     aa06_in_month = db.query(AaCodeRecord).filter(
@@ -322,20 +328,21 @@ def transport_salary_index(
             if not cg:
                 cg = db.query(User).filter(User.id == cg_id).first()
             total = sum(r.caregiver_share for r in records)
-            # 依個案分組（內含 AA 碼細項）
+            # 依個案分組（內含 AA 碼細項，依來源類型區分）
             by_case = []
             case_groups = defaultdict(list)
             for r in records:
                 case_groups[r.case_id].append(r)
             for case_id, recs in case_groups.items():
                 case = recs[0].case
-                by_code = defaultdict(lambda: {"count": 0, "total": 0})
+                by_source = defaultdict(lambda: defaultdict(lambda: {"count": 0, "total": 0}))
                 for rec in recs:
-                    by_code[rec.aa_code]["count"] += 1
-                    by_code[rec.aa_code]["total"] += rec.caregiver_share
+                    src = _aa_source_type(rec)
+                    by_source[src][rec.aa_code]["count"] += 1
+                    by_source[src][rec.aa_code]["total"] += rec.caregiver_share
                 by_case.append({
                     "case": case,
-                    "by_code": dict(by_code),
+                    "by_source": {k: dict(v) for k, v in by_source.items()},
                 })
             # 依個案名稱排序
             by_case.sort(key=lambda x: x["case"].name if x["case"] else "")
