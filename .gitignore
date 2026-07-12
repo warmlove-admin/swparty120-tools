@@ -19,3 +19,13 @@ package-lock.json
 # temp
 cookies.txt
 -D
+
+# 居家服務系統 debug 暫存
+tools/居家服務個案管理系統/_debug*.py
+tools/居家服務個案管理系統/_check*.py
+tools/居家服務個案管理系統/_compare*.py
+tools/居家服務個案管理系統/_db_check*.py
+tools/居家服務個案管理系統/run_daily*.py
+tools/居家服務個案管理系統/app/*.db
+tools/居家服務個案管理系統/app/*.db.bak
+tools/居家服務個案管理系統/scripts/start_bg.bat
