@@ -742,17 +742,17 @@ def _write_aa_bonus(db: Session, cg_totals: dict[tuple, int], year: int, month: 
         MonthlySalary.month == month,
     ).update({"aa_bonus": 0}, synchronize_session=False)
     db.flush()
-    for (cg_id, y, m), total in cg_totals.items():
+    for (cg_id, _y, _m), total in cg_totals.items():
         ms = db.query(MonthlySalary).filter(
             MonthlySalary.caregiver_id == cg_id,
-            MonthlySalary.year == y,
-            MonthlySalary.month == m,
+            MonthlySalary.year == year,
+            MonthlySalary.month == month,
         ).first()
         if ms:
             ms.aa_bonus += total
         else:
             db.add(MonthlySalary(
-                caregiver_id=cg_id, year=y, month=m,
+                caregiver_id=cg_id, year=year, month=month,
                 aa_bonus=total, calculated_at=datetime.utcnow(),
             ))
 
