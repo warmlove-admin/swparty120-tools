@@ -134,6 +134,7 @@ async def update_attendance_settings(
     target.hourly_wage = int(form.get("hourly_wage")) if form.get("hourly_wage") else None
     wkdays = form.getlist("work_weekdays")
     target.work_weekdays = sorted({int(v) for v in wkdays if v.strip()}) if wkdays else None
+    target.force_overtime_weekend = form.get("force_overtime_weekend") == "on"
     db.commit()
     return RedirectResponse(
         url=f"/attendance?caregiver_id={caregiver_id}", status_code=302
@@ -173,6 +174,8 @@ async def batch_update_settings(
             cg.hourly_wage = int(val) if val else None
         wkdays = form.getlist(wk_key)
         cg.work_weekdays = sorted({int(v) for v in wkdays if v.strip()}) if wkdays else None
+        fo_key = f"fo_{cg.id}"
+        cg.force_overtime_weekend = fo_key in form
     db.commit()
     return RedirectResponse(url="/attendance?view=overview", status_code=302)
 

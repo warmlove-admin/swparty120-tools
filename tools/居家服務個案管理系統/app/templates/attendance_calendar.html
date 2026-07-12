@@ -86,6 +86,13 @@
             </div>
             <small id="pt-hint" style="color:#b9770e;{% if not (selected_caregiver.work_weekdays and selected_caregiver.work_weekdays|length == 2 and 5 in selected_caregiver.work_weekdays and 6 in selected_caregiver.work_weekdays) %}display:none{% endif %};margin-top:0.2rem;display:block;">⚡ 僅週六週日 → 兼職人員，六日出勤視為一般工時</small>
           </div>
+          <div class="full" style="margin-top:0.5rem;">
+            <label style="display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;">
+              <input type="checkbox" name="force_overtime_weekend" style="width:auto;"
+                {% if selected_caregiver.force_overtime_weekend %}checked{% endif %}>
+              週末強制加班（即使當週≤5天出勤，週末仍算休息日/例假日）
+            </label>
+          </div>
           <div>
             <label>時薪（元）</label>
             <input type="number" name="hourly_wage" value="{{ selected_caregiver.hourly_wage or '' }}" placeholder="預設 230">
@@ -116,6 +123,7 @@
           <li>月總時數 ≥ 172h &rarr; 適用彈性工時</li>
           <li>&lt; 172h &rarr; 標⚠（仍依彈性工時邏輯）</li>
         </ul>
+        <p><strong>④-1 週出勤 ≤ 5 天且無國定假日</strong><br>全部算平日（非加班）。有勾「週末加班」者例外。</p>
         <p><strong>⑤ 六日僅一天出勤</strong><br>出勤日 &rarr; 休息日，另一天 &rarr; 例假</p>
         <p><strong>⑥ 六日皆未出勤</strong><br>週六 &rarr; 休息日，週日 &rarr; 例假日</p>
         <hr style="border:none;border-top:1px solid #dde5e5;margin:0.3rem 0;">
@@ -188,6 +196,7 @@
             <th>居服員</th>
             <th>出勤天</th>
             <th>時薪</th>
+            <th>週末加班</th>
           </tr>
         </thead>
         <tbody>
@@ -208,6 +217,10 @@
             </td>
             <td>
               <input type="number" name="wage_{{ cg.id }}" value="{{ cg.hourly_wage or '' }}" placeholder="230" style="width:80px;">
+            </td>
+            <td style="text-align:center;">
+              <input type="checkbox" name="fo_{{ cg.id }}" style="width:auto;"
+                {% if cg.force_overtime_weekend %}checked{% endif %}>
             </td>
           </tr>
           {% endfor %}
