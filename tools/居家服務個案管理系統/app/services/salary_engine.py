@@ -75,8 +75,8 @@ def check_api_key_exists() -> bool:
 
 def clean_address(addr):
     """NFKC + 移除括弧 + 移除空白 + 移除鄰 + 移除樓層。
-    **移除樓層資訊**（如 4樓之一、12樓、三樓），讓 Google Maps 專注於地號位置。
-    **注意**：不轉換台→臺，因為「新台五路」的「台」是路名本體，非簡寫。
+    Google Maps 查不到鄰跟樓層，所以要刪掉。
+    不轉台→臺（新台五路的台是路名本體），不轉路名數字。
     """
     if not addr or not isinstance(addr, str):
         return ""
@@ -84,11 +84,8 @@ def clean_address(addr):
     addr = re.sub(r"[（(].*?[）)]", "", addr)
     addr = re.sub(r"\s+", "", addr)
     addr = re.sub(r"\d+鄰", "", addr)
-    # 移除樓層資訊（含國字樓層、數字樓層、樓+之+國字/數字）
     addr = re.sub(r"[一二三四五六七八九十百千]+樓", "", addr)
     addr = re.sub(r"\d+樓[之\-]?[一二三四五六七八九十百千\d]*", "", addr)
-    # 還原路名中的數字為國字（如 新台5路→新台五路）
-    addr = re.sub(r"台(\d+)路", lambda m: "台" + "".join("一二三四五六七八九"[int(d)-1] for d in m.group(1) if d != "0") + "路", addr)
     return addr.strip()
 
 
