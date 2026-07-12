@@ -211,12 +211,14 @@ def classify_date_from_records(
     holiday_dates: set,
     service_records_by_date: dict,
     db: Session,
+    apply_rule_4_1: bool = True,
 ) -> tuple[str, bool]:
     """Determine date type and whether it's non-compliant.
 
     Returns (date_type, is_non_compliant).
 
     Priority: national_holiday > part-time > weekday > weekend rules.
+    apply_rule_4_1: 薪資計算不套用④-1（出勤月曆才套用）。
     """
     # ── ① 國定假日（最高優先） ──
     if d in holiday_dates:
@@ -248,7 +250,8 @@ def classify_date_from_records(
 
     # ── ④-1 週出勤≤5天且無國定假日→全部算平日 ──
     # 除非 force_overtime_weekend=True（積極配合排班者保留加班）
-    if not user.force_overtime_weekend:
+    # 薪資計算不套用此規則（apply_rule_4_1=False）
+    if apply_rule_4_1 and not user.force_overtime_weekend:
         week_sun, week_sat = _find_week_sun_sat(d)
         week_has_holiday = any(hd >= week_sun and hd <= week_sat for hd in holiday_dates)
         if not week_has_holiday:

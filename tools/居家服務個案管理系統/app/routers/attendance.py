@@ -94,6 +94,12 @@ def attendance_index(
     first_py_weekday = calendar.monthrange(current_month.year, current_month.month)[0]
     padding = [{"day": None}] * ((first_py_weekday + 1) % 7)
 
+    sun_first_short = ["日", "一", "二", "三", "四", "五", "六"]
+    day_weekday_labels = []
+    for day_num in range(1, days_in_month + 1):
+        wd_sun = (first_py_weekday + day_num - 1 + 1) % 7
+        day_weekday_labels.append(sun_first_short[wd_sun])
+
     return templates.TemplateResponse(
         request,
         "attendance_calendar.html",
@@ -116,6 +122,7 @@ def attendance_index(
             "overtime_multipliers": OVERTIME_MULTIPLIERS,
             "holidays": holiday_objects,
             "holiday_map": holiday_map,
+            "day_weekday_labels": day_weekday_labels,
         },
     )
 

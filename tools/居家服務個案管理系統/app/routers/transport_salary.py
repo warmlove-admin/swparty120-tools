@@ -694,6 +694,7 @@ def _handle_long_term_bonus(request, current_month, db, user):
 
     return templates.TemplateResponse(
         request, "transport_salary.html", {
+            "request": request,
             "user": user, "tab": "long_term_bonus",
             "month_options": _month_options(db),
             "current_month": current_month,
@@ -703,9 +704,15 @@ def _handle_long_term_bonus(request, current_month, db, user):
             "month_labels": month_labels,
             "lt_item_id": lt_item_id,
             "transfer_stats": {"total": 0, "ok": 0, "failed": 0, "pending": 0},
-            "error": None, "has_import_data": False,
+            "error": None, "success": "",
+            "has_import_data": False,
             "earnings_items": [], "extra_earnings_items": [], "deductions_items": [],
             "results": [], "today": date.today(),
+            "aa_detail_json": {},
+            "uploaded_types": set(),
+            "aa_ref_month_display": "",
+            "api_key_valid": True,
+            "api_key_message": "",
         }
     )
 
@@ -1111,7 +1118,6 @@ def salary_slip(
     MS_MAP = {
         "本薪（含交通）": "salary_with_transport",
         "交通津貼": "transport_allowance",
-        "久任獎金": "long_term_bonus",
         "AA碼獎金": "aa_bonus",
     }
 

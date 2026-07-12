@@ -38,7 +38,7 @@
         <thead>
           <tr>
             {% for label in sun_first_labels %}
-            <th style="text-align:center;padding:0.4rem 0.2rem;font-size:0.85rem;">{{ label[:1] }}</th>
+            <th style="text-align:center;padding:0.4rem 0.2rem;font-size:0.85rem;">{{ label[1:2] }}</th>
             {% endfor %}
           </tr>
         </thead>
@@ -156,7 +156,7 @@
             <th style="position:sticky;left:0;background:#eaf1f1;z-index:1;min-width:50px;padding:0.25rem;">人員</th>
             <th style="min-width:50px;padding:0.25rem;text-align:center;">出勤天</th>
             {% for day in range(1, days_in_month + 1) %}
-            <th style="text-align:center;min-width:22px;padding:0.2rem;">{{ day }}</th>
+            <th style="text-align:center;min-width:22px;padding:0.2rem;font-size:0.72rem;">{{ day }}<br><span style="font-size:0.6rem;color:{% if day_weekday_labels[day-1] == '日' %}#c0392b{% elif day_weekday_labels[day-1] == '六' %}#2c7a7b{% else %}#777{% endif %};">{{ day_weekday_labels[day-1] }}</span></th>
             {% endfor %}
           </tr>
         </thead>

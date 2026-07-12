@@ -457,7 +457,7 @@ def get_daily_bracket_breakdown(
         range_end = d + timedelta(days=7)
         svc_records = _get_service_records_by_date(caregiver_id, range_start, range_end, db)
 
-    date_type, _ = classify_date_from_records(caregiver, d, holiday_dates, svc_records, db)
+    date_type, _ = classify_date_from_records(caregiver, d, holiday_dates, svc_records, db, apply_rule_4_1=False)
     day_records = svc_records.get(d, [])
     total_minutes = sum(r.minutes for r in day_records)
 

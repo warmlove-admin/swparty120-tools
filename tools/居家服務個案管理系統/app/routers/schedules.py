@@ -23,7 +23,7 @@ from app.services.excel_schedule_import import parse_directory, import_entries_t
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
-WEEKDAY_LABELS = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"]
+WEEKDAY_LABELS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"]
 SERVICE_TOKEN_RE = re.compile(r"([A-Z]{1,3}\d{1,2}(?:-\d+)?(?:(?!x)[a-z]\d?)?)(?:\s*x\s*(\d+))?", re.IGNORECASE)
 SHORT_SERVICE_NAMES = {
     "BA16-1": "代購代領",
@@ -119,10 +119,11 @@ def _imported_calendar_item(record: CaregiverServiceRecord, view: str = "", care
     for sl in raw_lines:
         code = sl["code"]
         name = sl["name"]
+        qty = int(sl["quantity"]) if sl["quantity"] else 1
         if code in code_agg:
-            code_agg[code]["qty"] += int(sl["quantity"])
+            code_agg[code]["qty"] += qty
         else:
-            code_agg[code] = {"code": code, "name": name, "qty": int(sl["quantity"])}
+            code_agg[code] = {"code": code, "name": name, "qty": qty}
 
     service_lines = []
     for code, info in code_agg.items():
@@ -249,7 +250,7 @@ def _dialysis_adjacent_context(case: Case, schedule, db: Session):
         prev_name = adj["prev"].case.name if adj["prev"] and adj["prev"].case else None
         next_name = adj["next"].case.name if adj["next"] and adj["next"].case else None
         adj_by_weekday[wd] = {"prev_name": prev_name, "next_name": next_name, "route": _route_summary(case, schedule, caregiver_name, prev_name, next_name)}
-    weekday_labels = WEEKDAY_LABELS
+    weekday_labels = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"]
     return {
         "dialysis_case": case,
         "dialysis_caregiver_name": caregiver_name,
@@ -262,7 +263,7 @@ def _form_context(case: Case, user: User, schedule=None, error=None, db=None):
     ctx = {
         "case": case, "user": user, "schedule": schedule, "error": error,
         "plans": [plan for plan in case.care_plans if plan.assigned_caregiver_id],
-        "weekday_labels": list(enumerate(WEEKDAY_LABELS)),
+        "weekday_labels": [(1, "週一"), (2, "週二"), (3, "週三"), (4, "週四"), (5, "週五"), (6, "週六"), (0, "週日")],
     }
     if db and schedule and _need_dialysis_confirmation(case, schedule.service_code):
         ctx.update(_dialysis_adjacent_context(case, schedule, db))
@@ -382,14 +383,35 @@ def monthly_schedule(
         query = query.filter(ServiceSchedule.case_id == case_id)
         imported_query = imported_query.filter(CaregiverServiceRecord.case_id == case_id)
     schedules = query.filter(ServiceSchedule.effective_from <= month_end, or_(ServiceSchedule.effective_until.is_(None), ServiceSchedule.effective_until >= current_month)).all()
+    prev_month = _month_shift(current_month, -1)
+    next_month = _month_shift(current_month, 1)
+    _, prev_days = calendar.monthrange(prev_month.year, prev_month.month)
+    _, cur_days = calendar.monthrange(current_month.year, current_month.month)
+    import_start = date(prev_month.year, prev_month.month, prev_days - 6)
+    import_end = date(next_month.year, next_month.month, 7)
     imported_records = imported_query.filter(
-        CaregiverServiceRecord.service_date >= current_month,
-        CaregiverServiceRecord.service_date <= month_end,
+        CaregiverServiceRecord.service_date >= import_start,
+        CaregiverServiceRecord.service_date <= import_end,
     ).all()
-    _, days = calendar.monthrange(current_month.year, current_month.month)
-    first_weekday = current_month.weekday()
-    cells = [{"day": None, "schedules": []} for _ in range(first_weekday)]
-    for day in range(1, days + 1):
+    first_py_weekday = current_month.weekday()
+    first_sun_offset = (first_py_weekday + 1) % 7
+    cells = []
+    if first_sun_offset > 0:
+        for i in range(first_sun_offset, 0, -1):
+            prev_d = date(current_month.year, current_month.month, 1) - timedelta(days=i)
+            schedule_items = [
+                _calendar_item(item, prev_d)
+                for item in schedules
+                if prev_d.weekday() in item.weekdays and prev_d >= item.effective_from and (not item.effective_until or prev_d <= item.effective_until)
+            ]
+            imported_items = [
+                _imported_calendar_item(record, view, caregiver_id, case_id, show_names)
+                for record in imported_records
+                if record.service_date == prev_d
+            ]
+            items = sorted(schedule_items + imported_items, key=lambda item: (item["start_time"], item["case"].name if item["case"] else ""))
+            cells.append({"day": prev_d.day, "schedules": items, "other_month": True})
+    for day in range(1, cur_days + 1):
         current = date(current_month.year, current_month.month, day)
         schedule_items = [
             _calendar_item(item, current)
@@ -403,8 +425,22 @@ def monthly_schedule(
         ]
         items = sorted(schedule_items + imported_items, key=lambda item: (item["start_time"], item["case"].name if item["case"] else ""))
         cells.append({"day": day, "schedules": items})
+    next_day_num = 1
     while len(cells) % 7:
-        cells.append({"day": None, "schedules": []})
+        next_d = date(next_month.year, next_month.month, next_day_num)
+        schedule_items = [
+            _calendar_item(item, next_d)
+            for item in schedules
+            if next_d.weekday() in item.weekdays and next_d >= item.effective_from and (not item.effective_until or next_d <= item.effective_until)
+        ]
+        imported_items = [
+            _imported_calendar_item(record, view, caregiver_id, case_id, show_names)
+            for record in imported_records
+            if record.service_date == next_d
+        ]
+        items = sorted(schedule_items + imported_items, key=lambda item: (item["start_time"], item["case"].name if item["case"] else ""))
+        cells.append({"day": next_day_num, "schedules": items, "other_month": True})
+        next_day_num += 1
     current_case_name = ""
     if case_id and case_id in case_by_id:
         current_case_name = case_by_id[case_id].name
@@ -414,7 +450,7 @@ def monthly_schedule(
         "weeks": [cells[i:i + 7] for i in range(0, len(cells), 7)], "weekday_labels": WEEKDAY_LABELS,
         "view": view, "caregiver_id": caregiver_id, "case_id": case_id,
         "caregivers": caregivers, "cases": cases, "show_names": show_names,
-        "imported_count": len(imported_records),
+        "imported_count": sum(1 for r in imported_records if current_month <= r.service_date <= month_end),
         "formal_count": len(schedules),
         "current_case_name": current_case_name,
     })
@@ -498,7 +534,7 @@ def import_schedules_run(
     user: User = Depends(require_roles(UserRole.supervisor, UserRole.manager, UserRole.director)),
 ):
     current_month = _parse_month(month)
-    download_dir = os.path.join(os.path.expanduser("~"), "Downloads", "已執行班表6月")
+    download_dir = os.path.join(os.path.expanduser("~"), "Downloads", "已執行班表")
     if not os.path.isdir(download_dir):
         return RedirectResponse(
             url=f"/schedules?month={month}&error=找不到匯入資料夾：{download_dir}",
