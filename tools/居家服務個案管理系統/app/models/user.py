@@ -54,6 +54,7 @@ class User(Base):
     rest_weekday = Column(Integer)
     hourly_wage = Column(Integer)
     work_weekdays = Column(JSON)
+    force_overtime_weekend = Column(Boolean, default=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

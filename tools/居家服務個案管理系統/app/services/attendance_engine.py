@@ -246,6 +246,19 @@ def classify_date_from_records(
         has_sun_svc = _has_service_on(service_records_by_date, d)
         weekend_sat, weekend_sun = paired_saturday, d
 
+    # ── ④-1 週出勤≤5天且無國定假日→全部算平日 ──
+    # 除非 force_overtime_weekend=True（積極配合排班者保留加班）
+    if not user.force_overtime_weekend:
+        week_sun, week_sat = _find_week_sun_sat(d)
+        week_has_holiday = any(hd >= week_sun and hd <= week_sat for hd in holiday_dates)
+        if not week_has_holiday:
+            week_svc_days = sum(
+                1 for i in range(7)
+                if _has_service_on(service_records_by_date, week_sun + timedelta(days=i))
+            )
+            if week_svc_days <= 5:
+                return "weekday", False
+
     # 狀況 A：六日「皆有」出勤 → 14 天關聯視窗
     if has_sat_svc and has_sun_svc:
         day1, day14 = _get_14_day_window(weekend_sat, weekend_sun)
