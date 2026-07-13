@@ -24,3 +24,4 @@ from app.models.salary_item import SalaryItem  # noqa: F401
 from app.models.salary_payment import SalaryPayment  # noqa: F401
 from app.models.leave import LeaveType, LeaveRequest  # noqa: F401
 from app.models.aa_code import AaCodeRecord, Aa06CaseCondition  # noqa: F401
+from app.models.employee_change import EmployeeChange  # noqa: F401

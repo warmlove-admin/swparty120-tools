@@ -29,3 +29,6 @@ tools/居家服務個案管理系統/run_daily*.py
 tools/居家服務個案管理系統/app/*.db
 tools/居家服務個案管理系統/app/*.db.bak
 tools/居家服務個案管理系統/scripts/start_bg.bat
+tools/居家服務個案管理系統/scripts/*.png
+tools/居家服務個案管理系統/scripts/apollo_*.py
+tools/居家服務個案管理系統/scripts/apollo_*.json

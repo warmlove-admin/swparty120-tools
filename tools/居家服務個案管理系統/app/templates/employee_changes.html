@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}人事異動{% endblock %}
+{% block content %}
+<h2>人事異動管理</h2>
+
+<div style="display:grid; grid-template-columns:260px 1fr; gap:1rem; align-items:start;">
+  {# === 左側：員工選單 === #}
+  <div class="card" style="padding:0.8rem;">
+    <div class="section-title" style="margin:0 0 0.5rem;">居服員清單</div>
+    <div style="max-height:70vh; overflow-y:auto;">
+    {% for cg in caregivers %}
+      <a href="/employee-changes?employee_id={{ cg.id }}{% if selected_type %}&change_type={{ selected_type }}{% endif %}"
+         style="display:flex; justify-content:space-between; padding:0.45rem 0.6rem; border-radius:4px; text-decoration:none; color:#1f2d2f; font-weight:600; {% if selected and selected.id == cg.id %}background:#2c7a7b; color:#fff;{% endif %}">
+        <span>{{ cg.employee_no }} {{ cg.display_name }}</span>
+      </a>
+    {% endfor %}
+    </div>
+  </div>
+
+  {# === 右側：異動內容 === #}
+  <div>
+    {% if selected %}
+    {# -- 當前狀態摘要 -- #}
+    <div class="card">
+      <div class="section-title">{{ selected.employee_no }} {{ selected.display_name }} — 當前狀態</div>
+      <table style="margin-top:0.5rem;">
+        <tr>
+          <th>勞保</th><td>{{ "{:,}".format(current_values.get('insurance_labor_amount', 0)) }}</td>
+          <th>職災保險</th><td>{{ "{:,}".format(current_values.get('insurance_occupational_amount', 0)) }}</td>
+          <th>勞退</th><td>{{ "{:,}".format(current_values.get('insurance_labor_pension_amount', 0)) }}</td>
+        </tr>
+        <tr>
+          <th>雇主提繳率</th><td>{{ current_values.get('labor_pension_employer_rate', 6) }}%</td>
+          <th>個人提繳率</th><td>{{ current_values.get('labor_pension_personal_rate', 0) }}%</td>
+          <th>健保</th><td>{{ "{:,}".format(current_values.get('insurance_health_amount', 0)) }}</td>
+        </tr>
+        <tr>
+          <th>眷屬人數</th><td>{{ current_values.get('health_dependents', 0) }}</td>
+          <th>時薪</th><td>{{ "{:,}".format(current_values.get('hourly_wage', 0)) }}</td>
+          <th></th><td></td>
+        </tr>
+      </table>
+    </div>
+
+    {# -- 類型篩選 -- #}
+    <div style="margin-bottom:0.8rem;">
+      <a href="/employee-changes?employee_id={{ selected.id }}" class="btn {% if not selected_type %}{% else %}btn-secondary{% endif %}" style="font-size:0.9rem;">全部</a>
+      {% for val, label in change_types %}
+      <a href="/employee-changes?employee_id={{ selected.id }}&change_type={{ val }}" class="btn {% if selected_type == val %}{% else %}btn-secondary{% endif %}" style="font-size:0.9rem;">{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    {# -- 新增異動表單 -- #}
+    <div class="card">
+      <details>
+        <summary class="section-title" style="margin:0; cursor:pointer;">新增異動</summary>
+        <form method="post" action="/employee-changes/add" style="margin-top:1rem;">
+          <input type="hidden" name="employee_id" value="{{ selected.id }}">
+          <div class="form-grid">
+            <div>
+              <label>異動類型</label>
+              <select name="change_type" id="change_type_select" onchange="updateFields()">
+                {% for val, label in change_types %}
+                <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label>異動欄位</label>
+              <select name="field_name" id="field_name_select">
+                {% for val, label in fields_by_type.get(selected_type or 'insurance', fields_by_type['insurance']) %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label>生效日期</label>
+              <input type="date" name="effective_date" value="{{ '2025-10-01' }}" required>
+            </div>
+            <div>
+              <label>新值</label>
+              <input type="number" name="new_value" required min="0">
+            </div>
+            <div>
+              <label>來源</label>
+              <select name="source">
+                {% for val, label in sources %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn" style="margin-top:1rem;">儲存異動</button>
+        </form>
+      </details>
+    </div>
+
+    {# -- 異動紀錄 -- #}
+    <div class="card">
+      <div class="section-title">異動紀錄</div>
+      {% if changes %}
+      <table style="margin-top:0.5rem;">
+        <thead>
+          <tr>
+            <th>生效日</th>
+            <th>類型</th>
+            <th>欄位</th>
+            <th style="text-align:right;">舊值</th>
+            <th style="text-align:right;">新值</th>
+            <th>來源</th>
+            <th>建立者</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in changes %}
+          <tr>
+            <td>{{ c.effective_date }}</td>
+            <td>{{ c.change_type_label }}</td>
+            <td>{{ c.field_label }}</td>
+            <td style="text-align:right;">{{ "{:,}".format(c.old_value) }}</td>
+            <td style="text-align:right; font-weight:800;">{{ "{:,}".format(c.new_value) }}</td>
+            <td>{{ c.source_label }}</td>
+            <td>{{ c.creator.display_name if c.creator else '-' }}</td>
+            <td>
+              {% if user.role.value in ["主管", "主任"] %}
+              <form method="post" action="/employee-changes/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆異動？')">
+                <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.78rem;">刪除</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color:#999; margin-top:0.5rem;">尚無異動紀錄</p>
+      {% endif %}
+    </div>
+
+    {% else %}
+    <div class="card"><p>請從左側選擇一位居服員</p></div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+const FIELDS_BY_TYPE = {{ fields_by_type | tojson }};
+function updateFields() {
+  const type = document.getElementById('change_type_select').value;
+  const fieldSelect = document.getElementById('field_name_select');
+  const fields = FIELDS_BY_TYPE[type] || [];
+  fieldSelect.innerHTML = '';
+  fields.forEach(([val, label]) => {
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = label;
+    fieldSelect.appendChild(opt);
+  });
+}
+</script>
+{% endblock %}

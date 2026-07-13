@@ -142,6 +142,16 @@ def apply_compatible_schema_updates():
                 if col not in isr_cols:
                     col_type = "INTEGER" if col == "visit_order" else "FLOAT"
                     connection.execute(text(f"ALTER TABLE import_salary_records ADD COLUMN {col} {col_type}"))
+        # 勞健保級距欄位
+        if "users" in inspector.get_table_names():
+            ucols = {c["name"] for c in inspector.get_columns("users")}
+            for col in ("insurance_labor_amount", "insurance_occupational_amount",
+                        "insurance_labor_pension_amount", "labor_pension_employer_rate",
+                        "labor_pension_personal_rate", "insurance_health_amount",
+                        "health_dependents", "insurance_effective_year", "insurance_effective_month"):
+                if col not in ucols:
+                    default_val = "6" if col == "labor_pension_employer_rate" else "0"
+                    connection.execute(text(f"ALTER TABLE users ADD COLUMN {col} INTEGER DEFAULT {default_val}"))
         # 本功能上線前建立的目標／計畫沒有評估來源；依實務將它們歸回個案的初次評估，
         # 讓既有資料在新的評估分組畫面仍可被找到與檢討。
         for table_name in ("goals", "care_plans"):
