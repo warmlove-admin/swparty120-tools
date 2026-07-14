@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from jinja2 import Environment, FileSystemLoader
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
@@ -9,9 +9,21 @@ from app.auth import get_current_user, require_roles
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.employee_change import EmployeeChange
+from app.services.insurance import (
+    LABOR_INSURANCE_GRADES,
+    HEALTH_INSURANCE_GRADES,
+    LABOR_PENSION_GRADES,
+    calc_labor_insurance_self_pay,
+    calc_health_insurance_self_pay,
+    calc_labor_pension_self_pay,
+    calc_total_employee_deduction,
+    lookup_labor_insurance_grade,
+    lookup_health_insurance_grade,
+    lookup_labor_pension_grade,
+)
 
 router = APIRouter(prefix="/employee-changes")
-templates = Jinja2Templates(directory="app/templates")
+_jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 
 CHANGE_TYPES = [
     ("insurance", "勞健保"),
@@ -50,6 +62,35 @@ SOURCES = [
 ]
 
 
+def _get_current_values(user: User, db: Session) -> dict:
+    """取得員工目前各欄位的生效值。"""
+    today = date.today()
+    values = {}
+    for field_list in FIELDS_BY_TYPE.values():
+        for field_name, _ in field_list:
+            val = user.get_change_value(db, field_name, as_of=today)
+            if val is not None:
+                values[field_name] = val
+            else:
+                user_val = getattr(user, field_name, None)
+                if user_val is not None:
+                    values[field_name] = user_val
+    return values
+
+
+def _get_insurance_calc(cv: dict) -> dict:
+    """根據目前值計算各保險自付額。"""
+    labor_grade = cv.get("insurance_labor_amount", 0)
+    health_grade = cv.get("insurance_health_amount", 0)
+    dependents = cv.get("health_dependents", 0)
+    pension_grade = cv.get("insurance_labor_pension_amount", 0)
+    pension_self_rate = cv.get("labor_pension_personal_rate", 0)
+
+    return calc_total_employee_deduction(
+        labor_grade, health_grade, dependents, pension_self_rate
+    )
+
+
 @router.get("", response_class=HTMLResponse)
 def employee_changes_page(
     request: Request,
@@ -58,7 +99,6 @@ def employee_changes_page(
     user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
     db: Session = Depends(get_db),
 ):
-    # All active caregivers
     caregivers = (db.query(User)
                   .filter(User.is_active.is_(True), User.role == UserRole.caregiver)
                   .order_by(User.employee_no).all())
@@ -66,6 +106,7 @@ def employee_changes_page(
     selected = None
     changes = []
     current_values = {}
+    insurance_calc = {}
 
     if employee_id:
         selected = db.query(User).filter(User.id == employee_id).first()
@@ -78,33 +119,82 @@ def employee_changes_page(
         if change_type:
             q = q.filter(EmployeeChange.change_type == change_type)
         changes = q.order_by(desc(EmployeeChange.effective_date), desc(EmployeeChange.created_at)).all()
+        current_values = _get_current_values(selected, db)
+        insurance_calc = _get_insurance_calc(current_values)
 
-        # Compute current values as of today
-        today = date.today()
-        for field_list in FIELDS_BY_TYPE.values():
-            for field_name, _ in field_list:
-                val = selected.get_change_value(db, field_name, as_of=today)
-                if val is not None:
-                    current_values[field_name] = val
-                else:
-                    # Fallback to User table column
-                    user_val = getattr(selected, field_name, None)
-                    if user_val is not None:
-                        current_values[field_name] = user_val
+    # Grade options for dropdowns (value, label)
+    labor_grades = [(g, f"{g:,}") for _, g in LABOR_INSURANCE_GRADES]
+    health_grades = [(g, f"{g:,}") for _, g in HEALTH_INSURANCE_GRADES]
+    pension_grades = [(g, f"{g:,}") for _, g in LABOR_PENSION_GRADES]
 
-    return templates.TemplateResponse("employee_changes.html", {
-        "request": request,
-        "user": user,
-        "caregivers": caregivers,
-        "selected": selected,
-        "changes": changes,
-        "current_values": current_values,
-        "change_types": CHANGE_TYPES,
-        "fields_by_type": FIELDS_BY_TYPE,
-        "sources": SOURCES,
-        "selected_type": change_type,
-        "EmployeeChange": EmployeeChange,
-    })
+    today_str = date.today().isoformat()
+
+    template = _jinja_env.get_template("employee_changes.html")
+    html = template.render(
+        user=user,
+        caregivers=caregivers,
+        selected=selected,
+        changes=changes,
+        current_values=current_values,
+        insurance_calc=insurance_calc,
+        change_types=CHANGE_TYPES,
+        fields_by_type={k: [list(i) for i in v] for k, v in FIELDS_BY_TYPE.items()},
+        sources=SOURCES,
+        selected_type=change_type,
+        EmployeeChange=EmployeeChange,
+        labor_grades=labor_grades,
+        health_grades=health_grades,
+        pension_grades=pension_grades,
+        today_str=today_str,
+    )
+    return HTMLResponse(content=html)
+
+
+@router.post("/update-insurance")
+def update_insurance(
+    request: Request,
+    employee_id: str = Form(...),
+    insurance_labor_amount: int = Form(...),
+    insurance_health_amount: int = Form(...),
+    health_dependents: int = Form(0),
+    insurance_labor_pension_amount: int = Form(...),
+    labor_pension_personal_rate: int = Form(0),
+    effective_date: str = Form(...),
+    user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
+    db: Session = Depends(get_db),
+):
+    target = db.query(User).filter(User.id == employee_id).first()
+    if not target:
+        return RedirectResponse(url="/employee-changes", status_code=302)
+
+    eff = date.fromisoformat(effective_date)
+    fields = {
+        "insurance_labor_amount": insurance_labor_amount,
+        "insurance_health_amount": insurance_health_amount,
+        "health_dependents": health_dependents,
+        "insurance_labor_pension_amount": insurance_labor_pension_amount,
+        "labor_pension_personal_rate": labor_pension_personal_rate,
+    }
+
+    for field_name, new_val in fields.items():
+        old_val = target.get_change_value(db, field_name) or 0
+        if old_val != new_val:
+            change = EmployeeChange(
+                employee_id=employee_id,
+                change_type="insurance",
+                field_name=field_name,
+                effective_date=eff,
+                old_value=old_val,
+                new_value=new_val,
+                source="manual",
+                created_by=user.id,
+            )
+            db.add(change)
+    db.commit()
+    return RedirectResponse(
+        url=f"/employee-changes?employee_id={employee_id}",
+        status_code=302,
+    )
 
 
 @router.post("/add")
@@ -122,7 +212,6 @@ def add_change(
     if not target:
         return RedirectResponse(url="/employee-changes", status_code=302)
 
-    # Get old value
     old_value = target.get_change_value(db, field_name) or 0
 
     change = EmployeeChange(

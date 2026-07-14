@@ -33,6 +33,11 @@ class MonthlySalary(Base):
     aa_bonus = Column(Integer, default=0)
     travel_allowance = Column(Integer, default=0)
 
+    # 保險應扣項目
+    labor_insurance_deduction = Column(Integer, default=0)
+    health_insurance_deduction = Column(Integer, default=0)
+    labor_pension_deduction = Column(Integer, default=0)
+
     calculated_at = Column(DateTime, default=datetime.utcnow)
     calculated_by = Column(String, ForeignKey("users.id"))
 
@@ -42,3 +47,13 @@ class MonthlySalary(Base):
     @property
     def total_salary(self):
         return (self.salary_with_transport or 0) + (self.long_term_bonus or 0) + (self.aa_bonus or 0)
+
+    @property
+    def total_deductions(self):
+        return ((self.labor_insurance_deduction or 0) +
+                (self.health_insurance_deduction or 0) +
+                (self.labor_pension_deduction or 0))
+
+    @property
+    def net_salary(self):
+        return self.total_salary - self.total_deductions

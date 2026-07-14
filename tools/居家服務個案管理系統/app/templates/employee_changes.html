@@ -6,7 +6,10 @@
 <div style="display:grid; grid-template-columns:260px 1fr; gap:1rem; align-items:start;">
   {# === 左側：員工選單 === #}
   <div class="card" style="padding:0.8rem;">
-    <div class="section-title" style="margin:0 0 0.5rem;">居服員清單</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+      <div class="section-title" style="margin:0;">居服員清單</div>
+      <a href="/company" style="font-size:0.8rem; color:#2c7a7b; font-weight:700; text-decoration:none;">公司負擔 →</a>
+    </div>
     <div style="max-height:70vh; overflow-y:auto;">
     {% for cg in caregivers %}
       <a href="/employee-changes?employee_id={{ cg.id }}{% if selected_type %}&change_type={{ selected_type }}{% endif %}"
@@ -20,27 +23,130 @@
   {# === 右側：異動內容 === #}
   <div>
     {% if selected %}
-    {# -- 當前狀態摘要 -- #}
-    <div class="card">
-      <div class="section-title">{{ selected.employee_no }} {{ selected.display_name }} — 當前狀態</div>
-      <table style="margin-top:0.5rem;">
-        <tr>
-          <th>勞保</th><td>{{ "{:,}".format(current_values.get('insurance_labor_amount', 0)) }}</td>
-          <th>職災保險</th><td>{{ "{:,}".format(current_values.get('insurance_occupational_amount', 0)) }}</td>
-          <th>勞退</th><td>{{ "{:,}".format(current_values.get('insurance_labor_pension_amount', 0)) }}</td>
-        </tr>
-        <tr>
-          <th>雇主提繳率</th><td>{{ current_values.get('labor_pension_employer_rate', 6) }}%</td>
-          <th>個人提繳率</th><td>{{ current_values.get('labor_pension_personal_rate', 0) }}%</td>
-          <th>健保</th><td>{{ "{:,}".format(current_values.get('insurance_health_amount', 0)) }}</td>
-        </tr>
-        <tr>
-          <th>眷屬人數</th><td>{{ current_values.get('health_dependents', 0) }}</td>
-          <th>時薪</th><td>{{ "{:,}".format(current_values.get('hourly_wage', 0)) }}</td>
-          <th></th><td></td>
-        </tr>
-      </table>
-    </div>
+    {# -- 四張卡片：保險級距與自付額 -- #}
+    <form method="post" action="/employee-changes/update-insurance" id="insurance_form">
+      <input type="hidden" name="employee_id" value="{{ selected.id }}">
+      <input type="hidden" name="effective_date" id="effective_date_hidden" value="{{ today_str }}">
+
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.8rem; margin-bottom:1rem;">
+
+        {# ── 勞保卡片 ── #}
+        <div class="card" style="padding:0.8rem;">
+          <div style="font-weight:800; font-size:1rem; color:#2c7a7b; border-bottom:2px solid #2c7a7b; padding-bottom:0.3rem; margin-bottom:0.6rem;">勞保</div>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.82rem; color:#666;">投保級距</label>
+            <select name="insurance_labor_amount" id="sel_labor_grade"
+                    style="width:100%; padding:0.3rem; font-size:0.95rem; border:1px solid #ccc; border-radius:4px;"
+                    onchange="calcAll()">
+              {% for val, label in labor_grades %}
+              <option value="{{ val }}" {% if current_values.get('insurance_labor_amount', 0) == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="font-size:0.82rem; color:#666;">月投保薪資</div>
+          <div style="font-size:1.3rem; font-weight:800;" id="labor_grade_display">
+            {{ "{:,}".format(current_values.get('insurance_labor_amount', 29500)) }}
+          </div>
+          <div style="margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid #eee;">
+            <div style="font-size:0.82rem; color:#666;">每月自付額</div>
+            <div style="font-size:1.4rem; font-weight:900; color:#c53030;" id="labor_self_display">
+              {{ "{:,}".format(insurance_calc.get('labor_insurance_self', 0)) }}
+            </div>
+          </div>
+        </div>
+
+        {# ── 健保卡片 ── #}
+        <div class="card" style="padding:0.8rem;">
+          <div style="font-weight:800; font-size:1rem; color:#2b6cb0; border-bottom:2px solid #2b6cb0; padding-bottom:0.3rem; margin-bottom:0.6rem;">健保</div>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.82rem; color:#666;">投保級距</label>
+            <select name="insurance_health_amount" id="sel_health_grade"
+                    style="width:100%; padding:0.3rem; font-size:0.95rem; border:1px solid #ccc; border-radius:4px;"
+                    onchange="calcAll()">
+              {% for val, label in health_grades %}
+              <option value="{{ val }}" {% if current_values.get('insurance_health_amount', 0) == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="font-size:0.82rem; color:#666;">月投保金額</div>
+          <div style="font-size:1.3rem; font-weight:800;" id="health_grade_display">
+            {{ "{:,}".format(current_values.get('insurance_health_amount', 29500)) }}
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.82rem; color:#666;">眷屬人數</label>
+            <select name="health_dependents" id="sel_dependents"
+                    style="width:100%; padding:0.3rem; font-size:0.95rem; border:1px solid #ccc; border-radius:4px;"
+                    onchange="calcAll()">
+              {% for n in range(4) %}
+              <option value="{{ n }}" {% if current_values.get('health_dependents', 0) == n %}selected{% endif %}>{{ n }} 人</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="font-size:0.82rem; color:#666;">每月自付額（含眷屬）</div>
+          <div style="font-size:1.4rem; font-weight:900; color:#c53030;" id="health_self_display">
+            {{ "{:,}".format(insurance_calc.get('health_insurance_self', 0)) }}
+          </div>
+        </div>
+
+        {# ── 勞退卡片 ── #}
+        <div class="card" style="padding:0.8rem;">
+          <div style="font-weight:800; font-size:1rem; color:#744210; border-bottom:2px solid #744210; padding-bottom:0.3rem; margin-bottom:0.6rem;">勞退</div>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.82rem; color:#666;">提繳工資</label>
+            <select name="insurance_labor_pension_amount" id="sel_pension_grade"
+                    style="width:100%; padding:0.3rem; font-size:0.95rem; border:1px solid #ccc; border-radius:4px;"
+                    onchange="calcAll()">
+              {% for val, label in pension_grades %}
+              <option value="{{ val }}" {% if current_values.get('insurance_labor_pension_amount', 0) == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="font-size:0.82rem; color:#666;">月提繳工資</div>
+          <div style="font-size:1.3rem; font-weight:800;" id="pension_grade_display">
+            {{ "{:,}".format(current_values.get('insurance_labor_pension_amount', 0)) }}
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.82rem; color:#666;">自提比率</label>
+            <select name="labor_pension_personal_rate" id="sel_pension_self"
+                    style="width:100%; padding:0.3rem; font-size:0.95rem; border:1px solid #ccc; border-radius:4px;"
+                    onchange="calcAll()">
+              {% for n in range(7) %}
+              <option value="{{ n }}" {% if current_values.get('labor_pension_personal_rate', 0) == n %}selected{% endif %}>{{ n }}%</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="font-size:0.82rem; color:#666;">每月自付額</div>
+          <div style="font-size:1.4rem; font-weight:900; color:#c53030;" id="pension_self_display">
+            {{ "{:,}".format(insurance_calc.get('labor_pension_self', 0)) }}
+          </div>
+        </div>
+
+        {# ── 應扣合計卡片 ── #}
+        <div class="card" style="padding:0.8rem; background:#f7fafc;">
+          <div style="font-weight:800; font-size:1rem; color:#1a202c; border-bottom:2px solid #1a202c; padding-bottom:0.3rem; margin-bottom:0.6rem;">本月應扣合計</div>
+          <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #eee;">
+            <span style="color:#666; font-size:0.9rem;">勞保</span>
+            <span style="font-weight:700;" id="sum_labor">{{ "{:,}".format(insurance_calc.get('labor_insurance_self', 0)) }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #eee;">
+            <span style="color:#666; font-size:0.9rem;">健保</span>
+            <span style="font-weight:700;" id="sum_health">{{ "{:,}".format(insurance_calc.get('health_insurance_self', 0)) }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.3rem 0; border-bottom:1px solid #eee;">
+            <span style="color:#666; font-size:0.9rem;">勞退自提</span>
+            <span style="font-weight:700;" id="sum_pension">{{ "{:,}".format(insurance_calc.get('labor_pension_self', 0)) }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:0.5rem 0; margin-top:0.3rem;">
+            <span style="font-weight:800; font-size:1rem;">合計</span>
+            <span style="font-weight:900; font-size:1.4rem; color:#c53030;" id="sum_total">
+              {{ "{:,}".format(insurance_calc.get('total_deduction', 0)) }}
+            </span>
+          </div>
+          <button type="submit" class="btn" style="width:100%; margin-top:0.8rem; font-size:0.9rem;">儲存保險級距</button>
+        </div>
+
+      </div>
+    </form>
 
     {# -- 類型篩選 -- #}
     <div style="margin-bottom:0.8rem;">
@@ -75,7 +181,7 @@
             </div>
             <div>
               <label>生效日期</label>
-              <input type="date" name="effective_date" value="{{ '2025-10-01' }}" required>
+              <input type="date" name="effective_date" value="{{ today_str }}" required>
             </div>
             <div>
               <label>新值</label>
@@ -146,6 +252,40 @@
 
 <script>
 const FIELDS_BY_TYPE = {{ fields_by_type | tojson }};
+
+// 2026 費率常數
+const LI_RATE = 0.125, LI_EMP_RATIO = 0.20;
+const HI_RATE = 0.0517, HI_EMP_RATIO = 0.30;
+const LP_RATE = 0.06;
+
+function fmt(n) { return n.toLocaleString('en-US'); }
+
+function calcAll() {
+  const laborGrade = parseInt(document.getElementById('sel_labor_grade').value) || 0;
+  const healthGrade = parseInt(document.getElementById('sel_health_grade').value) || 0;
+  const dependents = parseInt(document.getElementById('sel_dependents').value) || 0;
+  const pensionGrade = parseInt(document.getElementById('sel_pension_grade').value) || 0;
+  const pensionSelf = parseInt(document.getElementById('sel_pension_self').value) || 0;
+
+  const laborSelf = Math.round(laborGrade * LI_RATE * LI_EMP_RATIO);
+  const dep = Math.min(dependents, 3);
+  const healthSelf = Math.round(healthGrade * HI_RATE * HI_EMP_RATIO * (1 + dep));
+  const pensionSelfAmt = Math.round(pensionGrade * pensionSelf / 100);
+  const total = laborSelf + healthSelf + pensionSelfAmt;
+
+  document.getElementById('labor_grade_display').textContent = fmt(laborGrade);
+  document.getElementById('labor_self_display').textContent = fmt(laborSelf);
+  document.getElementById('health_grade_display').textContent = fmt(healthGrade);
+  document.getElementById('health_self_display').textContent = fmt(healthSelf);
+  document.getElementById('pension_grade_display').textContent = fmt(pensionGrade);
+  document.getElementById('pension_self_display').textContent = fmt(pensionSelfAmt);
+
+  document.getElementById('sum_labor').textContent = fmt(laborSelf);
+  document.getElementById('sum_health').textContent = fmt(healthSelf);
+  document.getElementById('sum_pension').textContent = fmt(pensionSelfAmt);
+  document.getElementById('sum_total').textContent = fmt(total);
+}
+
 function updateFields() {
   const type = document.getElementById('change_type_select').value;
   const fieldSelect = document.getElementById('field_name_select');
@@ -158,5 +298,7 @@ function updateFields() {
     fieldSelect.appendChild(opt);
   });
 }
+
+document.addEventListener('DOMContentLoaded', calcAll);
 </script>
 {% endblock %}

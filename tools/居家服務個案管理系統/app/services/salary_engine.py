@@ -48,6 +48,11 @@ OLD_EMPLOYEES = {
 }
 
 from app.config import settings
+from app.services.insurance import (
+    calc_labor_insurance_self_pay,
+    calc_health_insurance_self_pay,
+    calc_labor_pension_self_pay,
+)
 GOOGLE_MAPS_API_KEY = settings.google_maps_api_key
 
 
@@ -606,6 +611,17 @@ def calculate_monthly_salary(
             caregiver.display_name, caregiver.hire_date, year, month, total_hours_ceil
         )
 
+    # 計算保險應扣項目
+    li_deduction = calc_labor_insurance_self_pay(caregiver.insurance_labor_amount or 0)
+    hi_deduction = calc_health_insurance_self_pay(
+        caregiver.insurance_health_amount or 0,
+        caregiver.health_dependents or 0,
+    )
+    lp_deduction = calc_labor_pension_self_pay(
+        caregiver.insurance_labor_pension_amount or 0,
+        caregiver.labor_pension_personal_rate or 0,
+    )
+
     existing = db.query(MonthlySalary).filter(
         MonthlySalary.caregiver_id == caregiver_id,
         MonthlySalary.year == year,
@@ -623,6 +639,9 @@ def calculate_monthly_salary(
         existing.total_service_minutes = total_svc_minutes
         existing.travel_allowance = travel_allowance
         existing.long_term_bonus = bonus
+        existing.labor_insurance_deduction = li_deduction
+        existing.health_insurance_deduction = hi_deduction
+        existing.labor_pension_deduction = lp_deduction
         existing.calculated_at = datetime.utcnow()
         if calculated_by:
             existing.calculated_by = calculated_by
@@ -641,6 +660,9 @@ def calculate_monthly_salary(
             total_service_minutes=total_svc_minutes,
             travel_allowance=travel_allowance,
             long_term_bonus=bonus,
+            labor_insurance_deduction=li_deduction,
+            health_insurance_deduction=hi_deduction,
+            labor_pension_deduction=lp_deduction,
             calculated_by=calculated_by,
         )
         db.add(ms)

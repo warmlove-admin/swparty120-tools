@@ -142,6 +142,12 @@ def apply_compatible_schema_updates():
                 if col not in isr_cols:
                     col_type = "INTEGER" if col == "visit_order" else "FLOAT"
                     connection.execute(text(f"ALTER TABLE import_salary_records ADD COLUMN {col} {col_type}"))
+        # 保險應扣欄位
+        if "monthly_salaries" in inspector.get_table_names():
+            ms_cols = {c["name"] for c in inspector.get_columns("monthly_salaries")}
+            for col in ("labor_insurance_deduction", "health_insurance_deduction", "labor_pension_deduction"):
+                if col not in ms_cols:
+                    connection.execute(text(f"ALTER TABLE monthly_salaries ADD COLUMN {col} INTEGER DEFAULT 0"))
         # 勞健保級距欄位
         if "users" in inspector.get_table_names():
             ucols = {c["name"] for c in inspector.get_columns("users")}
