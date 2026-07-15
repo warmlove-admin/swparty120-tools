@@ -152,15 +152,32 @@ def apply_compatible_schema_updates():
         if "nhi_dependents" not in inspector.get_table_names():
             from app.models.nhi_dependent import NhiDependent
             NhiDependent.__table__.create(connection)
+        else:
+            nhi_cols = {c["name"] for c in inspector.get_columns("nhi_dependents")}
+            for col in ("nationality", "is_child", "has_exemption", "subsidy_rate", "max_subsidy_amount"):
+                if col not in nhi_cols:
+                    if col in ("subsidy_rate", "max_subsidy_amount"):
+                        connection.execute(text(f"ALTER TABLE nhi_dependents ADD COLUMN {col} INTEGER DEFAULT 0"))
+                    elif col in ("is_child", "has_exemption"):
+                        connection.execute(text(f"ALTER TABLE nhi_dependents ADD COLUMN {col} BOOLEAN DEFAULT 0"))
+                    else:
+                        connection.execute(text(f"ALTER TABLE nhi_dependents ADD COLUMN {col} VARCHAR DEFAULT '本國人'"))
         # 勞健保級距欄位
         if "users" in inspector.get_table_names():
             ucols = {c["name"] for c in inspector.get_columns("users")}
             for col in ("insurance_labor_amount", "insurance_occupational_amount",
                         "insurance_labor_pension_amount", "labor_pension_employer_rate",
                         "labor_pension_personal_rate", "insurance_health_amount",
-                        "health_dependents", "insurance_effective_year", "insurance_effective_month"):
+                        "health_dependents", "has_exemption",
+                        "insurance_effective_year", "insurance_effective_month"):
                 if col not in ucols:
-                    default_val = "6" if col == "labor_pension_employer_rate" else "0"
+                    if col == "labor_pension_employer_rate":
+                        default_val = "6"
+                    elif col == "has_exemption":
+                        connection.execute(text(f"ALTER TABLE users ADD COLUMN {col} BOOLEAN DEFAULT 0"))
+                        continue
+                    else:
+                        default_val = "0"
                     connection.execute(text(f"ALTER TABLE users ADD COLUMN {col} INTEGER DEFAULT {default_val}"))
         # 本功能上線前建立的目標／計畫沒有評估來源；依實務將它們歸回個案的初次評估，
         # 讓既有資料在新的評估分組畫面仍可被找到與檢討。

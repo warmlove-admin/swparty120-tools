@@ -40,6 +40,7 @@ INSURANCE_FIELDS = [
     ("labor_pension_personal_rate", "勞退個人提繳率(%)"),
     ("insurance_health_amount", "健保投保金額"),
     ("health_dependents", "健保眷屬人數"),
+    ("has_exemption", "減免身分"),
 ]
 
 SALARY_FIELDS = [
@@ -168,6 +169,7 @@ def update_insurance(
     insurance_health_amount: int = Form(...),
     insurance_labor_pension_amount: int = Form(...),
     labor_pension_personal_rate: int = Form(0),
+    has_exemption: bool = Form(False),
     effective_date: str = Form(...),
     user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
     db: Session = Depends(get_db),
@@ -182,6 +184,7 @@ def update_insurance(
         "insurance_health_amount": insurance_health_amount,
         "insurance_labor_pension_amount": insurance_labor_pension_amount,
         "labor_pension_personal_rate": labor_pension_personal_rate,
+        "has_exemption": has_exemption,
     }
 
     for field_name, new_val in fields.items():

@@ -75,6 +75,13 @@
           </div>
           <div style="margin-bottom:0.5rem;">
             <label style="font-size:0.82rem; color:#666;">
+              <input type="checkbox" name="has_exemption" id="chk_exemption" value="1"
+                     {% if current_values.get('has_exemption') %}checked{% endif %}
+                     style="margin-right:0.3rem;">減免身分
+            </label>
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <label style="font-size:0.82rem; color:#666;">
               眷屬人數
               <span style="font-size:0.82rem; color:#2b6cb0; cursor:pointer; text-decoration:underline;" onclick="toggleDepPanel()">编辑</span>
             </label>
@@ -90,7 +97,10 @@
               <div style="font-size:0.85rem;">
                 <strong>{{ dep.name }}</strong>
                 <span style="color:#666;">{{ dep.relationship_label }}</span>
+                <span style="color:#999;">{{ dep.nationality_label }}</span>
                 {% if dep.id_number %}<span style="color:#999;">{{ dep.id_number[:4] }}***</span>{% endif %}
+                {% if dep.has_exemption %}<span style="color:#c53030; font-size:0.78rem;">[減免]</span>{% endif %}
+                {% if dep.subsidy_rate > 0 %}<span style="color:#2b6cb0; font-size:0.78rem;">[補助{{ dep.subsidy_rate }}%]</span>{% endif %}
                 <br>
                 <span style="color:#999; font-size:0.78rem;">
                   投保 {{ dep.enrollment_date }}
@@ -125,11 +135,18 @@
                     <input type="text" name="name" required style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
                   </div>
                   <div>
-                    <label style="font-size:0.78rem; color:#666;">身分證字號</label>
+                    <label style="font-size:0.78rem; color:#666;">證件號碼</label>
                     <input type="text" name="id_number" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
                   </div>
                   <div>
-                    <label style="font-size:0.78rem; color:#666;">關係</label>
+                    <label style="font-size:0.78rem; color:#666;">籍別</label>
+                    <select name="nationality" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                      <option value="本國人">本國人</option>
+                      <option value="外籍">外籍</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">稱謂</label>
                     <select name="relationship" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
                       <option value="配偶">配偶</option>
                       <option value="子女">子女</option>
@@ -142,7 +159,25 @@
                     <input type="date" name="birth_date" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
                   </div>
                   <div>
-                    <label style="font-size:0.78rem; color:#666;">投保日期</label>
+                    <label style="font-size:0.78rem; color:#666;">
+                      <input type="checkbox" name="is_child" value="1" style="margin-right:0.3rem;">子女
+                    </label>
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">
+                      <input type="checkbox" name="has_exemption" value="1" style="margin-right:0.3rem;">減免身分
+                    </label>
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">補助費率 (%)</label>
+                    <input type="number" name="subsidy_rate" value="0" min="0" max="100" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">最高補助金額</label>
+                    <input type="number" name="max_subsidy_amount" value="0" min="0" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">加保日期</label>
                     <input type="date" name="enrollment_date" value="{{ today_str }}" required style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
                   </div>
                 </div>
