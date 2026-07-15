@@ -9,6 +9,7 @@ from app.auth import get_current_user, require_roles
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.employee_change import EmployeeChange
+from app.models.nhi_dependent import NhiDependent
 from app.services.insurance import (
     LABOR_INSURANCE_GRADES,
     HEALTH_INSURANCE_GRADES,
@@ -78,11 +79,11 @@ def _get_current_values(user: User, db: Session) -> dict:
     return values
 
 
-def _get_insurance_calc(cv: dict) -> dict:
+def _get_insurance_calc(cv: dict, active_dependents: int = 0) -> dict:
     """根據目前值計算各保險自付額。"""
     labor_grade = cv.get("insurance_labor_amount", 0)
     health_grade = cv.get("insurance_health_amount", 0)
-    dependents = cv.get("health_dependents", 0)
+    dependents = active_dependents  # 使用資料庫實際眷屬數
     pension_grade = cv.get("insurance_labor_pension_amount", 0)
     pension_self_rate = cv.get("labor_pension_personal_rate", 0)
 
@@ -107,6 +108,7 @@ def employee_changes_page(
     changes = []
     current_values = {}
     insurance_calc = {}
+    dependents = []
 
     if employee_id:
         selected = db.query(User).filter(User.id == employee_id).first()
@@ -120,7 +122,14 @@ def employee_changes_page(
             q = q.filter(EmployeeChange.change_type == change_type)
         changes = q.order_by(desc(EmployeeChange.effective_date), desc(EmployeeChange.created_at)).all()
         current_values = _get_current_values(selected, db)
-        insurance_calc = _get_insurance_calc(current_values)
+
+        # Fetch actual dependents from DB
+        dependents = (db.query(NhiDependent)
+                      .filter(NhiDependent.employee_id == selected.id)
+                      .order_by(NhiDependent.enrollment_date.desc())
+                      .all())
+        active_dep_count = sum(1 for d in dependents if d.is_active)
+        insurance_calc = _get_insurance_calc(current_values, active_dep_count)
 
     # Grade options for dropdowns (value, label)
     labor_grades = [(g, f"{g:,}") for _, g in LABOR_INSURANCE_GRADES]
@@ -137,6 +146,7 @@ def employee_changes_page(
         changes=changes,
         current_values=current_values,
         insurance_calc=insurance_calc,
+        dependents=dependents,
         change_types=CHANGE_TYPES,
         fields_by_type={k: [list(i) for i in v] for k, v in FIELDS_BY_TYPE.items()},
         sources=SOURCES,
@@ -156,7 +166,6 @@ def update_insurance(
     employee_id: str = Form(...),
     insurance_labor_amount: int = Form(...),
     insurance_health_amount: int = Form(...),
-    health_dependents: int = Form(0),
     insurance_labor_pension_amount: int = Form(...),
     labor_pension_personal_rate: int = Form(0),
     effective_date: str = Form(...),
@@ -171,7 +180,6 @@ def update_insurance(
     fields = {
         "insurance_labor_amount": insurance_labor_amount,
         "insurance_health_amount": insurance_health_amount,
-        "health_dependents": health_dependents,
         "insurance_labor_pension_amount": insurance_labor_pension_amount,
         "labor_pension_personal_rate": labor_pension_personal_rate,
     }

@@ -612,10 +612,16 @@ def calculate_monthly_salary(
         )
 
     # 計算保險應扣項目
+    from app.models.nhi_dependent import NhiDependent
+    active_deps = db.query(NhiDependent).filter(
+        NhiDependent.employee_id == caregiver_id,
+        NhiDependent.is_active.is_(True),
+    ).count()
+
     li_deduction = calc_labor_insurance_self_pay(caregiver.insurance_labor_amount or 0)
     hi_deduction = calc_health_insurance_self_pay(
         caregiver.insurance_health_amount or 0,
-        caregiver.health_dependents or 0,
+        active_deps,
     )
     lp_deduction = calc_labor_pension_self_pay(
         caregiver.insurance_labor_pension_amount or 0,

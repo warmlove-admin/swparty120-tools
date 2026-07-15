@@ -27,6 +27,7 @@
     <form method="post" action="/employee-changes/update-insurance" id="insurance_form">
       <input type="hidden" name="employee_id" value="{{ selected.id }}">
       <input type="hidden" name="effective_date" id="effective_date_hidden" value="{{ today_str }}">
+      <input type="hidden" name="health_dependents" id="hidden_dep_count" value="{{ dependents|selectattr('is_active')|list|length }}">
 
       <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.8rem; margin-bottom:1rem;">
 
@@ -73,14 +74,81 @@
             {{ "{:,}".format(current_values.get('insurance_health_amount', 29500)) }}
           </div>
           <div style="margin-bottom:0.5rem;">
-            <label style="font-size:0.82rem; color:#666;">眷屬人數</label>
-            <select name="health_dependents" id="sel_dependents"
-                    style="width:100%; padding:0.3rem; font-size:0.95rem; border:1px solid #ccc; border-radius:4px;"
-                    onchange="calcAll()">
-              {% for n in range(4) %}
-              <option value="{{ n }}" {% if current_values.get('health_dependents', 0) == n %}selected{% endif %}>{{ n }} 人</option>
-              {% endfor %}
-            </select>
+            <label style="font-size:0.82rem; color:#666;">
+              眷屬人數
+              <span style="font-size:0.82rem; color:#2b6cb0; cursor:pointer; text-decoration:underline;" onclick="toggleDepPanel()">编辑</span>
+            </label>
+            <div style="font-size:1.3rem; font-weight:800;" id="dep_count_display">
+              {{ dependents|selectattr('is_active')|list|length }} 人
+            </div>
+          </div>
+
+          {# -- 眷屬展開面板 -- #}
+          <div id="dep_panel" style="display:none; margin-bottom:0.5rem; border:1px solid #e2e8f0; border-radius:6px; padding:0.6rem; background:#f7fafc;">
+            {% for dep in dependents %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; {% if not dep.is_active %}opacity:0.5;{% endif %} border-bottom:1px solid #eee;">
+              <div style="font-size:0.85rem;">
+                <strong>{{ dep.name }}</strong>
+                <span style="color:#666;">{{ dep.relationship_label }}</span>
+                {% if dep.id_number %}<span style="color:#999;">{{ dep.id_number[:4] }}***</span>{% endif %}
+                <br>
+                <span style="color:#999; font-size:0.78rem;">
+                  投保 {{ dep.enrollment_date }}
+                  {% if dep.termination_date %} | 退保 {{ dep.termination_date }}{% endif %}
+                  {% if not dep.is_active %} | <span style="color:#c53030;">已退保</span>{% endif %}
+                </span>
+              </div>
+              <div style="display:flex; gap:0.3rem;">
+                <form method="post" action="/nhi-dependents/toggle/{{ dep.id }}" style="display:inline;">
+                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.75rem; padding:0.15rem 0.4rem;">
+                    {{ "復保" if not dep.is_active else "退保" }}
+                  </button>
+                </form>
+                <form method="post" action="/nhi-dependents/delete/{{ dep.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆眷屬？')">
+                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.75rem; padding:0.15rem 0.4rem; color:#c53030;">刪除</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+            {% if not dependents %}
+            <div style="color:#999; font-size:0.85rem; padding:0.3rem 0;">尚無眷屬加保資料</div>
+            {% endif %}
+
+            {# -- 新增眷屬表單 -- #}
+            <details style="margin-top:0.5rem;">
+              <summary style="font-size:0.85rem; color:#2b6cb0; cursor:pointer; font-weight:600;">+ 新增眷屬</summary>
+              <form method="post" action="/nhi-dependents/add" style="margin-top:0.5rem;">
+                <input type="hidden" name="employee_id" value="{{ selected.id }}">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">姓名</label>
+                    <input type="text" name="name" required style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">身分證字號</label>
+                    <input type="text" name="id_number" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">關係</label>
+                    <select name="relationship" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                      <option value="配偶">配偶</option>
+                      <option value="子女">子女</option>
+                      <option value="父母">父母</option>
+                      <option value="其他">其他</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">出生日期</label>
+                    <input type="date" name="birth_date" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.78rem; color:#666;">投保日期</label>
+                    <input type="date" name="enrollment_date" value="{{ today_str }}" required style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+                  </div>
+                </div>
+                <button type="submit" class="btn" style="margin-top:0.5rem; font-size:0.85rem;">儲存</button>
+              </form>
+            </details>
           </div>
           <div style="font-size:0.82rem; color:#666;">每月自付額（含眷屬）</div>
           <div style="font-size:1.4rem; font-weight:900; color:#c53030;" id="health_self_display">
@@ -260,10 +328,15 @@ const LP_RATE = 0.06;
 
 function fmt(n) { return n.toLocaleString('en-US'); }
 
+function toggleDepPanel() {
+  const panel = document.getElementById('dep_panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
 function calcAll() {
   const laborGrade = parseInt(document.getElementById('sel_labor_grade').value) || 0;
   const healthGrade = parseInt(document.getElementById('sel_health_grade').value) || 0;
-  const dependents = parseInt(document.getElementById('sel_dependents').value) || 0;
+  const dependents = parseInt(document.getElementById('hidden_dep_count').value) || 0;
   const pensionGrade = parseInt(document.getElementById('sel_pension_grade').value) || 0;
   const pensionSelf = parseInt(document.getElementById('sel_pension_self').value) || 0;
 

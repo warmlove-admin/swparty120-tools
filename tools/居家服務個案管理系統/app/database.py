@@ -148,6 +148,10 @@ def apply_compatible_schema_updates():
             for col in ("labor_insurance_deduction", "health_insurance_deduction", "labor_pension_deduction"):
                 if col not in ms_cols:
                     connection.execute(text(f"ALTER TABLE monthly_salaries ADD COLUMN {col} INTEGER DEFAULT 0"))
+        # 健保眷屬加保表
+        if "nhi_dependents" not in inspector.get_table_names():
+            from app.models.nhi_dependent import NhiDependent
+            NhiDependent.__table__.create(connection)
         # 勞健保級距欄位
         if "users" in inspector.get_table_names():
             ucols = {c["name"] for c in inspector.get_columns("users")}
