@@ -198,17 +198,21 @@ def update_insurance(
         return RedirectResponse(url="/employee-changes", status_code=302)
 
     eff = date.fromisoformat(effective_date)
-    fields = {
+
+    # 先處理直接存在 User 上的欄位（不經過異動紀錄）
+    target.has_exemption = has_exemption
+    target.subsidy_rate = subsidy_rate
+    target.insurance_note = insurance_note
+
+    # 保險級距走異動紀錄
+    grade_fields = {
         "insurance_labor_amount": insurance_labor_amount,
         "insurance_health_amount": insurance_health_amount,
         "insurance_labor_pension_amount": insurance_labor_pension_amount,
         "labor_pension_personal_rate": labor_pension_personal_rate,
-        "has_exemption": has_exemption,
-        "subsidy_rate": subsidy_rate,
-        "insurance_note": insurance_note,
     }
 
-    for field_name, new_val in fields.items():
+    for field_name, new_val in grade_fields.items():
         old_val = target.get_change_value(db, field_name) or 0
         if old_val != new_val:
             change = EmployeeChange(
