@@ -42,6 +42,8 @@ INSURANCE_FIELDS = [
     ("insurance_health_amount", "健保投保金額"),
     ("health_dependents", "健保眷屬人數"),
     ("has_exemption", "減免身分"),
+    ("subsidy_rate", "補助費率(%)"),
+    ("insurance_note", "保險備註"),
 ]
 
 SALARY_FIELDS = [
@@ -112,6 +114,7 @@ def employee_changes_page(
     request: Request,
     employee_id: str = "",
     change_type: str = "",
+    new_hire: str = "",
     user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
     db: Session = Depends(get_db),
 ):
@@ -170,6 +173,7 @@ def employee_changes_page(
         health_grades=health_grades,
         pension_grades=pension_grades,
         today_str=today_str,
+        new_hire=new_hire == "1",
     )
     return HTMLResponse(content=html)
 
@@ -183,6 +187,8 @@ def update_insurance(
     insurance_labor_pension_amount: int = Form(...),
     labor_pension_personal_rate: int = Form(0),
     has_exemption: bool = Form(False),
+    subsidy_rate: int = Form(0),
+    insurance_note: str = Form(""),
     effective_date: str = Form(...),
     user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
     db: Session = Depends(get_db),
@@ -198,6 +204,8 @@ def update_insurance(
         "insurance_labor_pension_amount": insurance_labor_pension_amount,
         "labor_pension_personal_rate": labor_pension_personal_rate,
         "has_exemption": has_exemption,
+        "subsidy_rate": subsidy_rate,
+        "insurance_note": insurance_note,
     }
 
     for field_name, new_val in fields.items():
@@ -352,5 +360,46 @@ def reactivate_insurance(
     db.commit()
     return RedirectResponse(
         url=f"/employee-changes?employee_id={employee_id}",
+        status_code=302,
+    )
+
+
+@router.post("/init-insurance")
+def init_insurance(
+    employee_id: str = Form(...),
+    hire_date: str = Form(...),
+    user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
+    db: Session = Depends(get_db),
+):
+    """新進人員：自動建立保險異動紀錄，投保日=到職日"""
+    target = db.query(User).filter(User.id == employee_id).first()
+    if not target:
+        return RedirectResponse(url="/employee-changes", status_code=302)
+
+    eff = date.fromisoformat(hire_date)
+
+    # 自動建立保險異動紀錄
+    default_fields = {
+        "insurance_labor_amount": 0,
+        "insurance_health_amount": 0,
+        "insurance_labor_pension_amount": 0,
+        "labor_pension_personal_rate": 0,
+    }
+    for field_name, new_val in default_fields.items():
+        change = EmployeeChange(
+            employee_id=employee_id,
+            change_type="insurance",
+            field_name=field_name,
+            effective_date=eff,
+            old_value=0,
+            new_value=new_val,
+            source="manual",
+            created_by=user.id,
+        )
+        db.add(change)
+
+    db.commit()
+    return RedirectResponse(
+        url=f"/employee-changes?employee_id={employee_id}&new_hire=1",
         status_code=302,
     )

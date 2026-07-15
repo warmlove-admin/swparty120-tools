@@ -65,6 +65,8 @@ class User(Base):
     insurance_health_amount = Column(Integer, default=0)       # 健保投保金額
     health_dependents = Column(Integer, default=0)             # 健保眷屬加保人數
     has_exemption = Column(Boolean, default=False)             # 減免身分
+    subsidy_rate = Column(Integer, default=0)                  # 補助費率 %
+    insurance_note = Column(String)                            # 保險備註
     insurance_effective_year = Column(Integer, default=0)      # 生效年
     insurance_effective_month = Column(Integer, default=0)     # 生效月
 

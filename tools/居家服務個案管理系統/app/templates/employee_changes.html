@@ -40,6 +40,24 @@
     </div>
     {% endif %}
 
+    {# -- 新進人員提示 -- #}
+    {% if not selected.termination_date and selected.hire_date and not changes %}
+    <div style="background:#fefcbf; border:1px solid #f6e05e; border-radius:6px; padding:0.8rem; margin-bottom:1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span style="font-weight:700; color:#744210;">新進人員</span>
+          <span style="margin-left:1rem; color:#744210;">到職日：{{ selected.hire_date }}</span>
+          <span style="margin-left:1rem; color:#744210;">請先建立保險卡片</span>
+        </div>
+        <form method="post" action="/employee-changes/init-insurance" style="display:inline;">
+          <input type="hidden" name="employee_id" value="{{ selected.id }}">
+          <input type="hidden" name="hire_date" value="{{ selected.hire_date }}">
+          <button type="submit" class="btn" style="background:#d69e2e; font-size:0.85rem;">建立保險卡片</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
     {# -- 四張卡片：保險級距與自付額 -- #}
     <form method="post" action="/employee-changes/update-insurance" id="insurance_form">
       <input type="hidden" name="employee_id" value="{{ selected.id }}">
@@ -49,7 +67,7 @@
       <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.8rem; margin-bottom:1rem; {% if selected.termination_date %}opacity:0.6;{% endif %}">
 
         {# ── 勞保卡片 ── #}
-        <div class="card" style="padding:0.8rem;">
+        <div class="card" style="padding:0.8rem; {% if new_hire %}border:2px solid #c53030;{% endif %}">
           <div style="font-weight:800; font-size:1rem; color:#2c7a7b; border-bottom:2px solid #2c7a7b; padding-bottom:0.3rem; margin-bottom:0.6rem;">勞保</div>
           {% if selected.hire_date %}
           <div style="font-size:0.78rem; color:#666; margin-bottom:0.3rem;">投保日：{{ selected.hire_date }}</div>
@@ -78,7 +96,7 @@
         </div>
 
         {# ── 健保卡片 ── #}
-        <div class="card" style="padding:0.8rem;">
+        <div class="card" style="padding:0.8rem; {% if new_hire %}border:2px solid #c53030;{% endif %}">
           <div style="font-weight:800; font-size:1rem; color:#2b6cb0; border-bottom:2px solid #2b6cb0; padding-bottom:0.3rem; margin-bottom:0.6rem;">健保</div>
           <div style="margin-bottom:0.5rem;">
             <label style="font-size:0.82rem; color:#666;">投保級距</label>
@@ -100,7 +118,21 @@
                      {% if current_values.get('has_exemption') %}checked{% endif %}>員工具減免身分
             </label>
           </div>
-          <div style="font-size:0.78rem; color:#999; margin-bottom:0.5rem;">如低收入戶、身心障礙等</div>
+          <div id="exemption_fields" style="{% if not current_values.get('has_exemption') %}display:none;{% endif %} margin-bottom:0.5rem; padding:0.5rem; background:#f0f9ff; border:1px solid #bee3f8; border-radius:4px;">
+            <div style="margin-bottom:0.4rem;">
+              <label style="font-size:0.78rem; color:#666;">補助費率 (%)</label>
+              <input type="number" name="subsidy_rate" id="inp_subsidy_rate"
+                     value="{{ current_values.get('subsidy_rate', 0) }}" min="0" max="100"
+                     style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+            </div>
+            <div>
+              <label style="font-size:0.78rem; color:#666;">備註</label>
+              <input type="text" name="insurance_note" id="inp_insurance_note"
+                     value="{{ current_values.get('insurance_note', '') }}"
+                     placeholder="如低收入戶、身心障礙等"
+                     style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
+            </div>
+          </div>
           <div style="margin-bottom:0.5rem;">
             <label style="font-size:0.82rem; color:#666;">
               眷屬人數
@@ -220,7 +252,7 @@
         </div>
 
         {# ── 勞退卡片 ── #}
-        <div class="card" style="padding:0.8rem;">
+        <div class="card" style="padding:0.8rem; {% if new_hire %}border:2px solid #c53030;{% endif %}">
           <div style="font-weight:800; font-size:1rem; color:#744210; border-bottom:2px solid #744210; padding-bottom:0.3rem; margin-bottom:0.6rem;">勞退</div>
           <div style="margin-bottom:0.5rem;">
             <label style="font-size:0.82rem; color:#666;">提繳工資</label>
@@ -479,6 +511,21 @@ function toggleDepPanel() {
   const panel = document.getElementById('dep_panel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
+
+function toggleExemptionFields() {
+  const chk = document.getElementById('chk_exemption');
+  const fields = document.getElementById('exemption_fields');
+  fields.style.display = chk.checked ? 'block' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  calcAll();
+  const chk = document.getElementById('chk_exemption');
+  if (chk) {
+    chk.addEventListener('change', toggleExemptionFields);
+    toggleExemptionFields();
+  }
+});
 
 function calcAll() {
   const laborGrade = parseInt(document.getElementById('sel_labor_grade').value) || 0;

@@ -168,13 +168,16 @@ def apply_compatible_schema_updates():
             for col in ("insurance_labor_amount", "insurance_occupational_amount",
                         "insurance_labor_pension_amount", "labor_pension_employer_rate",
                         "labor_pension_personal_rate", "insurance_health_amount",
-                        "health_dependents", "has_exemption",
+                        "health_dependents", "has_exemption", "subsidy_rate", "insurance_note",
                         "insurance_effective_year", "insurance_effective_month"):
                 if col not in ucols:
                     if col == "labor_pension_employer_rate":
                         default_val = "6"
                     elif col == "has_exemption":
                         connection.execute(text(f"ALTER TABLE users ADD COLUMN {col} BOOLEAN DEFAULT 0"))
+                        continue
+                    elif col == "insurance_note":
+                        connection.execute(text(f"ALTER TABLE users ADD COLUMN {col} VARCHAR"))
                         continue
                     else:
                         default_val = "0"
