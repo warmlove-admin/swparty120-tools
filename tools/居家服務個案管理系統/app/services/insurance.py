@@ -199,6 +199,24 @@ def calc_health_insurance_self_pay(grade_amount: int, dependents: int = 0) -> in
     return round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYEE_RATIO * (1 + dep))
 
 
+def calc_health_insurance_subsidy(grade_amount: int, dependents: list) -> int:
+    """計算眷屬補助總金額。
+    dependents: NhiDependent objects list
+    補助金額 = min(眷屬自付額 × 補助費率%, 最高補助金額)
+    """
+    total_subsidy = 0
+    for dep in dependents:
+        if not dep.is_active or not dep.has_exemption or dep.subsidy_rate <= 0:
+            continue
+        # 該眷屬的基礎自付額（不含眷屬加成，每人獨立計算）
+        base = round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYEE_RATIO)
+        subsidy = round(base * dep.subsidy_rate / 100)
+        if dep.max_subsidy_amount > 0:
+            subsidy = min(subsidy, dep.max_subsidy_amount)
+        total_subsidy += subsidy
+    return total_subsidy
+
+
 def calc_labor_pension_self_pay(grade_amount: int, self_rate_pct: int = 0) -> int:
     """勞退每月自提金額 = 提繳工資 × 自提率%"""
     return round(grade_amount * (self_rate_pct or 0) / 100)

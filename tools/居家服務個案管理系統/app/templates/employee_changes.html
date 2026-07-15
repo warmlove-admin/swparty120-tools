@@ -100,7 +100,7 @@
                 <span style="color:#999;">{{ dep.nationality_label }}</span>
                 {% if dep.id_number %}<span style="color:#999;">{{ dep.id_number[:4] }}***</span>{% endif %}
                 {% if dep.has_exemption %}<span style="color:#c53030; font-size:0.78rem;">[減免]</span>{% endif %}
-                {% if dep.subsidy_rate > 0 %}<span style="color:#2b6cb0; font-size:0.78rem;">[補助{{ dep.subsidy_rate }}%]</span>{% endif %}
+                {% if dep.subsidy_rate > 0 %}<span style="color:#2b6cb0; font-size:0.78rem;">[補助{{ dep.subsidy_rate }}%{% if dep.max_subsidy_amount > 0 %}, 上限{{ dep.max_subsidy_amount }}元{% endif %}]</span>{% endif %}
                 <br>
                 <span style="color:#999; font-size:0.78rem;">
                   投保 {{ dep.enrollment_date }}
@@ -191,6 +191,11 @@
           <div style="font-size:1.4rem; font-weight:900; color:#c53030;" id="health_self_display">
             {{ "{:,}".format(insurance_calc.get('health_insurance_self', 0)) }}
           </div>
+          {% if insurance_calc.get('health_subsidy', 0) > 0 %}
+          <div style="font-size:0.78rem; color:#2b6cb0; margin-top:0.2rem;">
+            (已減免眷屬補助 {{ "{:,}".format(insurance_calc.get('health_subsidy', 0)) }} 元)
+          </div>
+          {% endif %}
         </div>
 
         {# ── 勞退卡片 ── #}

@@ -38,6 +38,7 @@ class EmployeeChange(Base):
         "labor_pension_personal_rate": "勞退個人提繳率",
         "insurance_health_amount": "健保投保金額",
         "health_dependents": "健保眷屬人數",
+        "has_exemption": "減免身分",
         "hourly_wage": "時薪",
         "tax_dependents": "所得稅扶養人數",
         "tax_rate": "所得稅稅率",

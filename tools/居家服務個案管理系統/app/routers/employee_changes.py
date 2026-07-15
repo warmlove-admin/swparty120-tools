@@ -16,6 +16,7 @@ from app.services.insurance import (
     LABOR_PENSION_GRADES,
     calc_labor_insurance_self_pay,
     calc_health_insurance_self_pay,
+    calc_health_insurance_subsidy,
     calc_labor_pension_self_pay,
     calc_total_employee_deduction,
     lookup_labor_insurance_grade,
@@ -80,17 +81,30 @@ def _get_current_values(user: User, db: Session) -> dict:
     return values
 
 
-def _get_insurance_calc(cv: dict, active_dependents: int = 0) -> dict:
+def _get_insurance_calc(cv: dict, dependents: list = None) -> dict:
     """根據目前值計算各保險自付額。"""
     labor_grade = cv.get("insurance_labor_amount", 0)
     health_grade = cv.get("insurance_health_amount", 0)
-    dependents = active_dependents  # 使用資料庫實際眷屬數
     pension_grade = cv.get("insurance_labor_pension_amount", 0)
     pension_self_rate = cv.get("labor_pension_personal_rate", 0)
 
-    return calc_total_employee_deduction(
-        labor_grade, health_grade, dependents, pension_self_rate
-    )
+    # 計算眷屬人數（僅 active）
+    active_deps = [d for d in (dependents or []) if d.is_active]
+    dep_count = len(active_deps)
+
+    li = calc_labor_insurance_self_pay(labor_grade)
+    hi_base = calc_health_insurance_self_pay(health_grade, dep_count)
+    hi_subsidy = calc_health_insurance_subsidy(health_grade, active_deps)
+    hi = hi_base - hi_subsidy
+    lp = calc_labor_pension_self_pay(pension_grade, pension_self_rate)
+
+    return {
+        "labor_insurance_self": li,
+        "health_insurance_self": hi,
+        "health_subsidy": hi_subsidy,
+        "labor_pension_self": lp,
+        "total_deduction": li + hi + lp,
+    }
 
 
 @router.get("", response_class=HTMLResponse)
@@ -129,8 +143,7 @@ def employee_changes_page(
                       .filter(NhiDependent.employee_id == selected.id)
                       .order_by(NhiDependent.enrollment_date.desc())
                       .all())
-        active_dep_count = sum(1 for d in dependents if d.is_active)
-        insurance_calc = _get_insurance_calc(current_values, active_dep_count)
+        insurance_calc = _get_insurance_calc(current_values, dependents)
 
     # Grade options for dropdowns (value, label)
     labor_grades = [(g, f"{g:,}") for _, g in LABOR_INSURANCE_GRADES]
