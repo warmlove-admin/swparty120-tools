@@ -27,6 +27,17 @@ from app.services.insurance import (
 router = APIRouter(prefix="/employee-changes")
 _jinja_env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
 
+
+def _safe_format_number(value):
+    """安全格式化數字，處理非數值類型"""
+    try:
+        return "{:,}".format(int(value))
+    except (ValueError, TypeError):
+        return str(value) if value else ""
+
+
+_jinja_env.filters["safe_number"] = _safe_format_number
+
 CHANGE_TYPES = [
     ("insurance", "勞健保"),
     ("salary", "薪資"),

@@ -366,9 +366,9 @@
                 <span style="margin-left:0.8rem;">{{ c.field_label }}</span>
               </div>
               <div style="display:flex; align-items:center; gap:0.8rem;">
-                <span style="color:#999;">{{ "{:,}".format(c.old_value) }}</span>
+                <span style="color:#999;">{{ c.old_value | safe_number }}</span>
                 <span style="color:#999;">→</span>
-                <span style="font-weight:700;">{{ "{:,}".format(c.new_value) }}</span>
+                <span style="font-weight:700;">{{ c.new_value | safe_number }}</span>
                 <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
                 <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
                 {% if user.role.value in ["主管", "主任"] %}
@@ -398,9 +398,9 @@
                 <span style="margin-left:0.8rem;">{{ c.field_label }}</span>
               </div>
               <div style="display:flex; align-items:center; gap:0.8rem;">
-                <span style="color:#999;">{{ "{:,}".format(c.old_value) }}</span>
+                <span style="color:#999;">{{ c.old_value | safe_number }}</span>
                 <span style="color:#999;">→</span>
-                <span style="font-weight:700;">{{ "{:,}".format(c.new_value) }}</span>
+                <span style="font-weight:700;">{{ c.new_value | safe_number }}</span>
                 <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
                 <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
                 {% if user.role.value in ["主管", "主任"] %}
@@ -430,9 +430,9 @@
                 <span style="margin-left:0.8rem;">{{ c.field_label }}</span>
               </div>
               <div style="display:flex; align-items:center; gap:0.8rem;">
-                <span style="color:#999;">{{ "{:,}".format(c.old_value) }}</span>
+                <span style="color:#999;">{{ c.old_value | safe_number }}</span>
                 <span style="color:#999;">→</span>
-                <span style="font-weight:700;">{{ "{:,}".format(c.new_value) }}</span>
+                <span style="font-weight:700;">{{ c.new_value | safe_number }}</span>
                 <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
                 <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
                 {% if user.role.value in ["主管", "主任"] %}
