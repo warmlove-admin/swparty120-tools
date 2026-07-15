@@ -273,3 +273,84 @@ def delete_change(
             status_code=302,
         )
     return RedirectResponse(url="/employee-changes", status_code=302)
+
+
+@router.post("/terminate-insurance")
+def terminate_insurance(
+    employee_id: str = Form(...),
+    termination_date: str = Form(...),
+    user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
+    db: Session = Depends(get_db),
+):
+    """退保：設定離職生效日，退保日 = 離職生效日 - 1 日"""
+    target = db.query(User).filter(User.id == employee_id).first()
+    if not target:
+        return RedirectResponse(url="/employee-changes", status_code=302)
+
+    term_date = date.fromisoformat(termination_date)
+    insurance_term_date = term_date - __import__('datetime').timedelta(days=1)
+
+    # 記錄異動
+    fields_to_terminate = {
+        "insurance_labor_amount": 0,
+        "insurance_health_amount": 0,
+        "insurance_labor_pension_amount": 0,
+        "labor_pension_personal_rate": 0,
+    }
+    for field_name, new_val in fields_to_terminate.items():
+        old_val = target.get_change_value(db, field_name) or 0
+        if old_val != new_val:
+            change = EmployeeChange(
+                employee_id=employee_id,
+                change_type="insurance",
+                field_name=field_name,
+                effective_date=insurance_term_date,
+                old_value=old_val,
+                new_value=new_val,
+                source="manual",
+                created_by=user.id,
+            )
+            db.add(change)
+
+    # 設定離職日期
+    target.termination_date = term_date
+
+    # 退保所有眷屬
+    from app.models.nhi_dependent import NhiDependent
+    active_deps = db.query(NhiDependent).filter(
+        NhiDependent.employee_id == employee_id,
+        NhiDependent.is_active.is_(True),
+    ).all()
+    for dep in active_deps:
+        dep.is_active = False
+        dep.termination_date = insurance_term_date
+
+    db.commit()
+    return RedirectResponse(
+        url=f"/employee-changes?employee_id={employee_id}",
+        status_code=302,
+    )
+
+
+@router.post("/reactivate-insurance")
+def reactivate_insurance(
+    employee_id: str = Form(...),
+    effective_date: str = Form(...),
+    user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
+    db: Session = Depends(get_db),
+):
+    """復保：取消離職日期，重新投保"""
+    target = db.query(User).filter(User.id == employee_id).first()
+    if not target:
+        return RedirectResponse(url="/employee-changes", status_code=302)
+
+    eff = date.fromisoformat(effective_date)
+
+    # 記錄異動（復保需要重新設定級距）
+    target.termination_date = None
+
+    db.commit()
+    return RedirectResponse(
+        url=f"/employee-changes?employee_id={employee_id}",
+        status_code=302,
+    )
