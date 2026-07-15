@@ -1,0 +1,8 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+daytrade,2634,漢翔,TSE,A,100.0,67.1,68.78,66.7,67100.0,1461.0,614.0,2.38,5.17,3.45,1.67,0.149,138680,9225926500.0,18,13,8,22,3,"above_open,strong_momentum,theme:hot_defense_drone,hot_theme,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume"
+daytrade,1301,台塑,TSE,B,78.1,63.6,65.19,63.22,63600.0,1382.0,583.0,2.37,5.65,2.16,3.41,0.157,139925,8631366500.0,18,13,8,0,3,"above_open,near_day_high,strong_momentum"
+daytrade,6505,台塑化,TSE,B,78.1,66.2,67.86,65.8,66200.0,1444.0,612.0,2.36,4.91,2.69,2.16,0.151,49417,3264848400.0,18,13,8,0,3,"above_open,strong_momentum"
+daytrade,1326,台化,TSE,B,76.7,67.0,68.67,66.6,67000.0,1451.0,614.0,2.36,3.08,0.46,2.6,0.149,94237,6183116100.0,18,8,10,0,5,"above_open,near_day_high"
+daytrade,4541,晟田,OTC,B,75.3,70.6,72.36,70.18,70600.0,1529.0,646.0,2.37,5.22,1.79,3.37,0.142,36485,2515995700.0,18,11,8,0,3,"above_open,strong_momentum"
+daytrade,3004,豐達科,TSE,B,72.6,153.5,157.34,152.58,153500.0,3338.0,1411.0,2.37,-0.65,-0.97,0.33,0.326,1578,236257500.0,9,0,4,22,3,"above_open,near_day_high,theme:hot_defense_drone,hot_theme,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume"
+daytrade,5314,世紀*,OTC,B,72.6,68.2,69.91,67.79,68200.0,1487.0,628.0,2.37,5.74,0.78,4.92,0.147,11607,769990800.0,18,9,8,0,3,"above_open,near_day_high,strong_momentum"

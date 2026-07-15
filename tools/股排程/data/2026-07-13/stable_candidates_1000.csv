@@ -1,0 +1,2 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+stable,3704,合勤控,TSE,B,70.7,49.7,52.68,48.71,49700.0,2734.0,1220.0,2.24,9.59,5.84,3.54,0.302,10270,510072300.0,17,13,20,0,5,"above_open,near_day_high,strong_momentum,stable_short_trend,stable_20d_up,stable_near_ma20,stable_shallow_pullback,stable_volume_orderly"

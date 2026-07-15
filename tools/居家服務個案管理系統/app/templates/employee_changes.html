@@ -134,111 +134,19 @@
             </div>
           </div>
           <div style="margin-bottom:0.5rem;">
-            <label style="font-size:0.82rem; color:#666;">
-              眷屬人數
-              <span style="font-size:0.82rem; color:#2b6cb0; cursor:pointer; text-decoration:underline;" onclick="toggleDepPanel()">编辑</span>
-            </label>
+            <label style="font-size:0.82rem; color:#666;">眷屬人數</label>
             <div style="font-size:1.3rem; font-weight:800;" id="dep_count_display">
               {{ dependents|selectattr('is_active')|list|length }} 人
+              {% if dependents|selectattr('is_active')|list|length > 0 %}
+              <span style="font-size:0.78rem; color:#666; font-weight:400;">
+                （
+                {% for d in dependents if d.is_active %}
+                  {{ d.name }}{{ '、' if not loop.last }}
+                {% endfor %}
+                ）
+              </span>
+              {% endif %}
             </div>
-          </div>
-
-          {# -- 眷屬展開面板 -- #}
-          <div id="dep_panel" style="display:none; margin-bottom:0.5rem; border:1px solid #e2e8f0; border-radius:6px; padding:0.6rem; background:#f7fafc;">
-            {% for dep in dependents %}
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0; {% if not dep.is_active %}opacity:0.5;{% endif %} border-bottom:1px solid #eee;">
-              <div style="font-size:0.85rem;">
-                <strong>{{ dep.name }}</strong>
-                <span style="color:#666;">{{ dep.relationship_label }}</span>
-                <span style="color:#999;">{{ dep.nationality_label }}</span>
-                {% if dep.id_number %}<span style="color:#999;">{{ dep.id_number[:4] }}***</span>{% endif %}
-                {% if dep.has_exemption %}<span style="color:#c53030; font-size:0.78rem;">[減免]</span>{% endif %}
-                {% if dep.subsidy_rate > 0 %}<span style="color:#2b6cb0; font-size:0.78rem;">[補助{{ dep.subsidy_rate }}%{% if dep.max_subsidy_amount > 0 %}, 上限{{ dep.max_subsidy_amount }}元{% endif %}]</span>{% endif %}
-                <br>
-                <span style="color:#999; font-size:0.78rem;">
-                  投保 {{ dep.enrollment_date }}
-                  {% if dep.termination_date %} | 退保 {{ dep.termination_date }}{% endif %}
-                  {% if not dep.is_active %} | <span style="color:#c53030;">已退保</span>{% endif %}
-                </span>
-              </div>
-              <div style="display:flex; gap:0.3rem;">
-                <form method="post" action="/nhi-dependents/toggle/{{ dep.id }}" style="display:inline;">
-                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.75rem; padding:0.15rem 0.4rem;">
-                    {{ "復保" if not dep.is_active else "退保" }}
-                  </button>
-                </form>
-                <form method="post" action="/nhi-dependents/delete/{{ dep.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆眷屬？')">
-                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.75rem; padding:0.15rem 0.4rem; color:#c53030;">刪除</button>
-                </form>
-              </div>
-            </div>
-            {% endfor %}
-            {% if not dependents %}
-            <div style="color:#999; font-size:0.85rem; padding:0.3rem 0;">尚無眷屬加保資料</div>
-            {% endif %}
-
-            {# -- 新增眷屬表單 -- #}
-            <details style="margin-top:0.5rem;">
-              <summary style="font-size:0.85rem; color:#2b6cb0; cursor:pointer; font-weight:600;">+ 新增眷屬</summary>
-              <form method="post" action="/nhi-dependents/add" style="margin-top:0.5rem;">
-                <input type="hidden" name="employee_id" value="{{ selected.id }}">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
-                  <div>
-                    <label style="font-size:0.78rem; color:#666;">姓名</label>
-                    <input type="text" name="dep_name" required style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                  </div>
-                  <div>
-                    <label style="font-size:0.78rem; color:#666;">證件號碼</label>
-                    <input type="text" name="dep_id_number" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                  </div>
-                  <div>
-                    <label style="font-size:0.78rem; color:#666;">稱謂</label>
-                    <select name="dep_relationship" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                      <option value="配偶">配偶</option>
-                      <option value="子女">子女</option>
-                      <option value="父母">父母</option>
-                      <option value="其他">其他</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style="font-size:0.78rem; color:#666;">出生日期</label>
-                    <input type="date" name="dep_birth_date" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                  </div>
-                  <div>
-                    <label style="font-size:0.78rem; color:#666;">籍別</label>
-                    <select name="dep_nationality" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                      <option value="本國人">本國人</option>
-                      <option value="外籍">外籍</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style="font-size:0.78rem; color:#666;">加保日期</label>
-                    <input type="date" name="dep_enrollment_date" value="{{ today_str }}" required style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                  </div>
-                </div>
-                {# 減免與補助區塊 #}
-                <div style="margin-top:0.6rem; padding:0.5rem; background:#f0f9ff; border:1px solid #bee3f8; border-radius:4px;">
-                  <div style="font-size:0.82rem; font-weight:600; color:#2b6cb0; margin-bottom:0.4rem;">減免與補助</div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.4rem; align-items:end;">
-                    <div>
-                      <label style="font-size:0.78rem; color:#666;">
-                        <input type="checkbox" name="dep_has_exemption" value="1" style="margin-right:0.3rem;">具減免身分
-                      </label>
-                      <div style="font-size:0.72rem; color:#999;">如低收入戶、中低收入戶、身心障礙等</div>
-                    </div>
-                    <div>
-                      <label style="font-size:0.78rem; color:#666;">補助費率 (%)</label>
-                      <input type="number" name="dep_subsidy_rate" value="0" min="0" max="100" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                    </div>
-                    <div>
-                      <label style="font-size:0.78rem; color:#666;">最高補助金額</label>
-                      <input type="number" name="dep_max_subsidy_amount" value="0" min="0" style="width:100%; padding:0.25rem; font-size:0.85rem; border:1px solid #ccc; border-radius:4px;">
-                    </div>
-                  </div>
-                </div>
-                <button type="submit" class="btn" style="margin-top:0.5rem; font-size:0.85rem;">儲存</button>
-              </form>
-            </details>
           </div>
           <div style="font-size:0.82rem; color:#666;">每月自付額（含眷屬）</div>
           <div style="font-size:1.4rem; font-weight:900; color:#c53030;" id="health_self_display">
@@ -345,42 +253,95 @@
     <div class="card">
       <details>
         <summary class="section-title" style="margin:0; cursor:pointer;">新增異動</summary>
-        <form method="post" action="/employee-changes/add" style="margin-top:1rem;">
+        <form method="post" id="change_form" style="margin-top:1rem;">
           <input type="hidden" name="employee_id" value="{{ selected.id }}">
           <div class="form-grid">
             <div>
               <label>異動類型</label>
-              <select name="change_type" id="change_type_select" onchange="updateFields()">
+              <select name="change_type" id="change_type_select" onchange="updateFields(); toggleDependentForm();">
                 {% for val, label in change_types %}
                 <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div>
-              <label>異動欄位</label>
-              <select name="field_name" id="field_name_select">
-                {% for val, label in fields_by_type.get(selected_type or 'insurance', fields_by_type['insurance']) %}
-                <option value="{{ val }}">{{ label }}</option>
-                {% endfor %}
-              </select>
+
+            {# -- 一般異動欄位 -- #}
+            <div id="normal_fields">
+              <div>
+                <label>異動欄位</label>
+                <select name="field_name" id="field_name_select">
+                  {% for val, label in fields_by_type.get(selected_type or 'insurance', fields_by_type['insurance']) %}
+                  <option value="{{ val }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label>生效日期</label>
+                <input type="date" name="effective_date" value="{{ today_str }}" required>
+              </div>
+              <div>
+                <label>新值</label>
+                <input type="number" name="new_value" required min="0">
+              </div>
+              <div>
+                <label>來源</label>
+                <select name="source">
+                  {% for val, label in sources %}
+                  <option value="{{ val }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             </div>
-            <div>
-              <label>生效日期</label>
-              <input type="date" name="effective_date" value="{{ today_str }}" required>
-            </div>
-            <div>
-              <label>新值</label>
-              <input type="number" name="new_value" required min="0">
-            </div>
-            <div>
-              <label>來源</label>
-              <select name="source">
-                {% for val, label in sources %}
-                <option value="{{ val }}">{{ label }}</option>
-                {% endfor %}
-              </select>
+
+            {# -- 眷屬異動欄位 -- #}
+            <div id="dependent_fields" style="display:none;">
+              <div style="grid-column: span 2;">
+                <label>眷屬姓名</label>
+                <input type="text" name="dep_name" required>
+              </div>
+              <div>
+                <label>證件號碼</label>
+                <input type="text" name="dep_id_number">
+              </div>
+              <div>
+                <label>稱謂</label>
+                <select name="dep_relationship">
+                  <option value="配偶">配偶</option>
+                  <option value="子女">子女</option>
+                  <option value="父母">父母</option>
+                  <option value="其他">其他</option>
+                </select>
+              </div>
+              <div>
+                <label>出生日期</label>
+                <input type="date" name="dep_birth_date">
+              </div>
+              <div>
+                <label>籍別</label>
+                <select name="dep_nationality">
+                  <option value="本國人">本國人</option>
+                  <option value="外籍">外籍</option>
+                </select>
+              </div>
+              <div>
+                <label>加保日期</label>
+                <input type="date" name="dep_enrollment_date" value="{{ today_str }}" required>
+              </div>
+              <div>
+                <label>具減免身分</label>
+                <input type="checkbox" name="dep_has_exemption" value="1">
+              </div>
+              <div>
+                <label>補助費率(%)</label>
+                <input type="number" name="dep_subsidy_rate" value="0" min="0" max="100">
+              </div>
+              <div>
+                <label>最高補助金額</label>
+                <input type="number" name="dep_max_subsidy_amount" value="0" min="0">
+              </div>
             </div>
           </div>
+
           <button type="submit" class="btn" style="margin-top:1rem;">儲存異動</button>
         </form>
       </details>
@@ -486,6 +447,43 @@
         </details>
         {% endif %}
 
+        {# 眷屬異動 #}
+        {% set dependent_changes = changes | selectattr('change_type', 'equalto', 'dependent') | list %}
+        {% if dependent_changes %}
+        <details style="margin-bottom:0.6rem;" open>
+          <summary style="font-weight:700; font-size:0.9rem; color:#805ad5; cursor:pointer; padding:0.4rem 0; border-bottom:1px solid #e2e8f0;">
+            眷屬異動（{{ dependent_changes | length }}筆）
+          </summary>
+          <div style="padding:0.5rem 0;">
+            {% for c in dependent_changes %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.5rem; border-bottom:1px solid #f0f0f0; font-size:0.88rem;">
+              <div>
+                <span style="color:#666;">{{ c.effective_date }}</span>
+                <span style="margin-left:0.8rem;">
+                  {% if c.new_value and c.new_value > 0 %}
+                    新增眷屬 (ID: {{ c.new_value }})
+                  {% elif c.old_value and c.old_value > 0 %}
+                    退保眷屬 (ID: {{ c.old_value }})
+                  {% else %}
+                    眄屬異動
+                  {% endif %}
+                </span>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.8rem;">
+                <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
+                {% if user.role.value in ["主管", "主任"] %}
+                <form method="post" action="/employee-changes/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆異動？')">
+                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.72rem; padding:0.1rem 0.3rem;">刪除</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+
       {% else %}
       <p style="color:#999; margin-top:0.5rem;">尚無異動紀錄</p>
       {% endif %}
@@ -510,6 +508,23 @@ function fmt(n) { return n.toLocaleString('en-US'); }
 function toggleDepPanel() {
   const panel = document.getElementById('dep_panel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleDependentForm() {
+  const type = document.getElementById('change_type_select').value;
+  const normalFields = document.getElementById('normal_fields');
+  const dependentFields = document.getElementById('dependent_fields');
+  const form = document.getElementById('change_form');
+
+  if (type === 'dependent') {
+    normalFields.style.display = 'none';
+    dependentFields.style.display = 'grid';
+    form.action = '/employee-changes/add-dependent';
+  } else {
+    normalFields.style.display = 'block';
+    dependentFields.style.display = 'none';
+    form.action = '/employee-changes/add';
+  }
 }
 
 function toggleExemptionFields() {

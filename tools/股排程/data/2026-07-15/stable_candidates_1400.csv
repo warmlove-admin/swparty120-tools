@@ -1,0 +1,3 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+stable,5388,中磊,TSE,A,96.7,89.4,94.76,87.61,89400.0,4918.0,2204.0,2.23,4.32,0.93,3.35,0.112,13075,1170149900.0,18,9,20,22,5,"above_open,strong_momentum,theme:hot_networking_optical,hot_theme,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume"
+stable,2883,凱基金,TSE,B,77.2,30.15,31.96,29.55,30150.0,1661.0,740.0,2.25,2.2,2.37,-0.17,0.166,50928,1543322350.0,18,8,20,14,5,"theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,stable_short_trend,stable_10d_up_not_hot,stable_20d_up"

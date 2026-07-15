@@ -1,0 +1,16 @@
+{
+  "updated_at": "2026-07-07",
+  "note": "除權息、減資、重大公司事件風險清單。enabled=true 且日期落在 before_days/after_days 視窗內時，該股票會直接排除。",
+  "entries": [
+    {
+      "enabled": false,
+      "code": "0000",
+      "name": "範例股票",
+      "kind": "ex_dividend_or_ex_right",
+      "ex_date": "2026-07-15",
+      "before_days": 3,
+      "after_days": 5,
+      "note": "把 enabled 改 true 並改成實際代號/日期後才會生效。"
+    }
+  ]
+}

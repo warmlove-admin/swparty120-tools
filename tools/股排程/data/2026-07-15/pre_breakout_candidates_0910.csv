@@ -1,0 +1,3 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+pre_breakout,2881,富邦金,TSE,B,92.0,128.0,136.32,125.44,128000.0,7685.0,3153.0,2.44,2.4,1.2,1.19,0.391,3219,410549500.0,11,9,20,16,5,"above_open,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up,open_above_ma5"
+pre_breakout,2882,國泰金,TSE,B,88.6,97.9,104.26,95.94,97900.0,5874.0,2414.0,2.43,1.87,0.83,1.03,0.102,4201,411747800.0,12,5,20,16,5,"above_open,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up,open_above_ma5"

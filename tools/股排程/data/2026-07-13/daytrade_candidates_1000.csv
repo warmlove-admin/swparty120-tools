@@ -1,0 +1,17 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+daytrade,2464,盟立,TSE,A,98.6,167.0,171.17,166.0,167000.0,3624.0,1534.0,2.36,3.41,1.86,1.52,0.299,7933,1351986500.0,15,10,7,22,3,"above_open,theme:hot_robotics_automation,hot_theme,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_avg_up"
+daytrade,3704,合勤控,TSE,A,80.8,49.7,50.94,49.4,49700.0,1078.0,459.0,2.35,9.59,5.84,3.54,0.302,10270,510072300.0,17,13,9,0,5,"above_open,near_day_high,strong_momentum"
+daytrade,3707,漢磊,OTC,A,80.8,86.5,88.66,85.98,86500.0,1877.0,796.0,2.36,8.81,8.43,0.35,0.347,19650,1710910600.0,17,13,9,0,5,"above_open,strong_momentum"
+daytrade,5347,世界,OTC,A,80.8,182.0,186.55,180.91,182000.0,3955.0,1672.0,2.37,5.2,4.91,0.28,0.275,15682,2876399500.0,17,13,9,0,5,"above_open,strong_momentum"
+daytrade,1802,台玻,TSE,B,78.1,66.8,68.47,66.4,66800.0,1452.0,613.0,2.37,2.77,2.0,0.75,0.15,28093,1899176800.0,18,9,10,0,5,above_open
+daytrade,3033,威健,TSE,B,78.1,51.8,53.09,51.49,51800.0,1121.0,476.0,2.36,4.44,3.43,0.97,0.193,17629,934518100.0,18,13,8,0,3,"above_open,strong_momentum"
+daytrade,6505,台塑化,TSE,B,78.1,63.0,64.57,62.62,63000.0,1364.0,581.0,2.35,7.14,2.89,4.13,0.159,19214,1209075300.0,18,13,8,0,3,"above_open,strong_momentum"
+daytrade,8112,至上,TSE,B,78.1,87.2,89.38,86.68,87200.0,1895.0,799.0,2.37,2.59,2.12,0.46,0.115,8197,722228000.0,16,11,10,0,5,above_open
+daytrade,3149,正達,TSE,B,76.7,92.5,94.81,91.94,92500.0,2008.0,856.0,2.35,3.35,1.68,1.65,0.108,7856,733319300.0,16,10,10,0,5,above_open
+daytrade,5371,中光電,OTC,B,76.7,99.1,101.58,98.51,99100.0,2156.0,907.0,2.38,6.33,0.97,5.31,0.202,29722,2911866800.0,17,9,7,5,3,"above_open,near_day_high,strong_momentum,theme:panel,theme_volume,theme_mild_up"
+daytrade,1815,富喬,OTC,B,75.3,97.1,99.53,96.52,97100.0,2113.0,890.0,2.37,2.21,1.05,1.15,0.103,7659,751586900.0,16,9,10,0,5,above_open
+daytrade,2377,微星,TSE,B,72.6,149.0,152.72,148.11,149000.0,3233.0,1366.0,2.37,2.76,0.69,2.05,0.336,17240,2578346000.0,17,7,9,0,5,above_open
+daytrade,2630,亞航,TSE,B,72.6,56.3,57.71,55.96,56300.0,1226.0,520.0,2.36,4.45,0.56,3.87,0.178,5992,336960300.0,14,9,10,0,5,"above_open,strong_momentum"
+daytrade,2886,兆豐金,TSE,B,72.6,47.05,48.23,46.77,47050.0,1026.0,430.0,2.38,0.75,0.0,0.75,0.106,6231,292075500.0,14,1,8,10,5,"above_open,near_day_high,theme:finance,theme_breadth,theme_holds_open,theme_volume"
+daytrade,4916,事欣科,TSE,B,72.6,115.0,117.87,114.31,115000.0,2494.0,1058.0,2.36,6.48,4.17,2.22,0.435,7196,827276000.0,13,13,9,0,3,"above_open,strong_momentum"
+daytrade,3019,亞光,TSE,B,71.2,148.5,152.21,147.61,148500.0,3225.0,1365.0,2.36,3.48,1.74,1.71,0.337,3453,519647500.0,13,10,9,0,5,above_open

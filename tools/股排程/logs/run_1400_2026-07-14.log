@@ -1,0 +1,192 @@
+﻿[2026-07-14 10:06:48] START
+[2026-07-14 10:06:53] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-14 10:06:53] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0714/020652/741834300/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-14 10:06:53] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-14 10:07:32] xlsx target locked; saved fallback=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-14\stock_screen_report_100719.xlsx
+[2026-07-14 10:07:32] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-14
+[2026-07-14 10:07:32] snapshots=1971 pre_breakout=0 pre_breakout_watch=0 stable=0 daytrade=4 overnight=4 weekly=4 overlap=4 excluded=11814
+[2026-07-14 10:07:32] [overlap]
+[2026-07-14 10:07:32] core_watch 2634 �~�� modes=daytrade,overnight,weekly avg_score=85.9 min_rr=2.17
+[2026-07-14 10:07:32] core_watch_strong 1301 �x�� modes=daytrade,overnight,weekly avg_score=80.3 min_rr=2.16
+[2026-07-14 10:07:32] core_watch 6505 �x��� modes=daytrade,overnight,weekly avg_score=79.4 min_rr=2.16
+[2026-07-14 10:07:32] core_watch 2630 �ȯ� modes=daytrade,overnight,weekly avg_score=76.8 min_rr=2.17
+[2026-07-14 10:07:32] [pre_breakout]
+[2026-07-14 10:07:32] [pre_breakout_watch]
+[2026-07-14 10:07:32] [stable]
+[2026-07-14 10:07:32] [daytrade]
+[2026-07-14 10:07:32] A 1301 �x�� score=80.8 entry=61.90 target=63.45 rr=2.37
+[2026-07-14 10:07:32] B 6505 �x��� score=78.1 entry=66.30 target=67.96 rr=2.36
+[2026-07-14 10:07:32] B 2630 �ȯ� score=75.3 entry=60.70 target=62.22 rr=2.39
+[2026-07-14 10:07:32] B 2634 �~�� score=74.0 entry=66.00 target=67.65 rr=2.35
+[2026-07-14 10:07:32] [overnight]
+[2026-07-14 10:07:32] A 2634 �~�� score=91.2 entry=66.00 target=69.30 rr=2.29
+[2026-07-14 10:07:32] A 1301 �x�� score=80.0 entry=61.90 target=65.00 rr=2.30
+[2026-07-14 10:07:32] A 6505 �x��� score=80.0 entry=66.30 target=69.61 rr=2.30
+[2026-07-14 10:07:32] B 2630 �ȯ� score=77.5 entry=60.70 target=63.74 rr=2.30
+[2026-07-14 10:07:32] [weekly]
+[2026-07-14 10:07:32] A 2634 �~�� score=92.5 entry=66.00 target=71.28 rr=2.17
+[2026-07-14 10:07:32] A 1301 �x�� score=80.0 entry=61.90 target=66.85 rr=2.16
+[2026-07-14 10:07:32] A 6505 �x��� score=80.0 entry=66.30 target=71.60 rr=2.16
+[2026-07-14 10:07:32] B 2630 �ȯ� score=77.5 entry=60.70 target=65.56 rr=2.17
+[2026-07-14 10:07:32] END exit_code=0
+[2026-07-14 10:07:59] START
+[2026-07-14 10:08:04] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-14 10:08:04] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0714/020802/874227300/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-14 10:08:04] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-14 10:08:38] xlsx target locked; saved fallback=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-14\stock_screen_report_100825.xlsx
+[2026-07-14 10:08:38] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-14
+[2026-07-14 10:08:38] snapshots=1971 pre_breakout=0 pre_breakout_watch=0 stable=0 daytrade=3 overnight=4 weekly=4 overlap=4 excluded=11815
+[2026-07-14 10:08:38] [overlap]
+[2026-07-14 10:08:38] core_watch_strong 1301 �x�� modes=daytrade,overnight,weekly avg_score=80.3 min_rr=2.17
+[2026-07-14 10:08:38] core_watch 6505 �x��� modes=daytrade,overnight,weekly avg_score=79.4 min_rr=2.16
+[2026-07-14 10:08:38] core_watch 2630 �ȯ� modes=daytrade,overnight,weekly avg_score=76.8 min_rr=2.16
+[2026-07-14 10:08:38] priority_watch 2634 �~�� modes=overnight,weekly avg_score=81.9 min_rr=2.17
+[2026-07-14 10:08:38] [pre_breakout]
+[2026-07-14 10:08:38] [pre_breakout_watch]
+[2026-07-14 10:08:38] [stable]
+[2026-07-14 10:08:38] [daytrade]
+[2026-07-14 10:08:38] A 1301 �x�� score=80.8 entry=62.00 target=63.55 rr=2.37
+[2026-07-14 10:08:38] B 6505 �x��� score=78.1 entry=66.30 target=67.96 rr=2.36
+[2026-07-14 10:08:38] B 2630 �ȯ� score=75.3 entry=60.50 target=62.01 rr=2.37
+[2026-07-14 10:08:38] [overnight]
+[2026-07-14 10:08:38] A 1301 �x�� score=80.0 entry=62.00 target=65.10 rr=2.29
+[2026-07-14 10:08:38] A 2634 �~�� score=80.0 entry=65.60 target=68.88 rr=2.30
+[2026-07-14 10:08:38] A 6505 �x��� score=80.0 entry=66.30 target=69.61 rr=2.30
+[2026-07-14 10:08:38] B 2630 �ȯ� score=77.5 entry=60.50 target=63.53 rr=2.29
+[2026-07-14 10:08:38] [weekly]
+[2026-07-14 10:08:38] A 2634 �~�� score=83.8 entry=65.60 target=70.85 rr=2.17
+[2026-07-14 10:08:38] A 1301 �x�� score=80.0 entry=62.00 target=66.96 rr=2.17
+[2026-07-14 10:08:38] A 6505 �x��� score=80.0 entry=66.30 target=71.60 rr=2.16
+[2026-07-14 10:08:38] B 2630 �ȯ� score=77.5 entry=60.50 target=65.34 rr=2.16
+[2026-07-14 10:08:38] END exit_code=0
+[2026-07-14 14:00:02] START
+[2026-07-14 14:00:06] Exception in thread Thread-1 (_readerthread):
+[2026-07-14 14:00:06] Traceback (most recent call last):
+[2026-07-14 14:00:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-14 14:00:06]     self._context.run(self.run)
+[2026-07-14 14:00:06]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-14 14:00:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-14 14:00:06]     self._target(*self._args, **self._kwargs)
+[2026-07-14 14:00:06]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-14 14:00:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-14 14:00:06]     buffer.append(fh.read())
+[2026-07-14 14:00:06]                   ~~~~~~~^^
+[2026-07-14 14:00:06]   File "<frozen codecs>", line 325, in decode
+[2026-07-14 14:00:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-14 14:00:06]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-14 14:00:06]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-14 14:00:06] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa6 in position 24: invalid start byte
+[2026-07-14 14:00:06] trading_day_check_warning trading_day_check_failed:the JSON object must be str, bytes or bytearray, not NoneType
+[2026-07-14 14:00:06] Warning: cannot open log file 'shioaji.log': 摮?鋡急???(os error 5), falling back to stdout
+[2026-07-14 14:00:06] [pid:22556] 2026-07-14T06:00:06.873947Z  INFO shioaji::api::api_v1::auth::token_login: No cached token available, performing new login
+[2026-07-14 14:00:07] [pid:22556] 2026-07-14T06:00:07.126224Z  INFO shioaji::api::api_v1::auth::token_login: Stored new token in slot 1
+[2026-07-14 14:00:07] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-14 14:00:07] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0714/060006/874131100/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-14 14:00:07] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-14 14:00:07] [pid:22556] 2026-07-14T06:00:07.163526Z  INFO shioaji::api::api_v1::contracts::api: Loaded 127 IND contracts from cache
+[2026-07-14 14:00:07] [pid:22556] 2026-07-14T06:00:07.171212Z  INFO shioaji::api::api_v1::contracts::api: Loaded 41452 STK contracts from cache
+[2026-07-14 14:00:07] [pid:22556] 2026-07-14T06:00:07.173250Z  INFO shioaji::api::api_v1::contracts::api: Loaded 2524 FUT contracts from cache
+[2026-07-14 14:00:07] [pid:22556] 2026-07-14T06:00:07.176155Z  INFO shioaji::api::api_v1::contracts::api: Loaded 8439 OPT contracts from cache
+[2026-07-14 14:00:07] [pid:22556] 2026-07-14T06:00:07.176274Z  INFO _core::api::auth::login: Loaded 52542 contracts after login
+[2026-07-14 14:00:18] Exception in thread Thread-3 (_readerthread):
+[2026-07-14 14:00:18] Traceback (most recent call last):
+[2026-07-14 14:00:18]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-14 14:00:18]     self._context.run(self.run)
+[2026-07-14 14:00:18]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-14 14:00:18]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-14 14:00:18]     self._target(*self._args, **self._kwargs)
+[2026-07-14 14:00:18]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-14 14:00:18]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-14 14:00:18]     buffer.append(fh.read())
+[2026-07-14 14:00:18]                   ~~~~~~~^^
+[2026-07-14 14:00:18]   File "<frozen codecs>", line 325, in decode
+[2026-07-14 14:00:18]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-14 14:00:18]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-14 14:00:18]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-14 14:00:18] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-14 14:00:18] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-14 14:00:19] Exception in thread Thread-5 (_readerthread):
+[2026-07-14 14:00:19] Traceback (most recent call last):
+[2026-07-14 14:00:19]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-14 14:00:19]     self._context.run(self.run)
+[2026-07-14 14:00:19]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-14 14:00:19]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-14 14:00:19]     self._target(*self._args, **self._kwargs)
+[2026-07-14 14:00:19]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-14 14:00:19]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-14 14:00:19]     buffer.append(fh.read())
+[2026-07-14 14:00:19]                   ~~~~~~~^^
+[2026-07-14 14:00:19]   File "<frozen codecs>", line 325, in decode
+[2026-07-14 14:00:19]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-14 14:00:19]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-14 14:00:19]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-14 14:00:19] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-14 14:00:19] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-14 14:00:47] [pid:22556] 2026-07-14T06:00:47.038729Z  INFO shioaji::api::token_pool: Removed invalid token from slot 1
+[2026-07-14 14:00:47] [pid:22556] 2026-07-14T06:00:47.043455Z  INFO shioaji::api: msg receiver error: Closed
+[2026-07-14 14:00:47] [pid:22556] 2026-07-14T06:00:47.043461Z  INFO shioaji::api: P2P receiver closed: Closed
+[2026-07-14 14:01:08] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-14
+[2026-07-14 14:01:08] snapshots=1971 pre_breakout=0 pre_breakout_watch=0 stable=0 daytrade=7 overnight=10 weekly=8 overlap=9 excluded=11801
+[2026-07-14 14:01:08] [overlap]
+[2026-07-14 14:01:08] core_watch_strong 2634 漢翔 modes=daytrade,overnight,weekly avg_score=100.0 min_rr=2.17
+[2026-07-14 14:01:08] core_watch 1301 台塑 modes=daytrade,overnight,weekly avg_score=79.4 min_rr=2.17
+[2026-07-14 14:01:08] core_watch 6505 台塑化 modes=daytrade,overnight,weekly avg_score=79.4 min_rr=2.17
+[2026-07-14 14:01:08] core_watch 4541 晟田 modes=daytrade,overnight,weekly avg_score=76.8 min_rr=2.17
+[2026-07-14 14:01:08] core_watch 1326 台化 modes=daytrade,overnight,weekly avg_score=76.4 min_rr=2.17
+[2026-07-14 14:01:08] [pre_breakout]
+[2026-07-14 14:01:08] [pre_breakout_watch]
+[2026-07-14 14:01:08] [stable]
+[2026-07-14 14:01:08] [daytrade]
+[2026-07-14 14:01:08] A 2634 漢翔 score=100.0 entry=67.10 target=68.78 rr=2.38
+[2026-07-14 14:01:08] B 1301 台塑 score=78.1 entry=63.60 target=65.19 rr=2.37
+[2026-07-14 14:01:08] B 6505 台塑化 score=78.1 entry=66.20 target=67.86 rr=2.36
+[2026-07-14 14:01:08] B 1326 台化 score=76.7 entry=67.00 target=68.67 rr=2.36
+[2026-07-14 14:01:08] B 4541 晟田 score=75.3 entry=70.60 target=72.36 rr=2.37
+[2026-07-14 14:01:08] [overnight]
+[2026-07-14 14:01:08] A 2634 漢翔 score=100.0 entry=67.10 target=70.45 rr=2.28
+[2026-07-14 14:01:08] A 1301 台塑 score=80.0 entry=63.60 target=66.78 rr=2.30
+[2026-07-14 14:01:08] A 6505 台塑化 score=80.0 entry=66.20 target=69.51 rr=2.30
+[2026-07-14 14:01:08] B 4541 晟田 score=77.5 entry=70.60 target=74.13 rr=2.29
+[2026-07-14 14:01:08] B 1326 台化 score=76.2 entry=67.00 target=70.35 rr=2.30
+[2026-07-14 14:01:08] [weekly]
+[2026-07-14 14:01:08] A 2634 漢翔 score=100.0 entry=67.10 target=72.47 rr=2.17
+[2026-07-14 14:01:08] A 1301 台塑 score=80.0 entry=63.60 target=68.69 rr=2.17
+[2026-07-14 14:01:08] A 6505 台塑化 score=80.0 entry=66.20 target=71.50 rr=2.17
+[2026-07-14 14:01:08] B 4541 晟田 score=77.5 entry=70.60 target=76.25 rr=2.17
+[2026-07-14 14:01:08] B 1326 台化 score=76.2 entry=67.00 target=72.36 rr=2.17
+[2026-07-14 14:01:08] END exit_code=0
+[2026-07-14 16:46:37] START
+[2026-07-14 16:46:41] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-14 16:46:41] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0714/084640/998995600/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-14 16:46:41] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-14 16:47:26] xlsx target locked; saved fallback=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-14\stock_screen_report_1400_164722.xlsx
+[2026-07-14 16:47:26] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-14
+[2026-07-14 16:47:26] snapshots=1971 pre_breakout=0 pre_breakout_watch=0 stable=0 daytrade=7 overnight=10 weekly=8 overlap=9 excluded=11801
+[2026-07-14 16:47:26] [overlap]
+[2026-07-14 16:47:26] core_watch_strong 2634 �~�� modes=daytrade,overnight,weekly avg_score=100.0 min_rr=2.17
+[2026-07-14 16:47:26] core_watch 1301 �x�� modes=daytrade,overnight,weekly avg_score=79.4 min_rr=2.17
+[2026-07-14 16:47:27] core_watch 6505 �x��� modes=daytrade,overnight,weekly avg_score=79.4 min_rr=2.17
+[2026-07-14 16:47:27] core_watch 4541 �ԥ� modes=daytrade,overnight,weekly avg_score=76.8 min_rr=2.17
+[2026-07-14 16:47:27] core_watch 1326 �x�� modes=daytrade,overnight,weekly avg_score=76.4 min_rr=2.17
+[2026-07-14 16:47:27] [pre_breakout]
+[2026-07-14 16:47:27] [pre_breakout_watch]
+[2026-07-14 16:47:27] [stable]
+[2026-07-14 16:47:27] [daytrade]
+[2026-07-14 16:47:27] A 2634 �~�� score=100.0 entry=67.10 target=68.78 rr=2.38
+[2026-07-14 16:47:27] B 1301 �x�� score=78.1 entry=63.60 target=65.19 rr=2.37
+[2026-07-14 16:47:27] B 6505 �x��� score=78.1 entry=66.20 target=67.86 rr=2.36
+[2026-07-14 16:47:27] B 1326 �x�� score=76.7 entry=67.00 target=68.67 rr=2.36
+[2026-07-14 16:47:27] B 4541 �ԥ� score=75.3 entry=70.60 target=72.36 rr=2.37
+[2026-07-14 16:47:27] [overnight]
+[2026-07-14 16:47:27] A 2634 �~�� score=100.0 entry=67.10 target=70.45 rr=2.28
+[2026-07-14 16:47:27] A 1301 �x�� score=80.0 entry=63.60 target=66.78 rr=2.30
+[2026-07-14 16:47:27] A 6505 �x��� score=80.0 entry=66.20 target=69.51 rr=2.30
+[2026-07-14 16:47:27] B 4541 �ԥ� score=77.5 entry=70.60 target=74.13 rr=2.29
+[2026-07-14 16:47:27] B 1326 �x�� score=76.2 entry=67.00 target=70.35 rr=2.30
+[2026-07-14 16:47:27] [weekly]
+[2026-07-14 16:47:27] A 2634 �~�� score=100.0 entry=67.10 target=72.47 rr=2.17
+[2026-07-14 16:47:27] A 1301 �x�� score=80.0 entry=63.60 target=68.69 rr=2.17
+[2026-07-14 16:47:27] A 6505 �x��� score=80.0 entry=66.20 target=71.50 rr=2.17
+[2026-07-14 16:47:27] B 4541 �ԥ� score=77.5 entry=70.60 target=76.25 rr=2.17
+[2026-07-14 16:47:27] B 1326 �x�� score=76.2 entry=67.00 target=72.36 rr=2.17
+[2026-07-14 16:47:27] END exit_code=0

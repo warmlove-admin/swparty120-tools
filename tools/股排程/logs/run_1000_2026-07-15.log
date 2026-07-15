@@ -1,0 +1,20 @@
+﻿[2026-07-15 10:49:03] START
+[2026-07-15 10:49:05] SDK NOTICE Wed Jul 15 10:49:05.727 2026 solClient.c:10688                    (0000446c) Session '(c0,s1)_sinopac' error attempting transport connection, client name 'PYAPI/78XjKBxwaq/0715/024905/690046000/LOGINING', VPN name 'sinopac', peer host '203.66.91.161:80' address 'IP 203.66.91.161', connection 'tcp_TxRx' local address 'IP 0.0.0.0:53200'
+[2026-07-15 10:49:05] SDK NOTICE Wed Jul 15 10:49:05.727 2026 solClient.c:10240                    (0000446c) Protocol or communication error when attempting to login for session '(c0,s1)_sinopac'; are session HOST and PORT correct? client name 'PYAPI/78XjKBxwaq/0715/024905/690046000/LOGINING', VPN name 'sinopac', peer host '203.66.91.161:80' address 'IP 203.66.91.161', connection 'tcp_TxRx' local address 'IP 0.0.0.0:53200'
+[2026-07-15 10:49:08] SDK NOTICE Wed Jul 15 10:49:08.811 2026 solClient.c:10688                    (0000446c) Session '(c0,s1)_sinopac' error attempting transport connection, client name 'PYAPI/78XjKBxwaq/0715/024905/690046000/LOGINING', VPN name 'sinopac', peer host '203.66.91.161:80' address 'IP 203.66.91.161', connection 'tcp_TxRx' local address 'IP 0.0.0.0:53205'
+[2026-07-15 10:49:08] SDK NOTICE Wed Jul 15 10:49:08.811 2026 solClient.c:10240                    (0000446c) Protocol or communication error when attempting to login for session '(c0,s1)_sinopac'; are session HOST and PORT correct? client name 'PYAPI/78XjKBxwaq/0715/024905/690046000/LOGINING', VPN name 'sinopac', peer host '203.66.91.161:80' address 'IP 203.66.91.161', connection 'tcp_TxRx' local address 'IP 0.0.0.0:53205'
+[2026-07-15 10:49:08] Traceback (most recent call last):
+[2026-07-15 10:49:08]   File "C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_daily_screen.py", line 1784, in <module>
+[2026-07-15 10:49:08]     main()
+[2026-07-15 10:49:08]     ~~~~^^
+[2026-07-15 10:49:08]   File "C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_daily_screen.py", line 1780, in main
+[2026-07-15 10:49:08]     run_once(output_label=args.output_label, skip_non_trading_day=args.skip_non_trading_day, after_close=args.after_close)
+[2026-07-15 10:49:08]     ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-15 10:49:08]   File "C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_daily_screen.py", line 1657, in run_once
+[2026-07-15 10:49:08]     api, simulation = load_api()
+[2026-07-15 10:49:08]                       ~~~~~~~~^^
+[2026-07-15 10:49:08]   File "C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_daily_screen.py", line 562, in load_api
+[2026-07-15 10:49:08]     api.login(api_key=env_required("SHIOAJI_API_KEY"), secret_key=env_required("SHIOAJI_SECRET_KEY"))
+[2026-07-15 10:49:08]     ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-15 10:49:08] shioaji.ShioajiConnectionError: login: connection error
+[2026-07-15 10:49:08] END exit_code=1

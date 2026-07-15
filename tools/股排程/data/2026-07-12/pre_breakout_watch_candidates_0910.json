@@ -1,0 +1,29 @@
+[
+  {
+    "mode": "pre_breakout_watch",
+    "code": "2359",
+    "name": "所羅門",
+    "exchange": "TSE",
+    "level": "B",
+    "score": 78.4,
+    "entry_price": 139.0,
+    "target_price": 148.03,
+    "stop_price": 136.22,
+    "lot_amount": 139000.0,
+    "net_profit_at_target": 8340.0,
+    "loss_at_stop": 3424.0,
+    "rr_ratio": 2.44,
+    "return_pct": 2.58,
+    "gap_pct": 2.58,
+    "fade_pct": 0.0,
+    "spread_pct": 0.36,
+    "volume": 2715,
+    "total_amount": 378339500.0,
+    "liquidity_score": 11,
+    "momentum_score": 11,
+    "technical_score": 20,
+    "theme_score": 12,
+    "risk_score": 5,
+    "reasons": "theme:hot_robotics_automation,hot_theme,theme_holds_open,theme_volume,open_above_ma5,open_above_ma10,open_above_ma20,open_above_ma60"
+  }
+]

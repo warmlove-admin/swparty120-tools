@@ -1,0 +1,15 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+daytrade,2337,旺宏,TSE,A,100.0,143.5,147.09,142.64,143500.0,3121.0,1319.0,2.37,3.61,2.17,1.41,0.348,62359,8988360500.0,17,12,7,22,3,"above_open,theme:hot_memory_hbm,hot_theme,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_avg_up"
+daytrade,2344,華邦電,TSE,A,100.0,176.5,180.91,175.44,176500.0,3833.0,1624.0,2.36,4.75,2.97,1.73,0.283,157502,28080117500.0,17,13,7,22,3,"above_open,strong_momentum,theme:hot_memory_hbm,hot_theme,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume"
+daytrade,5388,中磊,TSE,A,91.8,84.6,86.71,84.09,84600.0,1833.0,780.0,2.35,1.81,0.96,0.83,0.118,6373,545704000.0,16,5,10,16,5,"above_open,theme:hot_networking_optical,hot_theme,theme_breadth,theme_strong_peers,theme_volume"
+daytrade,3265,台星科,OTC,B,91.8,173.5,177.84,172.46,173500.0,3773.0,1594.0,2.37,2.97,2.08,0.87,0.288,1166,202281500.0,9,11,9,18,5,"above_open,theme:testing_packaging,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_avg_up"
+daytrade,2464,盟立,TSE,A,83.6,161.5,165.54,160.53,161500.0,3512.0,1486.0,2.36,1.25,0.31,0.94,0.31,7476,1212168000.0,15,5,9,12,5,"above_open,theme:hot_robotics_automation,hot_theme,theme_holds_open,theme_volume"
+daytrade,2324,仁寶,TSE,B,79.5,36.6,37.52,36.38,36600.0,800.0,337.0,2.38,3.1,1.69,1.39,0.137,68971,2533447250.0,18,10,10,0,5,above_open
+daytrade,2356,英業達,TSE,B,78.1,69.8,71.54,69.38,69800.0,1512.0,643.0,2.35,5.44,4.23,1.16,0.143,143003,10114387200.0,18,13,8,0,3,"above_open,strong_momentum"
+daytrade,2887,台新新光金,TSE,B,78.1,36.85,37.77,36.63,36850.0,800.0,338.0,2.37,2.79,1.67,1.1,0.136,111227,4091154450.0,18,9,10,0,5,above_open
+daytrade,6214,精誠,TSE,B,78.1,143.5,147.09,142.64,143500.0,3121.0,1319.0,2.37,6.3,5.19,1.06,0.348,5052,729279000.0,15,13,9,0,5,"above_open,strong_momentum"
+daytrade,2377,微星,TSE,B,75.3,145.0,148.62,144.13,145000.0,3146.0,1333.0,2.36,2.11,1.06,1.05,0.345,19738,2868097000.0,17,9,9,0,5,above_open
+daytrade,3149,正達,TSE,B,75.3,89.5,91.74,88.96,89500.0,1947.0,826.0,2.36,4.68,1.75,2.87,0.112,14125,1262183900.0,18,11,8,0,3,"above_open,strong_momentum"
+daytrade,6202,盛群,TSE,B,75.3,73.3,75.13,72.86,73300.0,1590.0,674.0,2.36,7.79,1.62,6.08,0.136,30529,2262051000.0,18,11,8,0,3,"above_open,near_day_high,strong_momentum"
+daytrade,3498,陽程,OTC,B,75.3,126.5,129.66,125.74,126500.0,2746.0,1164.0,2.36,5.86,3.77,2.02,0.395,4604,590540000.0,13,13,9,0,5,"above_open,strong_momentum"
+daytrade,2441,超豐,TSE,B,72.6,144.5,148.11,143.63,144500.0,3138.0,1332.0,2.36,4.71,1.45,3.21,0.346,13835,1992312500.0,17,11,7,0,3,"above_open,strong_momentum"

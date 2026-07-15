@@ -1,0 +1,29 @@
+[
+  {
+    "mode": "stable",
+    "code": "2886",
+    "name": "兆豐金",
+    "exchange": "TSE",
+    "level": "B",
+    "score": 71.7,
+    "entry_price": 47.0,
+    "target_price": 49.82,
+    "stop_price": 46.06,
+    "lot_amount": 47000.0,
+    "net_profit_at_target": 2588.0,
+    "loss_at_stop": 1158.0,
+    "rr_ratio": 2.24,
+    "return_pct": 0.64,
+    "gap_pct": 0.0,
+    "fade_pct": 0.64,
+    "spread_pct": 0.106,
+    "volume": 26732,
+    "total_amount": 1256845300.0,
+    "liquidity_score": 18,
+    "momentum_score": 1,
+    "technical_score": 20,
+    "theme_score": 10,
+    "risk_score": 5,
+    "reasons": "above_open,theme:finance,theme_breadth,theme_holds_open,theme_volume,stable_short_trend,stable_ma_alignment,stable_10d_up_not_hot"
+  }
+]

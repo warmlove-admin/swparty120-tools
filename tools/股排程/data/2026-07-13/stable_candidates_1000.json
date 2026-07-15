@@ -1,0 +1,29 @@
+[
+  {
+    "mode": "stable",
+    "code": "3704",
+    "name": "合勤控",
+    "exchange": "TSE",
+    "level": "B",
+    "score": 70.7,
+    "entry_price": 49.7,
+    "target_price": 52.68,
+    "stop_price": 48.71,
+    "lot_amount": 49700.0,
+    "net_profit_at_target": 2734.0,
+    "loss_at_stop": 1220.0,
+    "rr_ratio": 2.24,
+    "return_pct": 9.59,
+    "gap_pct": 5.84,
+    "fade_pct": 3.54,
+    "spread_pct": 0.302,
+    "volume": 10270,
+    "total_amount": 510072300.0,
+    "liquidity_score": 17,
+    "momentum_score": 13,
+    "technical_score": 20,
+    "theme_score": 0,
+    "risk_score": 5,
+    "reasons": "above_open,near_day_high,strong_momentum,stable_short_trend,stable_20d_up,stable_near_ma20,stable_shallow_pullback,stable_volume_orderly"
+  }
+]

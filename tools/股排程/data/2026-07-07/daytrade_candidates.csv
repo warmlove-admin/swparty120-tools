@@ -1,0 +1,10 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+daytrade,2882,國泰金,TSE,A,95.9,97.0,99.42,96.42,97000.0,2103.0,890.0,2.36,3.85,0.64,3.19,0.206,44871,4322351800.0,17,8,9,16,5,"above_open,near_day_high,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up"
+daytrade,2885,元大金,TSE,A,91.8,69.8,71.54,69.38,69800.0,1512.0,643.0,2.35,2.05,-0.29,2.35,0.143,36006,2527019500.0,18,3,10,16,5,"above_open,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up"
+daytrade,2886,兆豐金,TSE,A,89.0,46.8,47.97,46.52,46800.0,1017.0,430.0,2.37,1.08,-0.11,1.19,0.107,36052,1692128400.0,18,1,10,16,5,"above_open,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up"
+daytrade,2890,永豐金,TSE,A,89.0,41.1,42.13,40.85,41100.0,896.0,381.0,2.35,0.24,0.0,0.24,0.122,38869,1606616200.0,18,1,10,16,5,"above_open,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up"
+daytrade,5351,鈺創,OTC,A,89.0,93.1,95.43,92.54,93100.0,2026.0,858.0,2.36,3.56,1.78,1.75,0.107,60534,5698516100.0,18,10,8,11,3,"above_open,theme:hot_memory_hbm,hot_theme,theme_volume"
+daytrade,2881,富邦金,TSE,A,80.8,123.0,126.07,122.26,123000.0,2668.0,1133.0,2.35,1.23,0.0,1.23,0.407,20946,2569024000.0,15,1,9,16,3,"above_open,near_day_high,theme:finance,theme_breadth,theme_strong_peers,theme_holds_open,theme_volume,theme_mild_up"
+daytrade,6579,研揚,TSE,B,78.1,179.0,183.47,177.93,179000.0,3885.0,1642.0,2.37,8.81,5.47,3.17,0.279,5054,906859000.0,15,13,9,0,5,"above_open,near_day_high,strong_momentum"
+daytrade,5388,中磊,TSE,B,74.0,83.4,85.48,82.9,83400.0,1807.0,767.0,2.36,2.46,5.41,-2.8,0.12,12280,1048273300.0,18,8,6,12,5,"theme:hot_networking_optical,hot_theme,theme_strong_peers,theme_volume"
+daytrade,2458,義隆,TSE,B,72.6,188.0,192.7,186.87,188000.0,4085.0,1731.0,2.36,5.03,1.4,3.58,0.266,22097,4241150500.0,17,11,7,0,3,"above_open,strong_momentum"

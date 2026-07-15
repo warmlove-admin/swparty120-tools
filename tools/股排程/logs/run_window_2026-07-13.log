@@ -1,0 +1,719 @@
+﻿[2026-07-13 09:04:42] START
+[2026-07-13 09:04:42] Python=C:\Users\USER\1.Claude Code\swparty120-tools\tools\stock_screen_venv\Scripts\python.exe
+[2026-07-13 09:04:42] Script=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_daily_screen.py
+[2026-07-13 09:04:47] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:04:47] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010447/063288600/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:04:47] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:04:53] Exception in thread Thread-1 (_readerthread):
+[2026-07-13 09:04:53] Traceback (most recent call last):
+[2026-07-13 09:04:53]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:04:53]     self._context.run(self.run)
+[2026-07-13 09:04:53]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:04:53]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:04:53]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:04:53]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:04:53]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:04:53]     buffer.append(fh.read())
+[2026-07-13 09:04:53]                   ~~~~~~~^^
+[2026-07-13 09:04:53]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:04:53]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:04:53]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:04:53]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:04:53] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:04:53] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:04:54] Exception in thread Thread-3 (_readerthread):
+[2026-07-13 09:04:54] Traceback (most recent call last):
+[2026-07-13 09:04:54]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:04:54]     self._context.run(self.run)
+[2026-07-13 09:04:54]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:04:54]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:04:54]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:04:54]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:04:54]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:04:54]     buffer.append(fh.read())
+[2026-07-13 09:04:54]                   ~~~~~~~^^
+[2026-07-13 09:04:54]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:04:54]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:04:54]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:04:54]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:04:54] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:04:54] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:06:01] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:06:01] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010600/906437300/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:06:01] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:06:02] Exception in thread Thread-5 (_readerthread):
+[2026-07-13 09:06:02] Traceback (most recent call last):
+[2026-07-13 09:06:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:06:02]     self._context.run(self.run)
+[2026-07-13 09:06:02]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:06:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:06:02]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:06:02]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:06:02]     buffer.append(fh.read())
+[2026-07-13 09:06:02]                   ~~~~~~~^^
+[2026-07-13 09:06:02]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:06:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:06:02]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:06:02]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:02] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:06:02] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:06:03] Exception in thread Thread-7 (_readerthread):
+[2026-07-13 09:06:03] Traceback (most recent call last):
+[2026-07-13 09:06:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:06:03]     self._context.run(self.run)
+[2026-07-13 09:06:03]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:06:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:06:03]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:06:03]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:06:03]     buffer.append(fh.read())
+[2026-07-13 09:06:03]                   ~~~~~~~^^
+[2026-07-13 09:06:03]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:06:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:06:03]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:06:03]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:03] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:06:03] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:06:36] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:06:36] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010635/622349500/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:06:36] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:06:37] Exception in thread Thread-9 (_readerthread):
+[2026-07-13 09:06:37] Traceback (most recent call last):
+[2026-07-13 09:06:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:06:37]     self._context.run(self.run)
+[2026-07-13 09:06:37]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:06:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:06:37]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:06:37]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:06:37]     buffer.append(fh.read())
+[2026-07-13 09:06:37]                   ~~~~~~~^^
+[2026-07-13 09:06:37]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:06:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:06:37]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:06:37]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:37] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:06:37] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:06:38] Exception in thread Thread-11 (_readerthread):
+[2026-07-13 09:06:38] Traceback (most recent call last):
+[2026-07-13 09:06:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:06:38]     self._context.run(self.run)
+[2026-07-13 09:06:38]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:06:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:06:38]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:06:38]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:06:38]     buffer.append(fh.read())
+[2026-07-13 09:06:38]                   ~~~~~~~^^
+[2026-07-13 09:06:38]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:06:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:06:38]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:06:38]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:06:38] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:06:38] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:07:06] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:07:06] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010706/117526200/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:07:06] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:07:08] Exception in thread Thread-13 (_readerthread):
+[2026-07-13 09:07:08] Traceback (most recent call last):
+[2026-07-13 09:07:08]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:07:08]     self._context.run(self.run)
+[2026-07-13 09:07:08]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:07:08]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:07:08]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:07:08]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:08]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:07:08]     buffer.append(fh.read())
+[2026-07-13 09:07:08]                   ~~~~~~~^^
+[2026-07-13 09:07:08]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:07:08]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:07:08]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:07:08]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:08] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:07:08] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:07:09] Exception in thread Thread-15 (_readerthread):
+[2026-07-13 09:07:09] Traceback (most recent call last):
+[2026-07-13 09:07:09]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:07:09]     self._context.run(self.run)
+[2026-07-13 09:07:09]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:07:09]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:07:09]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:07:09]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:09]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:07:09]     buffer.append(fh.read())
+[2026-07-13 09:07:09]                   ~~~~~~~^^
+[2026-07-13 09:07:09]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:07:09]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:07:09]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:07:09]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:09] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:07:09] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:07:36] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:07:36] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010736/182158700/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:07:36] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:07:37] Exception in thread Thread-17 (_readerthread):
+[2026-07-13 09:07:37] Traceback (most recent call last):
+[2026-07-13 09:07:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:07:37]     self._context.run(self.run)
+[2026-07-13 09:07:37]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:07:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:07:37]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:07:37]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:07:37]     buffer.append(fh.read())
+[2026-07-13 09:07:37]                   ~~~~~~~^^
+[2026-07-13 09:07:37]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:07:37]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:07:37]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:07:37]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:37] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:07:37] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:07:38] Exception in thread Thread-19 (_readerthread):
+[2026-07-13 09:07:38] Traceback (most recent call last):
+[2026-07-13 09:07:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:07:38]     self._context.run(self.run)
+[2026-07-13 09:07:38]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:07:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:07:38]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:07:38]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:07:38]     buffer.append(fh.read())
+[2026-07-13 09:07:38]                   ~~~~~~~^^
+[2026-07-13 09:07:38]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:07:38]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:07:38]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:07:38]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:07:38] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:07:38] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:08:05] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:08:05] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010804/850811700/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:08:05] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:08:05] Exception in thread Thread-21 (_readerthread):
+[2026-07-13 09:08:05] Traceback (most recent call last):
+[2026-07-13 09:08:05]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:08:05]     self._context.run(self.run)
+[2026-07-13 09:08:05]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:08:05]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:08:05]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:08:05]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:05]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:08:05]     buffer.append(fh.read())
+[2026-07-13 09:08:05]                   ~~~~~~~^^
+[2026-07-13 09:08:05]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:08:05]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:08:05]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:08:05]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:05] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:08:05] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:08:06] Exception in thread Thread-23 (_readerthread):
+[2026-07-13 09:08:06] Traceback (most recent call last):
+[2026-07-13 09:08:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:08:06]     self._context.run(self.run)
+[2026-07-13 09:08:06]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:08:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:08:06]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:08:06]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:08:06]     buffer.append(fh.read())
+[2026-07-13 09:08:06]                   ~~~~~~~^^
+[2026-07-13 09:08:06]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:08:06]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:08:06]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:08:06]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:06] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:08:06] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:08:33] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:08:33] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010832/170351000/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:08:33] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:08:34] Exception in thread Thread-25 (_readerthread):
+[2026-07-13 09:08:34] Traceback (most recent call last):
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:08:34]     self._context.run(self.run)
+[2026-07-13 09:08:34]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:08:34]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:08:34]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:08:34]     buffer.append(fh.read())
+[2026-07-13 09:08:34]                   ~~~~~~~^^
+[2026-07-13 09:08:34]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:08:34]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:08:34]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:34] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:08:34] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:08:34] Exception in thread Thread-27 (_readerthread):
+[2026-07-13 09:08:34] Traceback (most recent call last):
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:08:34]     self._context.run(self.run)
+[2026-07-13 09:08:34]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:08:34]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:08:34]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:08:34]     buffer.append(fh.read())
+[2026-07-13 09:08:34]                   ~~~~~~~^^
+[2026-07-13 09:08:34]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:08:34]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:08:34]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:08:34]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:08:34] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:08:34] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:09:01] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:09:01] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010900/260133200/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:09:01] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:09:02] Exception in thread Thread-29 (_readerthread):
+[2026-07-13 09:09:02] Traceback (most recent call last):
+[2026-07-13 09:09:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:09:02]     self._context.run(self.run)
+[2026-07-13 09:09:02]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:09:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:09:02]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:09:02]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:09:02]     buffer.append(fh.read())
+[2026-07-13 09:09:02]                   ~~~~~~~^^
+[2026-07-13 09:09:02]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:09:02]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:09:02]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:09:02]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:02] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:09:02] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:09:03] Exception in thread Thread-31 (_readerthread):
+[2026-07-13 09:09:03] Traceback (most recent call last):
+[2026-07-13 09:09:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:09:03]     self._context.run(self.run)
+[2026-07-13 09:09:03]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:09:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:09:03]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:09:03]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:09:03]     buffer.append(fh.read())
+[2026-07-13 09:09:03]                   ~~~~~~~^^
+[2026-07-13 09:09:03]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:09:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:09:03]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:09:03]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:03] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:09:03] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:09:55] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:09:55] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/010954/516007400/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:09:55] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:09:56] Exception in thread Thread-33 (_readerthread):
+[2026-07-13 09:09:56] Traceback (most recent call last):
+[2026-07-13 09:09:56]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:09:56]     self._context.run(self.run)
+[2026-07-13 09:09:56]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:09:56]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:09:56]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:09:56]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:56]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:09:56]     buffer.append(fh.read())
+[2026-07-13 09:09:56]                   ~~~~~~~^^
+[2026-07-13 09:09:56]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:09:56]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:09:56]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:09:56]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:56] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:09:56] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:09:58] Exception in thread Thread-35 (_readerthread):
+[2026-07-13 09:09:58] Traceback (most recent call last):
+[2026-07-13 09:09:58]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:09:58]     self._context.run(self.run)
+[2026-07-13 09:09:58]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:09:58]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:09:58]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:09:58]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:58]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:09:58]     buffer.append(fh.read())
+[2026-07-13 09:09:58]                   ~~~~~~~^^
+[2026-07-13 09:09:58]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:09:58]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:09:58]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:09:58]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:09:58] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:09:58] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:10:28] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-13 09:10:28] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0713/011026/894242400/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-13 09:10:28] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-13 09:10:29] Exception in thread Thread-37 (_readerthread):
+[2026-07-13 09:10:29] Traceback (most recent call last):
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:10:29]     self._context.run(self.run)
+[2026-07-13 09:10:29]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:10:29]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:10:29]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:10:29]     buffer.append(fh.read())
+[2026-07-13 09:10:29]                   ~~~~~~~^^
+[2026-07-13 09:10:29]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:10:29]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:10:29]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:10:29] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-13 09:10:29] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:10:29] Exception in thread Thread-39 (_readerthread):
+[2026-07-13 09:10:29] Traceback (most recent call last):
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-13 09:10:29]     self._context.run(self.run)
+[2026-07-13 09:10:29]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-13 09:10:29]     self._target(*self._args, **self._kwargs)
+[2026-07-13 09:10:29]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-13 09:10:29]     buffer.append(fh.read())
+[2026-07-13 09:10:29]                   ~~~~~~~^^
+[2026-07-13 09:10:29]   File "<frozen codecs>", line 325, in decode
+[2026-07-13 09:10:29]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-13 09:10:29]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-13 09:10:29]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-13 09:10:29] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 51: invalid start byte
+[2026-07-13 09:10:29] corporate action auto source skipped: tpex (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=1 pre_breakout_watch=1 stable=1 daytrade=20 overnight=21 weekly=18 overlap=19 excluded=11764
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout,pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=88.3 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 2634 漢翔 modes=daytrade,overnight,weekly avg_score=100.0 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=97.1 min_rr=2.16
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=91.6 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5351 鈺創 modes=daytrade,overnight,weekly avg_score=90.3 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 6282 康舒 score=94.3 entry=59.30 target=63.15 rr=2.43
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=85.2 entry=59.30 target=63.15 rr=2.43
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=84.8 entry=59.30 target=62.86 rr=2.23
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 2634 漢翔 score=100.0 entry=63.40 target=64.98 rr=2.36
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.90 target=68.57 rr=2.36
+[2026-07-13 09:11:00] B 2464 盟立 score=95.9 entry=169.00 target=173.22 rr=2.37
+[2026-07-13 09:11:00] B 6282 康舒 score=90.4 entry=59.30 target=60.78 rr=2.34
+[2026-07-13 09:11:00] B 5371 中光電 score=90.4 entry=96.20 target=98.60 rr=2.35
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] A 2634 漢翔 score=100.0 entry=63.40 target=66.57 rr=2.30
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.90 target=70.25 rr=2.30
+[2026-07-13 09:11:00] A 5351 鈺創 score=93.8 entry=99.40 target=104.37 rr=2.30
+[2026-07-13 09:11:00] B 2464 盟立 score=90.0 entry=169.00 target=177.45 rr=2.30
+[2026-07-13 09:11:00] B 5371 中光電 score=90.0 entry=96.20 target=101.01 rr=2.30
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] A 2634 漢翔 score=100.0 entry=63.40 target=68.47 rr=2.17
+[2026-07-13 09:11:00] A 5351 鈺創 score=95.0 entry=99.40 target=107.35 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=91.2 entry=66.90 target=72.25 rr=2.16
+[2026-07-13 09:11:00] B 5371 中光電 score=90.0 entry=96.20 target=103.90 rr=2.17
+[2026-07-13 09:11:00] B 2464 盟立 score=88.8 entry=169.00 target=182.52 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=1 pre_breakout_watch=2 stable=1 daytrade=16 overnight=19 weekly=17 overlap=17 excluded=11770
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout,pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=88.7 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=91.6 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 5371 中光電 modes=daytrade,overnight,weekly avg_score=88.0 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=87.8 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 1301 台塑 modes=daytrade,overnight,weekly avg_score=77.7 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 6282 康舒 score=94.3 entry=59.20 target=63.05 rr=2.45
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=85.2 entry=59.20 target=63.05 rr=2.45
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=32.85 target=34.99 rr=2.43
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=84.8 entry=59.20 target=62.75 rr=2.24
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] B 2464 盟立 score=95.9 entry=169.50 target=173.74 rr=2.36
+[2026-07-13 09:11:00] A 3481 群創 score=94.5 entry=66.60 target=68.26 rr=2.35
+[2026-07-13 09:11:00] B 6282 康舒 score=90.4 entry=59.20 target=60.68 rr=2.34
+[2026-07-13 09:11:00] B 5371 中光電 score=89.0 entry=97.60 target=100.04 rr=2.35
+[2026-07-13 09:11:00] B 1301 台塑 score=78.1 entry=58.60 target=60.06 rr=2.36
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] B 6282 康舒 score=91.2 entry=59.20 target=62.16 rr=2.29
+[2026-07-13 09:11:00] B 2464 盟立 score=90.0 entry=169.50 target=177.97 rr=2.29
+[2026-07-13 09:11:00] B 5371 中光電 score=87.5 entry=97.60 target=102.48 rr=2.30
+[2026-07-13 09:11:00] A 3481 群創 score=85.0 entry=66.60 target=69.93 rr=2.29
+[2026-07-13 09:11:00] A 2344 華邦電 score=80.0 entry=179.00 target=187.95 rr=2.29
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] B 2464 盟立 score=88.8 entry=169.50 target=183.06 rr=2.17
+[2026-07-13 09:11:00] B 5371 中光電 score=87.5 entry=97.60 target=105.41 rr=2.17
+[2026-07-13 09:11:00] B 6282 康舒 score=86.2 entry=59.20 target=63.94 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=83.8 entry=66.60 target=71.93 rr=2.17
+[2026-07-13 09:11:00] B 5351 鈺創 score=81.2 entry=99.40 target=107.35 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=1 pre_breakout_watch=1 stable=1 daytrade=18 overnight=18 weekly=21 overlap=19 excluded=11766
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout,pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=88.7 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 5371 中光電 modes=daytrade,overnight,weekly avg_score=93.2 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=92.9 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=92.8 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 5351 鈺創 modes=daytrade,overnight,weekly avg_score=83.9 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 6282 康舒 score=94.3 entry=59.20 target=63.05 rr=2.45
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=85.2 entry=59.20 target=63.05 rr=2.45
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=84.8 entry=59.20 target=62.75 rr=2.24
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.60 target=68.26 rr=2.35
+[2026-07-13 09:11:00] B 2464 盟立 score=95.9 entry=171.00 target=175.27 rr=2.35
+[2026-07-13 09:11:00] B 5371 中光電 score=94.5 entry=97.60 target=100.04 rr=2.35
+[2026-07-13 09:11:00] B 6282 康舒 score=90.4 entry=59.20 target=60.68 rr=2.34
+[2026-07-13 09:11:00] B 1301 台塑 score=78.1 entry=58.40 target=59.86 rr=2.36
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] B 2464 盟立 score=93.8 entry=171.00 target=179.55 rr=2.30
+[2026-07-13 09:11:00] B 5371 中光電 score=92.5 entry=97.60 target=102.48 rr=2.30
+[2026-07-13 09:11:00] B 6282 康舒 score=91.2 entry=59.20 target=62.16 rr=2.29
+[2026-07-13 09:11:00] A 3481 群創 score=90.0 entry=66.60 target=69.93 rr=2.29
+[2026-07-13 09:11:00] A 5351 鈺創 score=87.5 entry=99.30 target=104.27 rr=2.30
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] B 5371 中光電 score=92.5 entry=97.60 target=105.41 rr=2.17
+[2026-07-13 09:11:00] B 2464 盟立 score=88.8 entry=171.00 target=184.68 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=88.8 entry=66.60 target=71.93 rr=2.17
+[2026-07-13 09:11:00] A 5351 鈺創 score=88.8 entry=99.30 target=107.24 rr=2.17
+[2026-07-13 09:11:00] B 6282 康舒 score=86.2 entry=59.20 target=63.94 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=2 pre_breakout_watch=2 stable=1 daytrade=19 overnight=25 weekly=21 overlap=25 excluded=11756
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout,pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=91.1 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=97.1 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=95.8 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 2344 華邦電 modes=daytrade,overnight,weekly avg_score=93.5 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5351 鈺創 modes=daytrade,overnight,weekly avg_score=92.0 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 6282 康舒 score=96.6 entry=59.50 target=63.37 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=32.95 target=35.09 rr=2.43
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=87.5 entry=59.50 target=63.37 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=32.95 target=35.09 rr=2.43
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=87.0 entry=59.50 target=63.07 rr=2.24
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=67.00 target=68.67 rr=2.36
+[2026-07-13 09:11:00] A 5371 中光電 score=97.3 entry=97.00 target=99.42 rr=2.36
+[2026-07-13 09:11:00] B 2464 盟立 score=95.9 entry=170.00 target=174.25 rr=2.36
+[2026-07-13 09:11:00] B 6282 康舒 score=93.2 entry=59.50 target=60.99 rr=2.35
+[2026-07-13 09:11:00] A 2344 華邦電 score=91.8 entry=181.50 target=186.04 rr=2.36
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=67.00 target=70.35 rr=2.30
+[2026-07-13 09:11:00] A 2344 華邦電 score=98.8 entry=181.50 target=190.58 rr=2.30
+[2026-07-13 09:11:00] A 5371 中光電 score=95.0 entry=97.00 target=101.85 rr=2.30
+[2026-07-13 09:11:00] B 6282 康舒 score=93.8 entry=59.50 target=62.48 rr=2.30
+[2026-07-13 09:11:00] A 5351 鈺創 score=93.8 entry=99.90 target=104.90 rr=2.30
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] A 5351 鈺創 score=100.0 entry=99.90 target=107.89 rr=2.17
+[2026-07-13 09:11:00] A 5371 中光電 score=95.0 entry=97.00 target=104.76 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=91.2 entry=67.00 target=72.36 rr=2.17
+[2026-07-13 09:11:00] A 2344 華邦電 score=90.0 entry=181.50 target=196.02 rr=2.17
+[2026-07-13 09:11:00] B 2464 盟立 score=88.8 entry=170.00 target=183.60 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=2 pre_breakout_watch=2 stable=1 daytrade=20 overnight=25 weekly=21 overlap=24 excluded=11755
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout,pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=93.5 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=98.3 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=97.1 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 2344 華邦電 modes=daytrade,overnight,weekly avg_score=93.5 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=91.6 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 6282 康舒 score=98.9 entry=59.50 target=63.37 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=33.05 target=35.20 rr=2.44
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=89.8 entry=59.50 target=63.37 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=33.05 target=35.20 rr=2.44
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=89.1 entry=59.50 target=63.07 rr=2.24
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.90 target=68.57 rr=2.36
+[2026-07-13 09:11:00] A 5371 中光電 score=100.0 entry=97.00 target=99.42 rr=2.36
+[2026-07-13 09:11:00] B 2464 盟立 score=95.9 entry=170.00 target=174.25 rr=2.36
+[2026-07-13 09:11:00] B 6282 康舒 score=95.9 entry=59.50 target=60.99 rr=2.35
+[2026-07-13 09:11:00] A 2344 華邦電 score=91.8 entry=181.50 target=186.04 rr=2.36
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.90 target=70.25 rr=2.30
+[2026-07-13 09:11:00] A 2344 華邦電 score=98.8 entry=181.50 target=190.58 rr=2.30
+[2026-07-13 09:11:00] A 5371 中光電 score=97.5 entry=97.00 target=101.85 rr=2.30
+[2026-07-13 09:11:00] B 6282 康舒 score=96.2 entry=59.50 target=62.48 rr=2.30
+[2026-07-13 09:11:00] B 2464 盟立 score=90.0 entry=170.00 target=178.50 rr=2.29
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] A 5371 中光電 score=97.5 entry=97.00 target=104.76 rr=2.17
+[2026-07-13 09:11:00] A 5351 鈺創 score=95.0 entry=100.00 target=108.00 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=91.2 entry=66.90 target=72.25 rr=2.16
+[2026-07-13 09:11:00] B 6282 康舒 score=91.2 entry=59.50 target=64.26 rr=2.16
+[2026-07-13 09:11:00] A 2344 華邦電 score=90.0 entry=181.50 target=196.02 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=2 pre_breakout_watch=3 stable=2 daytrade=22 overnight=27 weekly=27 overlap=29 excluded=11743
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout,pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=93.5 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=98.3 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 2344 華邦電 modes=daytrade,overnight,weekly avg_score=97.9 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=95.8 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 5351 鈺創 modes=daytrade,overnight,weekly avg_score=89.4 min_rr=2.16
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 6282 康舒 score=98.9 entry=59.50 target=63.37 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=33.05 target=35.20 rr=2.44
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=89.8 entry=59.50 target=63.37 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=33.05 target=35.20 rr=2.44
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.5 entry=30.40 target=32.38 rr=2.44
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=89.1 entry=59.50 target=63.07 rr=2.24
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.7 entry=30.40 target=32.22 rr=2.22
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 2344 華邦電 score=100.0 entry=182.00 target=186.55 rr=2.37
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.80 target=68.47 rr=2.37
+[2026-07-13 09:11:00] A 5371 中光電 score=100.0 entry=97.50 target=99.94 rr=2.38
+[2026-07-13 09:11:00] B 2464 盟立 score=95.9 entry=168.50 target=172.71 rr=2.36
+[2026-07-13 09:11:00] B 6282 康舒 score=95.9 entry=59.50 target=60.99 rr=2.35
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] A 2344 華邦電 score=100.0 entry=182.00 target=191.10 rr=2.29
+[2026-07-13 09:11:00] A 5371 中光電 score=97.5 entry=97.50 target=102.38 rr=2.30
+[2026-07-13 09:11:00] A 3481 群創 score=96.2 entry=66.80 target=70.14 rr=2.30
+[2026-07-13 09:11:00] B 6282 康舒 score=96.2 entry=59.50 target=62.48 rr=2.30
+[2026-07-13 09:11:00] A 2337 旺宏 score=92.5 entry=146.00 target=153.30 rr=2.29
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] A 5351 鈺創 score=97.5 entry=100.50 target=108.54 rr=2.16
+[2026-07-13 09:11:00] A 5371 中光電 score=97.5 entry=97.50 target=105.30 rr=2.17
+[2026-07-13 09:11:00] A 2344 華邦電 score=93.8 entry=182.00 target=196.56 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=91.2 entry=66.80 target=72.14 rr=2.17
+[2026-07-13 09:11:00] B 6282 康舒 score=91.2 entry=59.50 target=64.26 rr=2.16
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=1 pre_breakout_watch=3 stable=2 daytrade=19 overnight=27 weekly=24 overlap=26 excluded=11750
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=97.1 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 2344 華邦電 modes=daytrade,overnight,weekly avg_score=97.9 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=96.6 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=95.8 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 2337 旺宏 modes=daytrade,overnight,weekly avg_score=95.4 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=32.90 target=35.04 rr=2.43
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=93.2 entry=60.50 target=64.43 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=32.90 target=35.04 rr=2.43
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.5 entry=30.60 target=32.59 rr=2.45
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=92.4 entry=60.50 target=64.13 rr=2.24
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.7 entry=30.60 target=32.44 rr=2.25
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 2337 旺宏 score=100.0 entry=146.50 target=150.16 rr=2.36
+[2026-07-13 09:11:00] A 2344 華邦電 score=100.0 entry=182.50 target=187.06 rr=2.37
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.80 target=68.47 rr=2.37
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.50 target=62.01 rr=2.37
+[2026-07-13 09:11:00] A 5371 中光電 score=97.3 entry=97.20 target=99.63 rr=2.37
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] A 2344 華邦電 score=100.0 entry=182.50 target=191.62 rr=2.29
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.50 target=63.53 rr=2.29
+[2026-07-13 09:11:00] A 2337 旺宏 score=97.5 entry=146.50 target=153.83 rr=2.29
+[2026-07-13 09:11:00] A 3481 群創 score=96.2 entry=66.80 target=70.14 rr=2.30
+[2026-07-13 09:11:00] A 5351 鈺創 score=96.2 entry=100.00 target=105.00 rr=2.29
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.50 target=65.34 rr=2.16
+[2026-07-13 09:11:00] A 5351 鈺創 score=100.0 entry=100.00 target=108.00 rr=2.17
+[2026-07-13 09:11:00] A 5371 中光電 score=96.2 entry=97.20 target=104.98 rr=2.17
+[2026-07-13 09:11:00] A 2344 華邦電 score=93.8 entry=182.50 target=197.10 rr=2.17
+[2026-07-13 09:11:00] A 3481 群創 score=91.2 entry=66.80 target=72.14 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=1 pre_breakout_watch=3 stable=3 daytrade=19 overnight=23 weekly=23 overlap=24 excluded=11754
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=97.1 min_rr=2.16
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=98.3 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2359 所羅門 modes=stable,overnight,weekly avg_score=96.3 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=94.1 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 3481 群創 modes=daytrade,overnight,weekly avg_score=92.9 min_rr=2.16
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=32.90 target=35.04 rr=2.43
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=93.2 entry=60.50 target=64.43 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=32.90 target=35.04 rr=2.43
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.5 entry=30.55 target=32.54 rr=2.45
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=92.4 entry=60.50 target=64.13 rr=2.24
+[2026-07-13 09:11:00] B 2359 所羅門 score=91.3 entry=147.50 target=156.35 rr=2.24
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.7 entry=30.55 target=32.38 rr=2.23
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] A 3481 群創 score=100.0 entry=66.50 target=68.16 rr=2.36
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.50 target=62.01 rr=2.37
+[2026-07-13 09:11:00] A 5371 中光電 score=100.0 entry=98.40 target=100.86 rr=2.36
+[2026-07-13 09:11:00] B 2464 盟立 score=97.3 entry=171.00 target=175.27 rr=2.35
+[2026-07-13 09:11:00] A 2344 華邦電 score=91.8 entry=181.50 target=186.04 rr=2.36
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.50 target=63.53 rr=2.29
+[2026-07-13 09:11:00] B 2359 所羅門 score=98.8 entry=147.50 target=154.88 rr=2.30
+[2026-07-13 09:11:00] A 5371 中光電 score=97.5 entry=98.40 target=103.32 rr=2.29
+[2026-07-13 09:11:00] A 2344 華邦電 score=95.0 entry=181.50 target=190.58 rr=2.30
+[2026-07-13 09:11:00] B 2464 盟立 score=95.0 entry=171.00 target=179.55 rr=2.30
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.50 target=65.34 rr=2.16
+[2026-07-13 09:11:00] A 5351 鈺創 score=100.0 entry=99.70 target=107.68 rr=2.17
+[2026-07-13 09:11:00] B 2359 所羅門 score=98.8 entry=147.50 target=159.30 rr=2.17
+[2026-07-13 09:11:00] A 5371 中光電 score=97.5 entry=98.40 target=106.27 rr=2.17
+[2026-07-13 09:11:00] A 2344 華邦電 score=90.0 entry=181.50 target=196.02 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=1 pre_breakout_watch=3 stable=3 daytrade=19 overnight=26 weekly=25 overlap=26 excluded=11749
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=97.1 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=96.6 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2359 所羅門 modes=stable,overnight,weekly avg_score=96.3 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=94.1 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5351 鈺創 modes=daytrade,overnight,weekly avg_score=93.7 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=32.90 target=35.04 rr=2.43
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=93.2 entry=60.40 target=64.33 rr=2.44
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=32.90 target=35.04 rr=2.43
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.5 entry=30.40 target=32.38 rr=2.44
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=92.4 entry=60.40 target=64.02 rr=2.23
+[2026-07-13 09:11:00] B 2359 所羅門 score=91.3 entry=148.50 target=157.41 rr=2.24
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.7 entry=30.40 target=32.22 rr=2.22
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.40 target=61.91 rr=2.37
+[2026-07-13 09:11:00] B 2464 盟立 score=97.3 entry=170.50 target=174.76 rr=2.37
+[2026-07-13 09:11:00] A 5371 中光電 score=97.3 entry=97.50 target=99.94 rr=2.38
+[2026-07-13 09:11:00] A 2344 華邦電 score=84.9 entry=181.00 target=185.52 rr=2.35
+[2026-07-13 09:11:00] A 5351 鈺創 score=84.9 entry=100.00 target=102.50 rr=2.36
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.40 target=63.42 rr=2.29
+[2026-07-13 09:11:00] B 2359 所羅門 score=98.8 entry=148.50 target=155.93 rr=2.29
+[2026-07-13 09:11:00] A 5351 鈺創 score=96.2 entry=100.00 target=105.00 rr=2.29
+[2026-07-13 09:11:00] A 5371 中光電 score=96.2 entry=97.50 target=102.38 rr=2.30
+[2026-07-13 09:11:00] B 2464 盟立 score=95.0 entry=170.50 target=179.03 rr=2.29
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.40 target=65.23 rr=2.17
+[2026-07-13 09:11:00] A 5351 鈺創 score=100.0 entry=100.00 target=108.00 rr=2.17
+[2026-07-13 09:11:00] B 2359 所羅門 score=98.8 entry=148.50 target=160.38 rr=2.17
+[2026-07-13 09:11:00] A 5371 中光電 score=96.2 entry=97.50 target=105.30 rr=2.17
+[2026-07-13 09:11:00] B 2464 盟立 score=90.0 entry=170.50 target=184.14 rr=2.17
+[2026-07-13 09:11:00] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-13
+[2026-07-13 09:11:00] snapshots=1971 pre_breakout=2 pre_breakout_watch=3 stable=3 daytrade=18 overnight=23 weekly=23 overlap=24 excluded=11754
+[2026-07-13 09:11:00] [overlap]
+[2026-07-13 09:11:00] core_watch_with_breakout 6282 康舒 modes=pre_breakout_watch,stable,daytrade,overnight,weekly avg_score=97.1 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2359 所羅門 modes=stable,overnight,weekly avg_score=96.3 min_rr=2.17
+[2026-07-13 09:11:00] core_watch 2464 盟立 modes=daytrade,overnight,weekly avg_score=95.4 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5351 鈺創 modes=daytrade,overnight,weekly avg_score=93.7 min_rr=2.17
+[2026-07-13 09:11:00] core_watch_strong 5371 中光電 modes=daytrade,overnight,weekly avg_score=91.4 min_rr=2.17
+[2026-07-13 09:11:00] [pre_breakout]
+[2026-07-13 09:11:00] B 2353 宏碁 score=93.2 entry=32.95 target=35.09 rr=2.43
+[2026-07-13 09:11:00] B 2881 富邦金 score=78.4 entry=126.00 target=134.19 rr=2.44
+[2026-07-13 09:11:00] [pre_breakout_watch]
+[2026-07-13 09:11:00] B 6282 康舒 score=93.2 entry=60.70 target=64.65 rr=2.45
+[2026-07-13 09:11:00] B 2353 宏碁 score=84.1 entry=32.95 target=35.09 rr=2.43
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.5 entry=30.50 target=32.48 rr=2.43
+[2026-07-13 09:11:00] [stable]
+[2026-07-13 09:11:00] B 6282 康舒 score=92.4 entry=60.70 target=64.34 rr=2.24
+[2026-07-13 09:11:00] B 2359 所羅門 score=91.3 entry=148.00 target=156.88 rr=2.24
+[2026-07-13 09:11:00] B 2883 凱基金 score=70.7 entry=30.50 target=32.33 rr=2.24
+[2026-07-13 09:11:00] [daytrade]
+[2026-07-13 09:11:00] B 2464 盟立 score=100.0 entry=170.50 target=174.76 rr=2.37
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.70 target=62.22 rr=2.39
+[2026-07-13 09:11:00] A 3481 群創 score=94.5 entry=66.50 target=68.16 rr=2.36
+[2026-07-13 09:11:00] A 5371 中光電 score=91.8 entry=97.40 target=99.83 rr=2.37
+[2026-07-13 09:11:00] A 2344 華邦電 score=84.9 entry=180.50 target=185.01 rr=2.37
+[2026-07-13 09:11:00] [overnight]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.70 target=63.74 rr=2.30
+[2026-07-13 09:11:00] B 2359 所羅門 score=98.8 entry=148.00 target=155.40 rr=2.29
+[2026-07-13 09:11:00] A 5351 鈺創 score=96.2 entry=99.60 target=104.58 rr=2.30
+[2026-07-13 09:11:00] B 2464 盟立 score=93.8 entry=170.50 target=179.03 rr=2.29
+[2026-07-13 09:11:00] A 5371 中光電 score=91.2 entry=97.40 target=102.27 rr=2.30
+[2026-07-13 09:11:00] [weekly]
+[2026-07-13 09:11:00] B 6282 康舒 score=100.0 entry=60.70 target=65.56 rr=2.17
+[2026-07-13 09:11:00] A 5351 鈺創 score=100.0 entry=99.60 target=107.57 rr=2.17
+[2026-07-13 09:11:00] B 2359 所羅門 score=98.8 entry=148.00 target=159.84 rr=2.17
+[2026-07-13 09:11:00] B 2464 盟立 score=92.5 entry=170.50 target=184.14 rr=2.17
+[2026-07-13 09:11:00] A 5371 中光電 score=91.2 entry=97.40 target=105.19 rr=2.17
+[2026-07-13 09:11:00] END exit_code=0

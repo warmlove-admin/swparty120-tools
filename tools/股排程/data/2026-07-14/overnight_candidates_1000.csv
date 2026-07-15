@@ -1,0 +1,5 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+overnight,2634,漢翔,TSE,A,98.8,66.6,69.93,65.6,66600.0,3003.0,1310.0,2.29,4.39,3.45,0.91,0.3,77865,5224156000.0,17,13,20,16,3,"above_open,strong_momentum,theme:hot_defense_drone,hot_theme,theme_breadth,theme_holds_open,theme_volume,above_ma5"
+overnight,1301,台塑,TSE,A,80.0,62.0,65.1,61.07,62000.0,2796.0,1218.0,2.29,2.99,2.16,0.81,0.161,77502,4756270000.0,18,11,20,0,5,"above_open,above_ma5,above_ma10,ma5_gt_ma10,volume_expansion"
+overnight,6505,台塑化,TSE,A,80.0,66.4,69.72,65.4,66400.0,2994.0,1309.0,2.29,5.23,2.69,2.47,0.151,26359,1741163300.0,18,13,20,0,3,"above_open,near_day_high,strong_momentum,above_ma5,above_ma10,ma5_gt_ma10,volume_expansion,daily_close_near_high"
+overnight,2630,亞航,TSE,B,77.5,61.7,64.79,60.77,61700.0,2787.0,1217.0,2.29,8.82,1.41,7.3,0.162,22255,1365647000.0,18,11,20,0,3,"above_open,near_day_high,strong_momentum,above_ma5,above_ma10,ma5_gt_ma10,volume_expansion,daily_close_near_high"

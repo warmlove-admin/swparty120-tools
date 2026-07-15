@@ -31,6 +31,7 @@ CHANGE_TYPES = [
     ("insurance", "勞健保"),
     ("salary", "薪資"),
     ("tax", "所得稅"),
+    ("dependent", "眷屬"),
 ]
 
 INSURANCE_FIELDS = [
@@ -54,10 +55,23 @@ TAX_FIELDS = [
     ("tax_dependents", "所得稅扶養人數"),
 ]
 
+DEPENDENT_FIELDS = [
+    ("name", "姓名"),
+    ("dep_relationship", "稱謂"),
+    ("birth_date", "出生日期"),
+    ("nationality", "籍別"),
+    ("has_exemption", "減免身分"),
+    ("subsidy_rate", "補助費率(%)"),
+    ("max_subsidy_amount", "最高補助金額"),
+    ("enrollment_date", "加保日期"),
+    ("termination_date", "退保日期"),
+]
+
 FIELDS_BY_TYPE = {
     "insurance": INSURANCE_FIELDS,
     "salary": SALARY_FIELDS,
     "tax": TAX_FIELDS,
+    "dependent": DEPENDENT_FIELDS,
 }
 
 SOURCES = [
@@ -405,5 +419,95 @@ def init_insurance(
     db.commit()
     return RedirectResponse(
         url=f"/employee-changes?employee_id={employee_id}&new_hire=1",
+        status_code=302,
+    )
+
+
+@router.post("/add-dependent")
+def add_dependent(
+    employee_id: str = Form(...),
+    dep_name: str = Form(...),
+    dep_id_number: str = Form(""),
+    dep_nationality: str = Form("本國人"),
+    dep_relationship: str = Form(...),
+    dep_birth_date: str = Form(""),
+    dep_has_exemption: bool = Form(False),
+    dep_subsidy_rate: int = Form(0),
+    dep_max_subsidy_amount: int = Form(0),
+    dep_enrollment_date: str = Form(...),
+    user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
+    db: Session = Depends(get_db),
+):
+    """新增眷屬並記錄異動"""
+    target = db.query(User).filter(User.id == employee_id).first()
+    if not target:
+        return RedirectResponse(url="/employee-changes", status_code=302)
+
+    # 建立眷屬紀錄
+    dep = NhiDependent(
+        employee_id=employee_id,
+        name=dep_name,
+        id_number=dep_id_number,
+        nationality=dep_nationality,
+        dep_relationship=dep_relationship,
+        birth_date=date.fromisoformat(dep_birth_date) if dep_birth_date else None,
+        has_exemption=dep_has_exemption,
+        subsidy_rate=dep_subsidy_rate,
+        max_subsidy_amount=dep_max_subsidy_amount,
+        enrollment_date=date.fromisoformat(dep_enrollment_date),
+        is_active=True,
+    )
+    db.add(dep)
+    db.flush()  # 取得 dep.id
+
+    # 記錄異動（顯示在異動紀錄中）
+    change = EmployeeChange(
+        employee_id=employee_id,
+        change_type="dependent",
+        field_name="name",
+        effective_date=date.fromisoformat(dep_enrollment_date),
+        old_value=0,
+        new_value=dep.id,
+        source="manual",
+        created_by=user.id,
+    )
+    db.add(change)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/employee-changes?employee_id={employee_id}&change_type=dependent",
+        status_code=302,
+    )
+
+
+@router.post("/terminate-dependent/{dep_id}")
+def terminate_dependent(
+    dep_id: str,
+    termination_date: str = Form(...),
+    user: User = Depends(require_roles("居督", "主管", "主任", "會計")),
+    db: Session = Depends(get_db),
+):
+    """退保眷屬"""
+    dep = db.query(NhiDependent).filter(NhiDependent.id == dep_id).first()
+    if dep:
+        dep.is_active = False
+        dep.termination_date = date.fromisoformat(termination_date)
+
+        # 記錄異動
+        change = EmployeeChange(
+            employee_id=dep.employee_id,
+            change_type="dependent",
+            field_name="name",
+            effective_date=date.fromisoformat(termination_date),
+            old_value=dep.id,
+            new_value=0,
+            source="manual",
+            created_by=user.id,
+        )
+        db.add(change)
+        db.commit()
+
+    return RedirectResponse(
+        url=f"/employee-changes?employee_id={dep.employee_id}&change_type=dependent",
         status_code=302,
     )

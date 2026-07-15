@@ -1,0 +1,5 @@
+﻿watch_level,mode_count,code,name,exchange,modes,levels,avg_score,min_score,entry_price,nearest_target_price,nearest_stop_price,min_net_profit,min_rr_ratio,return_pct,volume,reasons
+core_watch_strong,3,2634,漢翔,TSE,"daytrade,overnight,weekly","A,A,A",98.3,97.3,66.6,68.26,66.2,1442.0,2.17,4.39,77865,"above_ma5,above_open,hot_theme,short_trend_up,strong_momentum,theme:hot_defense_drone,theme_breadth,theme_holds_open,theme_volume"
+core_watch_strong,3,1301,台塑,TSE,"daytrade,overnight,weekly","A,A,A",80.3,80.0,62.0,63.55,61.63,1347.0,2.17,2.99,77502,"above_ma10,above_ma20,above_ma5,above_open,five_day_price_up,ma5_gt_ma10,ma_alignment,short_trend_up,volume_expansion"
+core_watch,3,6505,台塑化,TSE,"daytrade,overnight,weekly","B,A,A",79.4,78.1,66.4,68.06,66.0,1443.0,2.17,5.23,26359,"above_ma10,above_ma20,above_ma5,above_open,daily_close_near_high,five_day_price_up,five_day_volume_up,ma5_gt_ma10,ma_alignment,near_day_high"
+core_watch,3,2630,亞航,TSE,"daytrade,overnight,weekly","B,B,B",76.8,75.3,61.7,63.24,61.33,1338.0,2.17,8.82,22255,"above_ma10,above_ma20,above_ma5,above_open,daily_close_near_high,five_day_price_up,five_day_volume_up,ma5_gt_ma10,ma_alignment,near_day_high"

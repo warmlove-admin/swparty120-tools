@@ -1,0 +1,283 @@
+﻿[2026-07-07 10:04:31] START
+[2026-07-07 10:04:33] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 10:04:33] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/020432/966968300/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-07 10:04:33] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 10:04:58] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 10:04:58] snapshots=1971 pre_breakout=3 daytrade=8 overnight=12 weekly=9 overlap=10 excluded=7852
+[2026-07-07 10:04:58] [overlap]
+[2026-07-07 10:04:58] core_watch_with_breakout 5388 ���U modes=pre_breakout,daytrade,overnight,weekly avg_score=79.0 min_rr=2.16
+[2026-07-07 10:04:58] core_watch_with_breakout 3605 ���P modes=pre_breakout,daytrade,overnight,weekly avg_score=76.4 min_rr=2.16
+[2026-07-07 10:04:58] core_watch_with_breakout 5351 ౳� modes=pre_breakout,daytrade,overnight,weekly avg_score=73.9 min_rr=2.17
+[2026-07-07 10:04:58] core_watch 5328 �خe modes=daytrade,overnight,weekly avg_score=75.1 min_rr=2.17
+[2026-07-07 10:04:58] core_watch 2885 ���j�� modes=daytrade,overnight,weekly avg_score=72.5 min_rr=2.17
+[2026-07-07 10:04:58] [pre_breakout]
+[2026-07-07 10:04:58] B 5388 ���U score=75.0 entry=85.90 target=91.48 rr=2.43
+[2026-07-07 10:04:58] B 3605 ���P score=73.9 entry=90.50 target=96.38 rr=2.44
+[2026-07-07 10:04:58] B 5351 ౳� score=72.7 entry=95.10 target=101.28 rr=2.44
+[2026-07-07 10:04:58] [daytrade]
+[2026-07-07 10:04:58] A 5388 ���U score=80.8 entry=85.90 target=88.05 rr=2.35
+[2026-07-07 10:04:58] B 3605 ���P score=76.7 entry=90.50 target=92.76 rr=2.37
+[2026-07-07 10:04:58] B 5328 �خe score=75.3 entry=82.10 target=84.15 rr=2.37
+[2026-07-07 10:04:58] B 5351 ౳� score=75.3 entry=95.10 target=97.48 rr=2.37
+[2026-07-07 10:04:58] B 2882 ����� score=74.0 entry=96.90 target=99.32 rr=2.36
+[2026-07-07 10:04:58] [overnight]
+[2026-07-07 10:04:58] A 5388 ���U score=80.0 entry=85.90 target=90.20 rr=2.30
+[2026-07-07 10:04:58] B 5351 ౳� score=77.5 entry=95.10 target=99.86 rr=2.29
+[2026-07-07 10:04:58] B 3605 ���P score=76.2 entry=90.50 target=95.03 rr=2.29
+[2026-07-07 10:04:58] B 8112 �ܤW score=76.2 entry=92.20 target=96.81 rr=2.30
+[2026-07-07 10:04:58] B 5328 �خe score=75.0 entry=82.10 target=86.20 rr=2.29
+[2026-07-07 10:04:58] [weekly]
+[2026-07-07 10:04:58] A 5388 ���U score=80.0 entry=85.90 target=92.77 rr=2.16
+[2026-07-07 10:04:58] B 3605 ���P score=78.8 entry=90.50 target=97.74 rr=2.16
+[2026-07-07 10:04:58] B 5328 �خe score=75.0 entry=82.10 target=88.67 rr=2.17
+[2026-07-07 10:04:58] B 2855 �Τ@�� score=72.5 entry=53.30 target=57.56 rr=2.16
+[2026-07-07 10:04:58] B 2885 ���j�� score=72.5 entry=71.20 target=76.90 rr=2.17
+[2026-07-07 10:04:58] END exit_code=0
+[2026-07-07 10:06:25] START
+[2026-07-07 10:06:26] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 10:06:26] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/020626/569954500/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-07 10:06:26] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 10:06:51] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-07
+[2026-07-07 10:06:51] snapshots=1971 pre_breakout=2 daytrade=7 overnight=12 weekly=10 overlap=10 excluded=7853
+[2026-07-07 10:06:51] [overlap]
+[2026-07-07 10:06:51] core_watch_with_breakout 3605 宏致 modes=pre_breakout,daytrade,overnight,weekly avg_score=76.4 min_rr=2.17
+[2026-07-07 10:06:51] core_watch_with_breakout 5351 鈺創 modes=pre_breakout,daytrade,overnight,weekly avg_score=73.9 min_rr=2.17
+[2026-07-07 10:06:51] core_watch 2855 統一證 modes=daytrade,overnight,weekly avg_score=72.5 min_rr=2.16
+[2026-07-07 10:06:51] core_watch 2885 元大金 modes=daytrade,overnight,weekly avg_score=71.2 min_rr=2.16
+[2026-07-07 10:06:51] priority_watch 2882 國泰金 modes=daytrade,overnight avg_score=74.6 min_rr=2.30
+[2026-07-07 10:06:51] [pre_breakout]
+[2026-07-07 10:06:51] B 3605 宏致 score=73.9 entry=90.70 target=96.60 rr=2.44
+[2026-07-07 10:06:51] B 5351 鈺創 score=72.7 entry=95.60 target=101.81 rr=2.44
+[2026-07-07 10:06:51] [daytrade]
+[2026-07-07 10:06:51] B 2882 國泰金 score=76.7 entry=97.00 target=99.42 rr=2.36
+[2026-07-07 10:06:51] B 3605 宏致 score=76.7 entry=90.70 target=92.97 rr=2.38
+[2026-07-07 10:06:51] B 5351 鈺創 score=75.3 entry=95.60 target=97.99 rr=2.37
+[2026-07-07 10:06:51] B 2426 鼎元 score=72.6 entry=83.40 target=85.48 rr=2.36
+[2026-07-07 10:06:51] B 2855 統一證 score=72.6 entry=53.30 target=54.63 rr=2.36
+[2026-07-07 10:06:51] [overnight]
+[2026-07-07 10:06:51] B 5351 鈺創 score=77.5 entry=95.60 target=100.38 rr=2.30
+[2026-07-07 10:06:51] B 3605 宏致 score=76.2 entry=90.70 target=95.24 rr=2.30
+[2026-07-07 10:06:51] B 5388 中磊 score=76.2 entry=85.70 target=89.99 rr=2.29
+[2026-07-07 10:06:51] B 2402 毅嘉 score=73.8 entry=70.10 target=73.61 rr=2.30
+[2026-07-07 10:06:51] B 2426 鼎元 score=73.8 entry=83.40 target=87.57 rr=2.30
+[2026-07-07 10:06:51] [weekly]
+[2026-07-07 10:06:51] B 3605 宏致 score=78.8 entry=90.70 target=97.96 rr=2.17
+[2026-07-07 10:06:51] B 2855 統一證 score=72.5 entry=53.30 target=57.56 rr=2.16
+[2026-07-07 10:06:51] B 5388 中磊 score=72.5 entry=85.70 target=92.56 rr=2.17
+[2026-07-07 10:06:51] B 2484 希華 score=71.2 entry=96.80 target=104.54 rr=2.17
+[2026-07-07 10:06:51] B 2885 元大金 score=71.2 entry=70.90 target=76.57 rr=2.16
+[2026-07-07 10:06:52] END exit_code=0
+[2026-07-07 10:11:11] START
+[2026-07-07 10:11:12] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 10:11:12] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/021112/684833800/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-07 10:11:12] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 10:11:37] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 10:11:37] snapshots=1971 pre_breakout=0 daytrade=4 overnight=4 weekly=4 overlap=4 excluded=7872
+[2026-07-07 10:11:37] [overlap]
+[2026-07-07 10:11:37] core_watch 2885 ���j�� modes=daytrade,overnight,weekly avg_score=75.9 min_rr=2.16
+[2026-07-07 10:11:37] core_watch 2882 ����� modes=daytrade,overnight,weekly avg_score=75.7 min_rr=2.17
+[2026-07-07 10:11:37] core_watch 2890 ���ת� modes=daytrade,overnight,weekly avg_score=72.6 min_rr=2.18
+[2026-07-07 10:11:37] priority_watch 2892 �Ĥ@�� modes=overnight,weekly avg_score=72.6 min_rr=2.16
+[2026-07-07 10:11:37] [pre_breakout]
+[2026-07-07 10:11:37] [daytrade]
+[2026-07-07 10:11:37] A 2882 ����� score=80.7 entry=96.60 target=99.01 rr=2.36
+[2026-07-07 10:11:37] B 2885 ���j�� score=76.1 entry=70.90 target=72.67 rr=2.34
+[2026-07-07 10:11:37] B 2890 ���ת� score=72.7 entry=41.45 target=42.49 rr=2.36
+[2026-07-07 10:11:37] B 2344 �ب��q score=71.6 entry=184.50 target=189.11 rr=2.36
+[2026-07-07 10:11:37] [overnight]
+[2026-07-07 10:11:37] B 2885 ���j�� score=75.8 entry=70.90 target=74.45 rr=2.30
+[2026-07-07 10:11:37] B 2882 ����� score=73.7 entry=96.60 target=101.43 rr=2.29
+[2026-07-07 10:11:37] B 2890 ���ת� score=72.6 entry=41.45 target=43.52 rr=2.30
+[2026-07-07 10:11:37] B 2892 �Ĥ@�� score=72.6 entry=33.55 target=35.23 rr=2.31
+[2026-07-07 10:11:37] [weekly]
+[2026-07-07 10:11:37] B 2885 ���j�� score=75.8 entry=70.90 target=76.57 rr=2.16
+[2026-07-07 10:11:37] B 2882 ����� score=72.6 entry=96.60 target=104.33 rr=2.17
+[2026-07-07 10:11:37] B 2890 ���ת� score=72.6 entry=41.45 target=44.77 rr=2.18
+[2026-07-07 10:11:37] B 2892 �Ĥ@�� score=72.6 entry=33.55 target=36.23 rr=2.16
+[2026-07-07 10:11:37] END exit_code=0
+[2026-07-07 10:12:21] START
+[2026-07-07 10:12:23] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 10:12:23] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/021222/816914700/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-07 10:12:23] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 10:12:48] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 10:12:48] snapshots=1971 pre_breakout=5 daytrade=11 overnight=20 weekly=19 overlap=18 excluded=7829
+[2026-07-07 10:12:48] [overlap]
+[2026-07-07 10:12:48] core_watch_with_breakout 5388 ���U modes=pre_breakout,daytrade,overnight,weekly avg_score=81.4 min_rr=2.17
+[2026-07-07 10:12:48] core_watch_with_breakout 6712 ���t modes=pre_breakout,daytrade,overnight,weekly avg_score=74.8 min_rr=2.17
+[2026-07-07 10:12:48] core_watch_with_breakout 3605 ���P modes=pre_breakout,daytrade,overnight,weekly avg_score=74.5 min_rr=2.17
+[2026-07-07 10:12:48] core_watch_with_breakout 5351 ౳� modes=pre_breakout,daytrade,overnight,weekly avg_score=73.9 min_rr=2.17
+[2026-07-07 10:12:48] core_watch_strong 2882 ����� modes=daytrade,overnight,weekly avg_score=89.0 min_rr=2.17
+[2026-07-07 10:12:48] [pre_breakout]
+[2026-07-07 10:12:48] B 1504 �F�� score=79.5 entry=74.00 target=78.81 rr=2.44
+[2026-07-07 10:12:48] B 5388 ���U score=78.4 entry=86.00 target=91.59 rr=2.44
+[2026-07-07 10:12:48] B 3605 ���P score=72.7 entry=90.40 target=96.28 rr=2.44
+[2026-07-07 10:12:48] B 5351 ౳� score=72.7 entry=94.80 target=100.96 rr=2.43
+[2026-07-07 10:12:48] B 6712 ���t score=71.6 entry=177.50 target=189.04 rr=2.44
+[2026-07-07 10:12:48] [daytrade]
+[2026-07-07 10:12:48] A 2882 ����� score=94.5 entry=97.10 target=99.53 rr=2.37
+[2026-07-07 10:12:48] A 2885 ���j�� score=89.0 entry=70.90 target=72.67 rr=2.34
+[2026-07-07 10:12:48] A 2890 ���ת� score=87.7 entry=41.55 target=42.59 rr=2.36
+[2026-07-07 10:12:48] A 5388 ���U score=82.2 entry=86.00 target=88.15 rr=2.35
+[2026-07-07 10:12:48] B 2881 �I���� score=76.7 entry=123.00 target=126.07 rr=2.35
+[2026-07-07 10:12:48] [overnight]
+[2026-07-07 10:12:48] A 2882 ����� score=88.8 entry=97.10 target=101.95 rr=2.29
+[2026-07-07 10:12:48] A 2885 ���j�� score=87.5 entry=70.90 target=74.45 rr=2.30
+[2026-07-07 10:12:48] A 2890 ���ת� score=86.2 entry=41.55 target=43.63 rr=2.31
+[2026-07-07 10:12:48] A 2892 �Ĥ@�� score=86.2 entry=33.55 target=35.23 rr=2.31
+[2026-07-07 10:12:48] A 5388 ���U score=82.5 entry=86.00 target=90.30 rr=2.29
+[2026-07-07 10:12:48] [weekly]
+[2026-07-07 10:12:48] A 2885 ���j�� score=88.8 entry=70.90 target=76.57 rr=2.16
+[2026-07-07 10:12:48] A 2890 ���ת� score=86.2 entry=41.55 target=44.87 rr=2.16
+[2026-07-07 10:12:48] A 2892 �Ĥ@�� score=86.2 entry=33.55 target=36.23 rr=2.16
+[2026-07-07 10:12:48] A 2882 ����� score=83.8 entry=97.10 target=104.87 rr=2.17
+[2026-07-07 10:12:48] A 5388 ���U score=82.5 entry=86.00 target=92.88 rr=2.17
+[2026-07-07 10:12:48] END exit_code=0
+[2026-07-07 10:21:01] START
+[2026-07-07 10:21:02] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 10:21:02] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/022102/733418000/211.74.190.24/> | Event: Session Property modification ok
+[2026-07-07 10:21:02] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 10:21:21] ERROR xlsx target locked; saved fallback=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07\stock_screen_report_102118.xlsx
+[2026-07-07 10:21:21] STACK at <ScriptBlock>, C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_1000.ps1: line 18
+[2026-07-07 21:37:59] START
+[2026-07-07 21:38:01] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 21:38:01] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/133801/208056200/49.159.218.50/> | Event: Session Property modification ok
+[2026-07-07 21:38:01] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 21:39:07] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 21:39:07] snapshots=1971 pre_breakout=3 daytrade=9 overnight=12 weekly=13 overlap=12 excluded=7847
+[2026-07-07 21:39:07] [overlap]
+[2026-07-07 21:39:07] core_watch_strong 5351 ౳� modes=pre_breakout,daytrade,overnight,weekly avg_score=87.5 min_rr=2.17
+[2026-07-07 21:39:07] core_watch_with_breakout 6579 �㴭 modes=pre_breakout,daytrade,overnight,weekly avg_score=77.4 min_rr=2.17
+[2026-07-07 21:39:07] core_watch_strong 2885 ���j�� modes=daytrade,overnight,weekly avg_score=90.6 min_rr=2.17
+[2026-07-07 21:39:07] core_watch_strong 2882 ����� modes=daytrade,overnight,weekly avg_score=90.3 min_rr=2.17
+[2026-07-07 21:39:07] core_watch_strong 2886 ���ת� modes=daytrade,overnight,weekly avg_score=88.0 min_rr=2.17
+[2026-07-07 21:39:07] [pre_breakout]
+[2026-07-07 21:39:07] A 5351 ౳� score=89.8 entry=93.10 target=99.15 rr=2.44
+[2026-07-07 21:39:07] B 6579 �㴭 score=73.9 entry=179.00 target=190.63 rr=2.44
+[2026-07-07 21:39:07] B 8109 �դj score=71.6 entry=161.50 target=172.00 rr=2.44
+[2026-07-07 21:39:07] [daytrade]
+[2026-07-07 21:39:07] A 2882 ����� score=95.9 entry=97.00 target=99.42 rr=2.36
+[2026-07-07 21:39:07] A 2885 ���j�� score=91.8 entry=69.80 target=71.54 rr=2.35
+[2026-07-07 21:39:07] A 2886 ���ת� score=89.0 entry=46.80 target=47.97 rr=2.37
+[2026-07-07 21:39:07] A 2890 ���ת� score=89.0 entry=41.10 target=42.13 rr=2.35
+[2026-07-07 21:39:07] A 5351 ౳� score=89.0 entry=93.10 target=95.43 rr=2.36
+[2026-07-07 21:39:07] [overnight]
+[2026-07-07 21:39:07] A 5388 ���U score=91.2 entry=83.40 target=87.57 rr=2.30
+[2026-07-07 21:39:07] A 2882 ����� score=90.0 entry=97.00 target=101.85 rr=2.30
+[2026-07-07 21:39:07] A 2885 ���j�� score=90.0 entry=69.80 target=73.29 rr=2.29
+[2026-07-07 21:39:07] A 5351 ౳� score=88.8 entry=93.10 target=97.75 rr=2.29
+[2026-07-07 21:39:07] A 2886 ���ת� score=87.5 entry=46.80 target=49.14 rr=2.30
+[2026-07-07 21:39:07] [weekly]
+[2026-07-07 21:39:07] A 5388 ���U score=91.2 entry=83.40 target=90.07 rr=2.17
+[2026-07-07 21:39:07] A 2885 ���j�� score=90.0 entry=69.80 target=75.38 rr=2.17
+[2026-07-07 21:39:07] A 2886 ���ת� score=87.5 entry=46.80 target=50.54 rr=2.17
+[2026-07-07 21:39:07] A 2890 ���ת� score=87.5 entry=41.10 target=44.39 rr=2.17
+[2026-07-07 21:39:07] A 2882 ����� score=85.0 entry=97.00 target=104.76 rr=2.17
+[2026-07-07 21:39:07] END exit_code=0
+[2026-07-07 21:41:14] START
+[2026-07-07 21:41:15] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 21:41:15] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/134115/137478300/49.159.218.50/> | Event: Session Property modification ok
+[2026-07-07 21:41:15] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 21:41:45] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 21:41:45] snapshots=1971 pre_breakout=2 daytrade=9 overnight=12 weekly=13 overlap=12 excluded=7848
+[2026-07-07 21:41:45] [overlap]
+[2026-07-07 21:41:45] core_watch_strong 5351 ౳� modes=pre_breakout,daytrade,overnight,weekly avg_score=87.5 min_rr=2.17
+[2026-07-07 21:41:45] core_watch_with_breakout 6579 �㴭 modes=pre_breakout,daytrade,overnight,weekly avg_score=77.4 min_rr=2.17
+[2026-07-07 21:41:45] core_watch_strong 2885 ���j�� modes=daytrade,overnight,weekly avg_score=90.6 min_rr=2.17
+[2026-07-07 21:41:45] core_watch_strong 2882 ����� modes=daytrade,overnight,weekly avg_score=90.3 min_rr=2.17
+[2026-07-07 21:41:45] core_watch_strong 2886 ���ת� modes=daytrade,overnight,weekly avg_score=88.0 min_rr=2.17
+[2026-07-07 21:41:45] [pre_breakout]
+[2026-07-07 21:41:45] A 5351 ౳� score=89.8 entry=93.10 target=99.15 rr=2.44
+[2026-07-07 21:41:45] B 6579 �㴭 score=73.9 entry=179.00 target=190.63 rr=2.44
+[2026-07-07 21:41:45] [daytrade]
+[2026-07-07 21:41:45] A 2882 ����� score=95.9 entry=97.00 target=99.42 rr=2.36
+[2026-07-07 21:41:45] A 2885 ���j�� score=91.8 entry=69.80 target=71.54 rr=2.35
+[2026-07-07 21:41:45] A 2886 ���ת� score=89.0 entry=46.80 target=47.97 rr=2.37
+[2026-07-07 21:41:45] A 2890 ���ת� score=89.0 entry=41.10 target=42.13 rr=2.35
+[2026-07-07 21:41:45] A 5351 ౳� score=89.0 entry=93.10 target=95.43 rr=2.36
+[2026-07-07 21:41:45] [overnight]
+[2026-07-07 21:41:45] A 5388 ���U score=91.2 entry=83.40 target=87.57 rr=2.30
+[2026-07-07 21:41:45] A 2882 ����� score=90.0 entry=97.00 target=101.85 rr=2.30
+[2026-07-07 21:41:45] A 2885 ���j�� score=90.0 entry=69.80 target=73.29 rr=2.29
+[2026-07-07 21:41:45] A 5351 ౳� score=88.8 entry=93.10 target=97.75 rr=2.29
+[2026-07-07 21:41:45] A 2886 ���ת� score=87.5 entry=46.80 target=49.14 rr=2.30
+[2026-07-07 21:41:45] [weekly]
+[2026-07-07 21:41:45] A 5388 ���U score=91.2 entry=83.40 target=90.07 rr=2.17
+[2026-07-07 21:41:45] A 2885 ���j�� score=90.0 entry=69.80 target=75.38 rr=2.17
+[2026-07-07 21:41:45] A 2886 ���ת� score=87.5 entry=46.80 target=50.54 rr=2.17
+[2026-07-07 21:41:45] A 2890 ���ת� score=87.5 entry=41.10 target=44.39 rr=2.17
+[2026-07-07 21:41:45] A 2882 ����� score=85.0 entry=97.00 target=104.76 rr=2.17
+[2026-07-07 21:41:45] END exit_code=0
+[2026-07-07 21:55:20] START
+[2026-07-07 21:55:21] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 21:55:21] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/135521/226193000/49.159.218.50/> | Event: Session Property modification ok
+[2026-07-07 21:55:21] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 21:55:49] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 21:55:49] snapshots=1971 pre_breakout=2 daytrade=9 overnight=12 weekly=13 overlap=12 excluded=7848
+[2026-07-07 21:55:49] [overlap]
+[2026-07-07 21:55:49] core_watch_strong 5351 ౳� modes=pre_breakout,daytrade,overnight,weekly avg_score=87.5 min_rr=2.17
+[2026-07-07 21:55:49] core_watch_with_breakout 6579 �㴭 modes=pre_breakout,daytrade,overnight,weekly avg_score=77.4 min_rr=2.17
+[2026-07-07 21:55:49] core_watch_strong 2885 ���j�� modes=daytrade,overnight,weekly avg_score=90.6 min_rr=2.17
+[2026-07-07 21:55:49] core_watch_strong 2882 ����� modes=daytrade,overnight,weekly avg_score=90.3 min_rr=2.17
+[2026-07-07 21:55:49] core_watch_strong 2886 ���ת� modes=daytrade,overnight,weekly avg_score=88.0 min_rr=2.17
+[2026-07-07 21:55:49] [pre_breakout]
+[2026-07-07 21:55:49] A 5351 ౳� score=89.8 entry=93.10 target=99.15 rr=2.44
+[2026-07-07 21:55:49] B 6579 �㴭 score=73.9 entry=179.00 target=190.63 rr=2.44
+[2026-07-07 21:55:49] [daytrade]
+[2026-07-07 21:55:49] A 2882 ����� score=95.9 entry=97.00 target=99.42 rr=2.36
+[2026-07-07 21:55:49] A 2885 ���j�� score=91.8 entry=69.80 target=71.54 rr=2.35
+[2026-07-07 21:55:49] A 2886 ���ת� score=89.0 entry=46.80 target=47.97 rr=2.37
+[2026-07-07 21:55:49] A 2890 ���ת� score=89.0 entry=41.10 target=42.13 rr=2.35
+[2026-07-07 21:55:49] A 5351 ౳� score=89.0 entry=93.10 target=95.43 rr=2.36
+[2026-07-07 21:55:49] [overnight]
+[2026-07-07 21:55:49] A 5388 ���U score=91.2 entry=83.40 target=87.57 rr=2.30
+[2026-07-07 21:55:49] A 2882 ����� score=90.0 entry=97.00 target=101.85 rr=2.30
+[2026-07-07 21:55:49] A 2885 ���j�� score=90.0 entry=69.80 target=73.29 rr=2.29
+[2026-07-07 21:55:49] A 5351 ౳� score=88.8 entry=93.10 target=97.75 rr=2.29
+[2026-07-07 21:55:49] A 2886 ���ת� score=87.5 entry=46.80 target=49.14 rr=2.30
+[2026-07-07 21:55:49] [weekly]
+[2026-07-07 21:55:49] A 5388 ���U score=91.2 entry=83.40 target=90.07 rr=2.17
+[2026-07-07 21:55:49] A 2885 ���j�� score=90.0 entry=69.80 target=75.38 rr=2.17
+[2026-07-07 21:55:49] A 2886 ���ת� score=87.5 entry=46.80 target=50.54 rr=2.17
+[2026-07-07 21:55:49] A 2890 ���ת� score=87.5 entry=41.10 target=44.39 rr=2.17
+[2026-07-07 21:55:49] A 2882 ����� score=85.0 entry=97.00 target=104.76 rr=2.17
+[2026-07-07 21:55:49] END exit_code=0
+[2026-07-07 22:09:28] START
+[2026-07-07 22:09:29] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 22:09:29] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/140929/116491700/49.159.218.50/> | Event: Session Property modification ok
+[2026-07-07 22:09:29] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 22:09:32] ERROR Traceback (most recent call last):
+[2026-07-07 22:09:32] STACK at <ScriptBlock>, C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_1000.ps1: line 18
+[2026-07-07 22:10:31] START
+[2026-07-07 22:10:32] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-07 22:10:32] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0707/141031/956843100/49.159.218.50/> | Event: Session Property modification ok
+[2026-07-07 22:10:32] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-07 22:11:01] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\�ѱƵ{\data\2026-07-07
+[2026-07-07 22:11:01] snapshots=1971 pre_breakout=2 daytrade=9 overnight=11 weekly=12 overlap=11 excluded=7850
+[2026-07-07 22:11:01] [overlap]
+[2026-07-07 22:11:01] core_watch_strong 5351 ౳� modes=pre_breakout,daytrade,overnight,weekly avg_score=87.5 min_rr=2.17
+[2026-07-07 22:11:01] core_watch_with_breakout 6579 �㴭 modes=pre_breakout,daytrade,overnight,weekly avg_score=77.4 min_rr=2.17
+[2026-07-07 22:11:01] core_watch_strong 2885 ���j�� modes=daytrade,overnight,weekly avg_score=90.6 min_rr=2.17
+[2026-07-07 22:11:01] core_watch_strong 2882 ����� modes=daytrade,overnight,weekly avg_score=90.3 min_rr=2.17
+[2026-07-07 22:11:01] core_watch_strong 2886 ���ת� modes=daytrade,overnight,weekly avg_score=88.0 min_rr=2.17
+[2026-07-07 22:11:01] [pre_breakout]
+[2026-07-07 22:11:01] A 5351 ౳� score=89.8 entry=93.10 target=99.15 rr=2.44
+[2026-07-07 22:11:01] B 6579 �㴭 score=73.9 entry=179.00 target=190.63 rr=2.44
+[2026-07-07 22:11:01] [daytrade]
+[2026-07-07 22:11:01] A 2882 ����� score=95.9 entry=97.00 target=99.42 rr=2.36
+[2026-07-07 22:11:01] A 2885 ���j�� score=91.8 entry=69.80 target=71.54 rr=2.35
+[2026-07-07 22:11:01] A 2886 ���ת� score=89.0 entry=46.80 target=47.97 rr=2.37
+[2026-07-07 22:11:01] A 2890 ���ת� score=89.0 entry=41.10 target=42.13 rr=2.35
+[2026-07-07 22:11:01] A 5351 ౳� score=89.0 entry=93.10 target=95.43 rr=2.36
+[2026-07-07 22:11:01] [overnight]
+[2026-07-07 22:11:01] A 5388 ���U score=91.2 entry=83.40 target=87.57 rr=2.30
+[2026-07-07 22:11:01] A 2882 ����� score=90.0 entry=97.00 target=101.85 rr=2.30
+[2026-07-07 22:11:01] A 2885 ���j�� score=90.0 entry=69.80 target=73.29 rr=2.29
+[2026-07-07 22:11:01] A 5351 ౳� score=88.8 entry=93.10 target=97.75 rr=2.29
+[2026-07-07 22:11:01] A 2886 ���ת� score=87.5 entry=46.80 target=49.14 rr=2.30
+[2026-07-07 22:11:01] [weekly]
+[2026-07-07 22:11:01] A 5388 ���U score=91.2 entry=83.40 target=90.07 rr=2.17
+[2026-07-07 22:11:01] A 2885 ���j�� score=90.0 entry=69.80 target=75.38 rr=2.17
+[2026-07-07 22:11:01] A 2886 ���ת� score=87.5 entry=46.80 target=50.54 rr=2.17
+[2026-07-07 22:11:01] A 2890 ���ת� score=87.5 entry=41.10 target=44.39 rr=2.17
+[2026-07-07 22:11:01] A 2882 ����� score=85.0 entry=97.00 target=104.76 rr=2.17
+[2026-07-07 22:11:01] END exit_code=0

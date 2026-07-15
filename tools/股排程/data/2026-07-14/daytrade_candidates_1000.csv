@@ -1,0 +1,5 @@
+﻿mode,code,name,exchange,level,score,entry_price,target_price,stop_price,lot_amount,net_profit_at_target,loss_at_stop,rr_ratio,return_pct,gap_pct,fade_pct,spread_pct,volume,total_amount,liquidity_score,momentum_score,technical_score,theme_score,risk_score,reasons
+daytrade,2634,漢翔,TSE,A,97.3,66.6,68.26,66.2,66600.0,1442.0,613.0,2.35,4.39,3.45,0.91,0.3,77865,5224156000.0,17,13,7,16,3,"above_open,strong_momentum,theme:hot_defense_drone,hot_theme,theme_breadth,theme_holds_open,theme_volume"
+daytrade,1301,台塑,TSE,A,80.8,62.0,63.55,61.63,62000.0,1347.0,568.0,2.37,2.99,2.16,0.81,0.161,77502,4756270000.0,18,11,10,0,5,above_open
+daytrade,6505,台塑化,TSE,B,78.1,66.4,68.06,66.0,66400.0,1443.0,612.0,2.36,5.23,2.69,2.47,0.151,26359,1741163300.0,18,13,8,0,3,"above_open,near_day_high,strong_momentum"
+daytrade,2630,亞航,TSE,B,75.3,61.7,63.24,61.33,61700.0,1338.0,567.0,2.36,8.82,1.41,7.3,0.162,22255,1365647000.0,18,11,8,0,3,"above_open,near_day_high,strong_momentum"

@@ -1,0 +1,58 @@
+﻿[2026-07-11 11:01:41] START
+[2026-07-11 11:01:41] Python=C:\Users\USER\1.Claude Code\swparty120-tools\tools\stock_screen_venv\Scripts\python.exe
+[2026-07-11 11:01:42] Script=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\run_daily_screen.py
+[2026-07-11 11:01:56] Response Code: 0 | Event Code: 0 | Info: host '210.59.255.161:80', hostname '210.59.255.161:80' IP 210.59.255.161:80 (host 1 of 1) (host connection attempt 1 of 1) (total connection attempt 1 of 2) | Event: Session up
+[2026-07-11 11:01:56] Response Code: 200 | Event Code: 18 | Info: #P2P/v:bcsolace01/Oryfkqqm/PYAPI/E221249675/0711/030154/501418200/49.159.218.50/> | Event: Session Property modification ok
+[2026-07-11 11:01:56] Response Code: 200 | Event Code: 16 | Info: APISUB/V1/SYS/CONTRACT | Event: Subscribe or Unsubscribe ok
+[2026-07-11 11:02:03] Exception in thread Thread-1 (_readerthread):
+[2026-07-11 11:02:03] Traceback (most recent call last):
+[2026-07-11 11:02:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1082, in _bootstrap_inner
+[2026-07-11 11:02:03]     self._context.run(self.run)
+[2026-07-11 11:02:03]     ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+[2026-07-11 11:02:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\threading.py", line 1024, in run
+[2026-07-11 11:02:03]     self._target(*self._args, **self._kwargs)
+[2026-07-11 11:02:03]     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-11 11:02:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\subprocess.py", line 1614, in _readerthread
+[2026-07-11 11:02:03]     buffer.append(fh.read())
+[2026-07-11 11:02:03]                   ~~~~~~~^^
+[2026-07-11 11:02:03]   File "<frozen codecs>", line 325, in decode
+[2026-07-11 11:02:03]   File "C:\Users\USER\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\utf_8_sig.py", line 69, in _buffer_decode
+[2026-07-11 11:02:03]     return codecs.utf_8_decode(input, errors, final)
+[2026-07-11 11:02:03]            ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+[2026-07-11 11:02:03] UnicodeDecodeError: 'utf-8' codec can't decode byte 0xb0 in position 22: invalid start byte
+[2026-07-11 11:02:03] corporate action auto source skipped: twse (the JSON object must be str, bytes or bytearray, not NoneType)
+[2026-07-11 11:03:32] output_dir=C:\Users\USER\1.Claude Code\swparty120-tools\tools\股排程\data\2026-07-11
+[2026-07-11 11:03:32] snapshots=1971 pre_breakout=2 pre_breakout_watch=1 stable=2 daytrade=14 overnight=25 weekly=27 overlap=23 excluded=11755
+[2026-07-11 11:03:32] [overlap]
+[2026-07-11 11:03:32] core_watch_with_breakout 2359 所羅門 modes=pre_breakout,pre_breakout_watch,stable,overnight,weekly avg_score=82.6 min_rr=2.17
+[2026-07-11 11:03:32] core_watch_strong 5388 中磊 modes=stable,daytrade,overnight,weekly avg_score=88.6 min_rr=2.17
+[2026-07-11 11:03:32] core_watch_with_breakout 2377 微星 modes=pre_breakout,daytrade,overnight,weekly avg_score=74.8 min_rr=2.17
+[2026-07-11 11:03:32] core_watch_strong 2337 旺宏 modes=daytrade,overnight,weekly avg_score=95.4 min_rr=2.17
+[2026-07-11 11:03:32] core_watch_strong 2344 華邦電 modes=daytrade,overnight,weekly avg_score=93.3 min_rr=2.17
+[2026-07-11 11:03:32] [pre_breakout]
+[2026-07-11 11:03:32] B 2359 所羅門 score=87.5 entry=139.00 target=148.03 rr=2.44
+[2026-07-11 11:03:32] B 2377 微星 score=71.6 entry=145.00 target=154.42 rr=2.44
+[2026-07-11 11:03:32] [pre_breakout_watch]
+[2026-07-11 11:03:32] B 2359 所羅門 score=78.4 entry=139.00 target=148.03 rr=2.44
+[2026-07-11 11:03:32] [stable]
+[2026-07-11 11:03:32] A 5388 中磊 score=82.6 entry=84.60 target=89.68 rr=2.24
+[2026-07-11 11:03:32] B 2359 所羅門 score=78.3 entry=139.00 target=147.34 rr=2.24
+[2026-07-11 11:03:32] [daytrade]
+[2026-07-11 11:03:32] A 2337 旺宏 score=100.0 entry=143.50 target=147.09 rr=2.37
+[2026-07-11 11:03:32] A 2344 華邦電 score=100.0 entry=176.50 target=180.91 rr=2.36
+[2026-07-11 11:03:32] A 5388 中磊 score=91.8 entry=84.60 target=86.71 rr=2.35
+[2026-07-11 11:03:32] B 3265 台星科 score=91.8 entry=173.50 target=177.84 rr=2.37
+[2026-07-11 11:03:32] A 2464 盟立 score=83.6 entry=161.50 target=165.54 rr=2.36
+[2026-07-11 11:03:32] [overnight]
+[2026-07-11 11:03:32] A 2337 旺宏 score=93.8 entry=143.50 target=150.68 rr=2.30
+[2026-07-11 11:03:32] A 2344 華邦電 score=90.0 entry=176.50 target=185.33 rr=2.29
+[2026-07-11 11:03:32] A 5388 中磊 score=90.0 entry=84.60 target=88.83 rr=2.29
+[2026-07-11 11:03:32] B 2359 所羅門 score=82.5 entry=139.00 target=145.95 rr=2.29
+[2026-07-11 11:03:32] A 2356 英業達 score=80.0 entry=69.80 target=73.29 rr=2.29
+[2026-07-11 11:03:32] [weekly]
+[2026-07-11 11:03:32] A 2337 旺宏 score=92.5 entry=143.50 target=154.98 rr=2.17
+[2026-07-11 11:03:32] A 2344 華邦電 score=90.0 entry=176.50 target=190.62 rr=2.17
+[2026-07-11 11:03:32] A 5388 中磊 score=90.0 entry=84.60 target=91.37 rr=2.17
+[2026-07-11 11:03:32] B 2359 所羅門 score=86.2 entry=139.00 target=150.12 rr=2.17
+[2026-07-11 11:03:32] B 3265 台星科 score=82.5 entry=173.50 target=187.38 rr=2.17
+[2026-07-11 11:03:32] END exit_code=0
