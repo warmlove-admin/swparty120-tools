@@ -311,44 +311,106 @@
       </details>
     </div>
 
-    {# -- 異動紀錄 -- #}
+    {# -- 異動紀錄（分類摺疊） -- #}
     <div class="card">
-      <div class="section-title">異動紀錄</div>
+      <div class="section-title" style="margin-bottom:0.8rem;">異動紀錄</div>
       {% if changes %}
-      <table style="margin-top:0.5rem;">
-        <thead>
-          <tr>
-            <th>生效日</th>
-            <th>類型</th>
-            <th>欄位</th>
-            <th style="text-align:right;">舊值</th>
-            <th style="text-align:right;">新值</th>
-            <th>來源</th>
-            <th>建立者</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in changes %}
-          <tr>
-            <td>{{ c.effective_date }}</td>
-            <td>{{ c.change_type_label }}</td>
-            <td>{{ c.field_label }}</td>
-            <td style="text-align:right;">{{ "{:,}".format(c.old_value) }}</td>
-            <td style="text-align:right; font-weight:800;">{{ "{:,}".format(c.new_value) }}</td>
-            <td>{{ c.source_label }}</td>
-            <td>{{ c.creator.display_name if c.creator else '-' }}</td>
-            <td>
-              {% if user.role.value in ["主管", "主任"] %}
-              <form method="post" action="/employee-changes/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆異動？')">
-                <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.78rem;">刪除</button>
-              </form>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        {# 勞健保異動 #}
+        {% set insurance_changes = changes | selectattr('change_type', 'equalto', 'insurance') | list %}
+        {% if insurance_changes %}
+        <details style="margin-bottom:0.6rem;" open>
+          <summary style="font-weight:700; font-size:0.9rem; color:#2c7a7b; cursor:pointer; padding:0.4rem 0; border-bottom:1px solid #e2e8f0;">
+            勞健保異動（{{ insurance_changes | length }}筆）
+          </summary>
+          <div style="padding:0.5rem 0;">
+            {% for c in insurance_changes %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.5rem; border-bottom:1px solid #f0f0f0; font-size:0.88rem;">
+              <div>
+                <span style="color:#666;">{{ c.effective_date }}</span>
+                <span style="margin-left:0.8rem;">{{ c.field_label }}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.8rem;">
+                <span style="color:#999;">{{ "{:,}".format(c.old_value) }}</span>
+                <span style="color:#999;">→</span>
+                <span style="font-weight:700;">{{ "{:,}".format(c.new_value) }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
+                {% if user.role.value in ["主管", "主任"] %}
+                <form method="post" action="/employee-changes/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆異動？')">
+                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.72rem; padding:0.1rem 0.3rem;">刪除</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+
+        {# 薪資異動 #}
+        {% set salary_changes = changes | selectattr('change_type', 'equalto', 'salary') | list %}
+        {% if salary_changes %}
+        <details style="margin-bottom:0.6rem;" open>
+          <summary style="font-weight:700; font-size:0.9rem; color:#744210; cursor:pointer; padding:0.4rem 0; border-bottom:1px solid #e2e8f0;">
+            薪資異動（{{ salary_changes | length }}筆）
+          </summary>
+          <div style="padding:0.5rem 0;">
+            {% for c in salary_changes %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.5rem; border-bottom:1px solid #f0f0f0; font-size:0.88rem;">
+              <div>
+                <span style="color:#666;">{{ c.effective_date }}</span>
+                <span style="margin-left:0.8rem;">{{ c.field_label }}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.8rem;">
+                <span style="color:#999;">{{ "{:,}".format(c.old_value) }}</span>
+                <span style="color:#999;">→</span>
+                <span style="font-weight:700;">{{ "{:,}".format(c.new_value) }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
+                {% if user.role.value in ["主管", "主任"] %}
+                <form method="post" action="/employee-changes/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆異動？')">
+                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.72rem; padding:0.1rem 0.3rem;">刪除</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+
+        {# 所得稅異動 #}
+        {% set tax_changes = changes | selectattr('change_type', 'equalto', 'tax') | list %}
+        {% if tax_changes %}
+        <details style="margin-bottom:0.6rem;" open>
+          <summary style="font-weight:700; font-size:0.9rem; color:#c53030; cursor:pointer; padding:0.4rem 0; border-bottom:1px solid #e2e8f0;">
+            所得稅異動（{{ tax_changes | length }}筆）
+          </summary>
+          <div style="padding:0.5rem 0;">
+            {% for c in tax_changes %}
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.5rem; border-bottom:1px solid #f0f0f0; font-size:0.88rem;">
+              <div>
+                <span style="color:#666;">{{ c.effective_date }}</span>
+                <span style="margin-left:0.8rem;">{{ c.field_label }}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.8rem;">
+                <span style="color:#999;">{{ "{:,}".format(c.old_value) }}</span>
+                <span style="color:#999;">→</span>
+                <span style="font-weight:700;">{{ "{:,}".format(c.new_value) }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.source_label }}</span>
+                <span style="font-size:0.78rem; color:#999;">{{ c.creator.display_name if c.creator else '-' }}</span>
+                {% if user.role.value in ["主管", "主任"] %}
+                <form method="post" action="/employee-changes/delete/{{ c.id }}" style="display:inline;" onsubmit="return confirm('確定刪除此筆異動？')">
+                  <button type="submit" class="btn btn-secondary btn-compact" style="font-size:0.72rem; padding:0.1rem 0.3rem;">刪除</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+
       {% else %}
       <p style="color:#999; margin-top:0.5rem;">尚無異動紀錄</p>
       {% endif %}
