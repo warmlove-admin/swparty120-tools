@@ -269,7 +269,7 @@
             <div id="normal_fields">
               <div>
                 <label>異動欄位</label>
-                <select name="field_name" id="field_name_select">
+                <select name="field_name" id="field_name_select" onchange="toggleInsuranceGrade();">
                   {% for val, label in fields_by_type.get(selected_type or 'insurance', fields_by_type['insurance']) %}
                   <option value="{{ val }}">{{ label }}</option>
                   {% endfor %}
@@ -279,9 +279,14 @@
                 <label>生效日期</label>
                 <input type="date" name="effective_date" value="{{ today_str }}" required>
               </div>
-              <div>
+              <div id="new_value_input_group">
                 <label>新值</label>
-                <input type="number" name="new_value" required min="0">
+                <input type="number" name="new_value" id="new_value_number" required min="0">
+                <select name="new_value" id="new_value_select" style="display:none;">
+                  {% for val, label in labor_grades %}
+                  <option value="{{ val }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div>
                 <label>來源</label>
@@ -515,15 +520,23 @@ function toggleDependentForm() {
   const normalFields = document.getElementById('normal_fields');
   const dependentFields = document.getElementById('dependent_fields');
   const form = document.getElementById('change_form');
+  const effDate = form.querySelector('[name="effective_date"]');
 
   if (type === 'dependent') {
     normalFields.style.display = 'none';
     dependentFields.style.display = 'grid';
     form.action = '/employee-changes/add-dependent';
+    // 移除一般欄位的 required，避免擋住表單送出
+    document.getElementById('new_value_number').removeAttribute('required');
+    document.getElementById('new_value_select').removeAttribute('required');
+    if (effDate) effDate.removeAttribute('required');
   } else {
     normalFields.style.display = 'block';
     dependentFields.style.display = 'none';
     form.action = '/employee-changes/add';
+    // 還原 required
+    toggleInsuranceGrade();  // 會正確設定 new_value 的 required
+    if (effDate) effDate.setAttribute('required', '');
   }
 }
 
@@ -540,32 +553,10 @@ document.addEventListener('DOMContentLoaded', function() {
     chk.addEventListener('change', toggleExemptionFields);
     toggleExemptionFields();
   }
+  toggleInsuranceGrade();
 });
 
 function calcAll() {
-  const laborGrade = parseInt(document.getElementById('sel_labor_grade').value) || 0;
-  const healthGrade = parseInt(document.getElementById('sel_health_grade').value) || 0;
-  const dependents = parseInt(document.getElementById('hidden_dep_count').value) || 0;
-  const pensionGrade = parseInt(document.getElementById('sel_pension_grade').value) || 0;
-  const pensionSelf = parseInt(document.getElementById('sel_pension_self').value) || 0;
-
-  const laborSelf = Math.round(laborGrade * LI_RATE * LI_EMP_RATIO);
-  const dep = Math.min(dependents, 3);
-  const healthSelf = Math.round(healthGrade * HI_RATE * HI_EMP_RATIO * (1 + dep));
-  const pensionSelfAmt = Math.round(pensionGrade * pensionSelf / 100);
-  const total = laborSelf + healthSelf + pensionSelfAmt;
-
-  document.getElementById('labor_grade_display').textContent = fmt(laborGrade);
-  document.getElementById('labor_self_display').textContent = fmt(laborSelf);
-  document.getElementById('health_grade_display').textContent = fmt(healthGrade);
-  document.getElementById('health_self_display').textContent = fmt(healthSelf);
-  document.getElementById('pension_grade_display').textContent = fmt(pensionGrade);
-  document.getElementById('pension_self_display').textContent = fmt(pensionSelfAmt);
-
-  document.getElementById('sum_labor').textContent = fmt(laborSelf);
-  document.getElementById('sum_health').textContent = fmt(healthSelf);
-  document.getElementById('sum_pension').textContent = fmt(pensionSelfAmt);
-  document.getElementById('sum_total').textContent = fmt(total);
 }
 
 function updateFields() {
@@ -579,6 +570,49 @@ function updateFields() {
     opt.textContent = label;
     fieldSelect.appendChild(opt);
   });
+  toggleInsuranceGrade();
+}
+
+// 勞保/健保/勞退欄位 → 用下拉選單
+const INSURANCE_GRADE_FIELDS = ['insurance_labor_amount', 'insurance_health_amount', 'insurance_labor_pension_amount'];
+
+function toggleInsuranceGrade() {
+  const field = document.getElementById('field_name_select').value;
+  const numberInput = document.getElementById('new_value_number');
+  const selectInput = document.getElementById('new_value_select');
+
+  if (INSURANCE_GRADE_FIELDS.includes(field)) {
+    numberInput.style.display = 'none';
+    numberInput.removeAttribute('name');
+    numberInput.removeAttribute('required');
+    selectInput.style.display = 'block';
+    selectInput.setAttribute('name', 'new_value');
+    selectInput.setAttribute('required', '');
+
+    // 根據欄位切換下拉選項
+    selectInput.innerHTML = '';
+    let grades = [];
+    if (field === 'insurance_labor_amount') {
+      grades = {{ labor_grades | tojson }};
+    } else if (field === 'insurance_health_amount') {
+      grades = {{ health_grades | tojson }};
+    } else if (field === 'insurance_labor_pension_amount') {
+      grades = {{ pension_grades | tojson }};
+    }
+    grades.forEach(([val, label]) => {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = label;
+      selectInput.appendChild(opt);
+    });
+  } else {
+    numberInput.style.display = 'block';
+    numberInput.setAttribute('name', 'new_value');
+    numberInput.setAttribute('required', '');
+    selectInput.style.display = 'none';
+    selectInput.removeAttribute('name');
+    selectInput.removeAttribute('required');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', calcAll);

@@ -2,7 +2,25 @@
 
 # ── 勞保投保薪資分級表（2026.01.01 起適用）─────────────────────────────────
 # (月薪資總額上限, 月投保薪資)
+# 含部分工時勞工級距（11,100 起）
 LABOR_INSURANCE_GRADES = [
+    (11_100, 11_100),
+    (12_540, 12_540),
+    (13_500, 13_500),
+    (15_840, 15_840),
+    (16_500, 16_500),
+    (17_280, 17_280),
+    (17_880, 17_880),
+    (19_047, 19_047),
+    (20_008, 20_008),
+    (21_009, 21_009),
+    (22_000, 22_000),
+    (23_100, 23_100),
+    (24_000, 24_000),
+    (25_250, 25_250),
+    (26_400, 26_400),
+    (27_600, 27_600),
+    (28_590, 28_590),
     (29_500, 29_500),
     (30_300, 30_300),
     (31_800, 31_800),
@@ -24,6 +42,7 @@ OCCUPATIONAL_INJURY_RATE = 0.002
 
 # ── 健保投保金額分級表（2026.01.01 起適用）─────────────────────────────────
 # (月薪資總額上限, 月投保金額)
+# 健保最低級距為29,500
 HEALTH_INSURANCE_GRADES = [
     (29_500, 29_500),
     (30_300, 30_300),
@@ -189,28 +208,42 @@ def lookup_labor_pension_grade(salary: int) -> int:
 # ── 自付額計算 ────────────────────────────────────────────────────────────────
 
 def calc_labor_insurance_self_pay(grade_amount: int) -> int:
-    """勞保每月自付額 = 投保級距 × 12.5% × 20%"""
-    return round(grade_amount * LABOR_INSURANCE_RATE * LABOR_INSURANCE_EMPLOYEE_RATIO)
+    """勞保每月自付額 = 投保級距 × 12.5% × 20%（無條件捨去）"""
+    return int(grade_amount * LABOR_INSURANCE_RATE * LABOR_INSURANCE_EMPLOYEE_RATIO)
 
 
-def calc_health_insurance_self_pay(grade_amount: int, dependents: int = 0) -> int:
-    """健保每月自付額 = 投保級距 × 5.17% × 30% × (1 + min(眷屬, 3))"""
-    dep = min(dependents or 0, 3)
-    return round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYEE_RATIO * (1 + dep))
+def calc_health_insurance_self_pay(grade_amount: int) -> int:
+    """健保每月本人自付額 = 投保級距 × 5.17% × 30%"""
+    return round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYEE_RATIO)
+
+
+def calc_health_insurance_dependent_pay(grade_amount: int, dependents: list) -> int:
+    """健保每月眷屬自付額合計。
+    每位眷屬：本人級距自付額 × (1 - 補助比例)
+    未勾選補助的眷屬：本人級距自付額
+    """
+    per_person = calc_health_insurance_self_pay(grade_amount)
+    total = 0
+    for dep in dependents:
+        if not dep.is_active:
+            continue
+        if dep.has_exemption and dep.subsidy_rate > 0:
+            total += per_person * (100 - dep.subsidy_rate) / 100
+        else:
+            total += per_person
+    return total
 
 
 def calc_health_insurance_subsidy(grade_amount: int, dependents: list) -> int:
     """計算眷屬補助總金額。
-    dependents: NhiDependent objects list
-    補助金額 = min(眷屬自付額 × 補助費率%, 最高補助金額)
+    補助金額 = 本人級距自付額 × 補助比例
     """
+    per_person = calc_health_insurance_self_pay(grade_amount)
     total_subsidy = 0
     for dep in dependents:
         if not dep.is_active or not dep.has_exemption or dep.subsidy_rate <= 0:
             continue
-        # 該眷屬的基礎自付額（不含眷屬加成，每人獨立計算）
-        base = round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYEE_RATIO)
-        subsidy = round(base * dep.subsidy_rate / 100)
+        subsidy = per_person * dep.subsidy_rate / 100
         if dep.max_subsidy_amount > 0:
             subsidy = min(subsidy, dep.max_subsidy_amount)
         total_subsidy += subsidy
@@ -219,7 +252,7 @@ def calc_health_insurance_subsidy(grade_amount: int, dependents: list) -> int:
 
 def calc_labor_pension_self_pay(grade_amount: int, self_rate_pct: int = 0) -> int:
     """勞退每月自提金額 = 提繳工資 × 自提率%"""
-    return round(grade_amount * (self_rate_pct or 0) / 100)
+    return int(grade_amount * (self_rate_pct or 0) / 100)
 
 
 def calc_total_employee_deduction(
@@ -244,23 +277,25 @@ def calc_total_employee_deduction(
 
 def calc_labor_insurance_employer_pay(grade_amount: int) -> int:
     """勞保每月雇主負擔 = 投保級距 × 12.5% × 70%"""
-    return round(grade_amount * LABOR_INSURANCE_RATE * 0.70)
+    return int(grade_amount * LABOR_INSURANCE_RATE * 0.70)
 
 
 def calc_health_insurance_employer_pay(grade_amount: int, dependents: int = 0) -> int:
-    """健保每月投保單位負擔 = 投保級距 × 5.17% × 60% × (1 + min(眷屬, 3))"""
+    """健保每月投保單位負擔 = 投保級距 × 5.17% × 60% × (1 + min(眷屬, 3))
+    每人分別四捨五入後加總。"""
     dep = min(dependents or 0, 3)
-    return round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYER_RATIO * (1 + dep))
+    per_person = round(grade_amount * HEALTH_INSURANCE_RATE * HEALTH_INSURANCE_EMPLOYER_RATIO)
+    return per_person * (1 + dep)
 
 
 def calc_labor_pension_employer_pay(grade_amount: int, employer_rate_pct: int = 6) -> int:
     """勞退每月雇主提繳 = 提繳工資 × 雇主提繳率%"""
-    return round(grade_amount * (employer_rate_pct or 6) / 100)
+    return int(grade_amount * (employer_rate_pct or 6) / 100)
 
 
 def calc_occupational_injury_pay(grade_amount: int) -> int:
     """職災保險每月雇主負擔 = 投保級距 × 職災費率（0.2%）"""
-    return round(grade_amount * OCCUPATIONAL_INJURY_RATE)
+    return int(grade_amount * OCCUPATIONAL_INJURY_RATE)
 
 
 def calc_employer_monthly_cost(

@@ -16,6 +16,7 @@ from app.services.insurance import (
     LABOR_PENSION_GRADES,
     calc_labor_insurance_self_pay,
     calc_health_insurance_self_pay,
+    calc_health_insurance_dependent_pay,
     calc_health_insurance_subsidy,
     calc_labor_pension_self_pay,
     calc_total_employee_deduction,
@@ -52,10 +53,8 @@ INSURANCE_FIELDS = [
     ("labor_pension_employer_rate", "勞退雇主提繳率(%)"),
     ("labor_pension_personal_rate", "勞退個人提繳率(%)"),
     ("insurance_health_amount", "健保投保金額"),
-    ("health_dependents", "健保眷屬人數"),
     ("has_exemption", "減免身分"),
     ("subsidy_rate", "補助費率(%)"),
-    ("insurance_note", "保險備註"),
 ]
 
 SALARY_FIELDS = [
@@ -117,18 +116,17 @@ def _get_insurance_calc(cv: dict, dependents: list = None) -> dict:
 
     # 計算眷屬人數（僅 active）
     active_deps = [d for d in (dependents or []) if d.is_active]
-    dep_count = len(active_deps)
 
     li = calc_labor_insurance_self_pay(labor_grade)
-    hi_base = calc_health_insurance_self_pay(health_grade, dep_count)
-    hi_subsidy = calc_health_insurance_subsidy(health_grade, active_deps)
-    hi = hi_base - hi_subsidy
+    hi_emp = calc_health_insurance_self_pay(health_grade)
+    hi_dep = calc_health_insurance_dependent_pay(health_grade, active_deps)
+    hi = round(hi_emp + hi_dep)
     lp = calc_labor_pension_self_pay(pension_grade, pension_self_rate)
 
     return {
         "labor_insurance_self": li,
         "health_insurance_self": hi,
-        "health_subsidy": hi_subsidy,
+        "health_subsidy": 0,
         "labor_pension_self": lp,
         "total_deduction": li + hi + lp,
     }
@@ -181,25 +179,30 @@ def employee_changes_page(
     today_str = date.today().isoformat()
 
     template = _jinja_env.get_template("employee_changes.html")
-    html = template.render(
-        user=user,
-        caregivers=caregivers,
-        selected=selected,
-        changes=changes,
-        current_values=current_values,
-        insurance_calc=insurance_calc,
-        dependents=dependents,
-        change_types=CHANGE_TYPES,
-        fields_by_type={k: [list(i) for i in v] for k, v in FIELDS_BY_TYPE.items()},
-        sources=SOURCES,
-        selected_type=change_type,
-        EmployeeChange=EmployeeChange,
-        labor_grades=labor_grades,
-        health_grades=health_grades,
-        pension_grades=pension_grades,
-        today_str=today_str,
-        new_hire=new_hire == "1",
-    )
+    try:
+        html = template.render(
+            user=user,
+            caregivers=caregivers,
+            selected=selected,
+            changes=changes,
+            current_values=current_values,
+            insurance_calc=insurance_calc,
+            dependents=dependents,
+            change_types=CHANGE_TYPES,
+            fields_by_type={k: [list(i) for i in v] for k, v in FIELDS_BY_TYPE.items()},
+            sources=SOURCES,
+            selected_type=change_type,
+            EmployeeChange=EmployeeChange,
+            labor_grades=labor_grades,
+            health_grades=health_grades,
+            pension_grades=pension_grades,
+            today_str=today_str,
+            new_hire=new_hire == "1",
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return HTMLResponse(content=f"<pre>{traceback.format_exc()}</pre>", status_code=500)
     return HTMLResponse(content=html)
 
 
@@ -472,13 +475,14 @@ def add_dependent(
     db.flush()  # 取得 dep.id
 
     # 記錄異動（顯示在異動紀錄中）
+    # new_value = 1 表示新增眷屬（依賴眷屬人數從 DB 自動計算）
     change = EmployeeChange(
         employee_id=employee_id,
         change_type="dependent",
         field_name="name",
         effective_date=date.fromisoformat(dep_enrollment_date),
         old_value=0,
-        new_value=dep.id,
+        new_value=1,
         source="manual",
         created_by=user.id,
     )
@@ -501,16 +505,18 @@ def terminate_dependent(
     """退保眷屬"""
     dep = db.query(NhiDependent).filter(NhiDependent.id == dep_id).first()
     if dep:
+        emp_id = dep.employee_id
         dep.is_active = False
         dep.termination_date = date.fromisoformat(termination_date)
 
         # 記錄異動
+        # old_value = 1 表示退保前有眷屬（依賴眷屬人數從 DB 自動計算）
         change = EmployeeChange(
-            employee_id=dep.employee_id,
+            employee_id=emp_id,
             change_type="dependent",
             field_name="name",
             effective_date=date.fromisoformat(termination_date),
-            old_value=dep.id,
+            old_value=1,
             new_value=0,
             source="manual",
             created_by=user.id,
@@ -518,7 +524,7 @@ def terminate_dependent(
         db.add(change)
         db.commit()
 
-    return RedirectResponse(
-        url=f"/employee-changes?employee_id={dep.employee_id}&change_type=dependent",
-        status_code=302,
-    )
+        return RedirectResponse(
+            url=f"/employee-changes?employee_id={emp_id}",
+            status_code=302,
+        )

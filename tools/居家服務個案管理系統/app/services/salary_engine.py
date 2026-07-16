@@ -51,6 +51,7 @@ from app.config import settings
 from app.services.insurance import (
     calc_labor_insurance_self_pay,
     calc_health_insurance_self_pay,
+    calc_health_insurance_dependent_pay,
     calc_labor_pension_self_pay,
 )
 GOOGLE_MAPS_API_KEY = settings.google_maps_api_key
@@ -621,15 +622,12 @@ def calculate_monthly_salary(
     active_deps = len(active_dep_objs)
 
     li_deduction = calc_labor_insurance_self_pay(caregiver.insurance_labor_amount or 0)
-    hi_base = calc_health_insurance_self_pay(
-        caregiver.insurance_health_amount or 0,
-        active_deps,
-    )
-    hi_subsidy = calc_health_insurance_subsidy(
+    hi_emp = calc_health_insurance_self_pay(caregiver.insurance_health_amount or 0)
+    hi_dep = calc_health_insurance_dependent_pay(
         caregiver.insurance_health_amount or 0,
         active_dep_objs,
     )
-    hi_deduction = hi_base - hi_subsidy
+    hi_deduction = round(hi_emp + hi_dep)
     lp_deduction = calc_labor_pension_self_pay(
         caregiver.insurance_labor_pension_amount or 0,
         caregiver.labor_pension_personal_rate or 0,
